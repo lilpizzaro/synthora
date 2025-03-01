@@ -4,6 +4,9 @@ import google.generativeai as genai
 import traceback
 import uuid
 from dotenv import load_dotenv
+import threading
+import time
+import requests
 
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
@@ -171,6 +174,36 @@ def generate_stream(user_input):
     for chunk in response:
         if hasattr(chunk, 'text'):
             print(chunk.text, end="")
+
+# Add a keep-alive mechanism
+def keep_alive():
+    """Function to keep the server awake by pinging it every 14 minutes"""
+    app_url = os.environ.get("APP_URL")
+    if not app_url:
+        print("APP_URL not set, keep-alive disabled")
+        return
+        
+    while True:
+        try:
+            print(f"Sending keep-alive ping to {app_url}")
+            response = requests.get(f"{app_url}/ping")
+            print(f"Keep-alive response: {response.status_code}")
+        except Exception as e:
+            print(f"Keep-alive ping failed: {str(e)}")
+        
+        # Sleep for 14 minutes (840 seconds)
+        time.sleep(840)
+
+# Start the keep-alive thread
+if os.environ.get("ENABLE_KEEP_ALIVE", "false").lower() == "true":
+    keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
+    keep_alive_thread.start()
+    print("Keep-alive thread started")
+
+@app.route('/ping')
+def ping():
+    """Simple endpoint for keep-alive pings"""
+    return jsonify({"status": "ok", "message": "Ducky is awake!"}), 200
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

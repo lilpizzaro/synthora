@@ -246,6 +246,7 @@ body {
     color: var(--message-text);
     margin: 0 8px 0 52px;
     text-align: right;
+    max-width: 80%; /* Ensure text doesn't extend off screen */
 }
 
 .ducky-message .text {
@@ -725,25 +726,46 @@ button:active {
     margin-bottom: 30px;
     position: relative;
     display: inline-block;
-    animation: fade-in 0.8s ease-out forwards;
-    animation-delay: 0.5s;
-    opacity: 0;
+    opacity: 1;
 }
 
 .hello-text {
     position: relative;
-    background: none;
-    -webkit-background-clip: initial;
-    -webkit-text-fill-color: initial; 
+    font-family: 'Dancing Script', cursive;
     color: var(--splash-text);
-    overflow: visible;
-    width: auto;
-    animation: none;
-    filter: none;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 0;
+    display: inline-block;
+    animation: writing 1.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    animation-delay: 0.8s;
 }
 
 .hello-cursor {
-    display: none;
+    display: inline-block;
+    width: 3px;
+    height: 60px;
+    background-color: var(--splash-text);
+    position: absolute;
+    right: -10px;
+    top: 10px;
+    animation: typing-cursor 1.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards, cursor-blink 0.8s infinite;
+    animation-delay: 0.8s, 2.3s;
+}
+
+@keyframes typing-cursor {
+    0% { left: 0; }
+    100% { left: 100%; }
+}
+
+@keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes writing {
+    0% { width: 0; }
+    100% { width: 100%; }
 }
 
 @keyframes fade-in {
@@ -1108,5 +1130,14 @@ h1 .icon {
         align-items: center;
         justify-content: center;
         gap: 8px;
+    }
+}
+
+/* Fix user message bubbles in desktop mode */
+@media (min-width: 769px) {
+    /* Desktop-specific adjustments */
+    .user-message .text,
+    .ducky-message .text {
+        max-width: 70%;
     }
 } 

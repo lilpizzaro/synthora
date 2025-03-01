@@ -19,6 +19,7 @@
         <div class="splash-content">
             <div class="hello-animation">
                 <span class="hello-text">Hello</span>
+                <span class="hello-cursor"></span>
             </div>
             <div class="splash-logo">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="splash-icon">
@@ -122,7 +123,7 @@
             const splashScreen = document.getElementById('splashScreen');
             const mainContent = document.getElementById('mainContent');
             
-            // Show splash screen for 4.5 seconds to allow for handwriting animation
+            // Show splash screen for 4.5 seconds then fade out
             setTimeout(function() {
                 splashScreen.classList.add('fade-out');
                 
@@ -151,7 +152,7 @@
                         document.getElementById('userInput').focus();
                     }, 300);
                 }, 800); // Match this with the animation duration in CSS
-            }, 4500); // Increased to allow handwriting animation to complete
+            }, 4500);
         });
 
         // Add message to chat
@@ -627,12 +628,10 @@
                 root.style.setProperty('--splash-background', '#000000');
                 root.style.setProperty('--splash-text', '#ffffff');
                 root.style.setProperty('--splash-text-rgb', '255, 255, 255');
-                root.style.setProperty('--splash-title-color', '#5AC8FA');
             } else {
-                root.style.setProperty('--splash-background', '#ffffff');
-                root.style.setProperty('--splash-text', '#000000');
-                root.style.setProperty('--splash-text-rgb', '0, 0, 0');
-                root.style.setProperty('--splash-title-color', '#007AFF');
+                root.style.setProperty('--splash-background', '#000000');
+                root.style.setProperty('--splash-text', '#ffffff');
+                root.style.setProperty('--splash-text-rgb', '255, 255, 255');
             }
         }
     </script>

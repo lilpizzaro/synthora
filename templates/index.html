@@ -88,14 +88,10 @@
             </div>
         </div>
         <div class="input-container">
-            <input 
-                type="text" 
-                id="userInput" 
-                placeholder="Type your message here..." 
-                autocomplete="off"
-                aria-label="Message input"
-            >
-            <button onclick="sendMessage()" id="sendButton">
+            <div class="input-wrapper">
+                <input type="text" id="userInput" placeholder="Message Ducky..." autocomplete="off">
+            </div>
+            <button id="sendButton" onclick="sendMessage()">
                 <span class="button-text">Send</span>
             </button>
         </div>
@@ -103,6 +99,14 @@
 
     <script>
         let conversationId = null;
+        
+        // Add initial welcome message when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add initial welcome message from Ducky after the splash screen
+            setTimeout(() => {
+                addMessageToChat('ducky', 'Hi there! I\'m Ducky, your friendly AI assistant. How can I help you today?');
+            }, 5500); // Slightly after splash screen fade out
+        });
         
         // Splash screen handling
         window.addEventListener('load', function() {
@@ -129,11 +133,19 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}-message`;
             
+            // Remove any existing typing indicators for Ducky messages
+            if (type === 'ducky') {
+                const typingMessages = document.querySelectorAll('.typing-message');
+                typingMessages.forEach(msg => msg.remove());
+            }
+            
             let content = '';
             
             if (type === 'user') {
                 content = `
-                    <div class="avatar">👤</div>
+                    <div class="avatar">
+                        <span class="user-icon">👤</span>
+                    </div>
                     <div class="text">${escapeHtml(message)}</div>
                 `;
             } else if (type === 'ducky') {
@@ -189,76 +201,94 @@
 
         // Add typing animation to messages
         function addTypingAnimation(text) {
-            return `<div class="typing-animation">
-                ${text.split('\n').map(line => 
-                    `<span>${escapeHtml(line.trim())}</span>`
-                ).join('')}
-            </div>`;
+            const lines = text.split('\n').filter(line => line.trim());
+            const formattedLines = lines.map(line => `<span>${escapeHtml(line)}</span>`).join('');
+            return `<div class="typing-animation">${formattedLines}</div>`;
+        }
+
+        // Create a typing indicator with animated dots
+        function createTypingIndicator() {
+            return `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
         }
 
         function sendMessage() {
             const inputField = document.getElementById('userInput');
             const message = inputField.value.trim();
             
-            if (message) {
-                // Add user message to chat
-                addMessageToChat('user', message);
-                inputField.value = '';
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessageToChat('user', message);
+            
+            // Clear input
+            inputField.value = '';
+            
+            // Add typing indicator
+            const chatContainer = document.getElementById('chatContainer');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ducky-message typing-message';
+            typingDiv.innerHTML = `
+                <div class="avatar">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
+                </div>
+                <div class="text">${createTypingIndicator()}</div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
+            
+            // Set button to loading state
+            setButtonLoading(true);
+            
+            // Send message to server
+            fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    conversation_id: conversationId
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove typing indicator
+                const typingMessages = document.querySelectorAll('.typing-message');
+                typingMessages.forEach(msg => msg.remove());
                 
-                // Show typing indicator
-                const typingIndicator = document.createElement('div');
-                typingIndicator.className = 'typing-indicator';
-                typingIndicator.innerHTML = '<span></span><span></span><span></span>';
-                document.getElementById('chatContainer').appendChild(typingIndicator);
-                
-                // Send message to server
-                fetch('/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        message: message,
-                        conversation_id: conversationId 
-                    }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Remove typing indicator
-                    const indicator = document.querySelector('.typing-indicator');
-                    if (indicator) {
-                        indicator.remove();
-                    }
-                    
-                    // Store conversation ID
+                if (data.error) {
+                    addMessageToChat('error', data.error);
+                } else {
+                    // Update conversation ID
                     if (data.conversation_id) {
                         conversationId = data.conversation_id;
                     }
                     
-                    if (data.error) {
-                        console.error('Error:', data.error);
-                        addMessageToChat('error', 'Sorry, something went wrong. Please try again.');
-                    } else {
-                        // Add bot response to chat
-                        addMessageToChat('ducky', data.response);
-                    }
-                    
-                    // Scroll to bottom
-                    scrollToBottom();
-                })
-                .catch((error) => {
-                    // Remove typing indicator
-                    const indicator = document.querySelector('.typing-indicator');
-                    if (indicator) {
-                        indicator.remove();
-                    }
-                    console.error('Error:', error);
-                    addMessageToChat('error', 'Sorry, something went wrong. Please try again.');
-                });
+                    // Add response to chat
+                    addMessageToChat('ducky', data.response);
+                }
                 
-                // Scroll to bottom
-                scrollToBottom();
-            }
+                // Reset button
+                setButtonLoading(false);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Remove typing indicator
+                const typingMessages = document.querySelectorAll('.typing-message');
+                typingMessages.forEach(msg => msg.remove());
+                
+                addMessageToChat('error', 'Sorry, there was an error processing your request. Please try again.');
+                setButtonLoading(false);
+            });
+            
+            // Focus input field
+            inputField.focus();
         }
 
         // Add enter key support
@@ -306,27 +336,14 @@
 
         // Mobile actions
         function clearChat() {
-            if (confirm('Are you sure you want to clear the chat?')) {
-                const chatContainer = document.getElementById('chatContainer');
-                // Keep the pull indicator and initial message
-                chatContainer.innerHTML = `
-                    <div class="pull-indicator">
-                        <span>Pull to refresh</span>
-                    </div>
-                    <div class="message ducky-message">
-                        <div class="avatar">
-                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
-                        </div>
-                        <div class="text">
-                            <div class="typing-animation">
-                                <span>Quack! Hello there!</span>
-                                <span>I'm your friendly AI duck assistant.</span>
-                                <span>How can I help you today? 🦆</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '';
+            conversationId = null;
+            
+            // Add initial welcome message from Ducky
+            setTimeout(() => {
+                addMessageToChat('ducky', 'Hi there! I\'m Ducky, your friendly AI assistant. How can I help you today?');
+            }, 300);
         }
 
         function toggleDarkMode() {

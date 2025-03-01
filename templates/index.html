@@ -120,7 +120,7 @@
                     splashScreen.style.display = 'none';
                     document.getElementById('userInput').focus();
                 }, 500);
-            }, 3000);
+            }, 5000);
         });
 
         // Add message to chat
@@ -133,8 +133,8 @@
             
             if (type === 'user') {
                 content = `
-                    <div class="text">${escapeHtml(message)}</div>
                     <div class="avatar">👤</div>
+                    <div class="text">${escapeHtml(message)}</div>
                 `;
             } else if (type === 'ducky') {
                 content = `
@@ -314,7 +314,9 @@
                         <span>Pull to refresh</span>
                     </div>
                     <div class="message ducky-message">
-                        <div class="avatar">🦆</div>
+                        <div class="avatar">
+                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
+                        </div>
                         <div class="text">
                             <div class="typing-animation">
                                 <span>Quack! Hello there!</span>

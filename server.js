@@ -1,0 +1,94 @@
+const express = require('express');
+const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+require('dotenv').config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Serve static files from the current directory
+app.use(express.static('./'));
+
+// Initialize Gemini API
+const genAI = new GoogleGenerativeAI('AIzaSyB0MmJjgLLRDCSs89VkUTGRLLCeoP0djEc');
+
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        console.log('Received message:', message);
+        
+        if (!message) {
+            return res.status(400).json({ error: 'Message is required' });
+        }
+
+        // Initialize the model
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+
+        // Prepare the prompt
+        const prompt = `You are Ducky, a friendly and playful duck assistant who loves to make duck-themed puns and says "quack" occasionally. Keep responses cheerful and duck-themed!
+
+User's message: ${message}
+
+Please respond in a cheerful, duck-themed way.`;
+
+        console.log('Sending prompt to Gemini...');
+        const result = await model.generateContent(prompt);
+        console.log('Received response from Gemini');
+        
+        const response = await result.response;
+        const text = response.text();
+        
+        console.log('Generated response:', text);
+        res.json({ response: text });
+    } catch (error) {
+        console.error('Detailed Server Error:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
+        
+        // Check if it's a safety error
+        if (error.message?.includes('safety')) {
+            return res.status(400).json({
+                error: 'Content filtered for safety',
+                details: error.message
+            });
+        }
+        
+        // Check for API key errors
+        if (error.message?.includes('API key')) {
+            return res.status(401).json({
+                error: 'API key error',
+                details: error.message
+            });
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to generate response',
+            details: error.message 
+        });
+    }
+});
+
+const PORT = process.env.PORT || 3001;
+
+const startServer = () => {
+    const server = app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    }).on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`Port ${PORT} is busy. Trying port ${PORT + 1}`);
+            setTimeout(() => {
+                server.close();
+                app.listen(PORT + 1, () => {
+                    console.log(`Server running on port ${PORT + 1}`);
+                });
+            }, 1000);
+        } else {
+            console.error('Server error:', err);
+        }
+    });
+};
+
+startServer(); 

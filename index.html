@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Chat with Ducky">
+    <title>Ducky Chat</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --background-color: #ffffff;
+            --text-color: #1d1d1f;
+            --chat-bg: #f5f5f7;
+            --message-bg: #007AFF;
+            --message-text: #ffffff;
+            --user-message-bg: #e9ecef;
+            --user-message-text: #1d1d1f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .app-header span {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #0056b3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-container {
+            flex: 1;
+            margin-top: 4rem;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background: var(--chat-bg);
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 0.8rem 1rem;
+            border-radius: 1rem;
+            margin: 0.5rem;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .bot-message {
+            background: var(--message-bg);
+            color: var(--message-text);
+            align-self: flex-start;
+            border-bottom-left-radius: 0.3rem;
+        }
+
+        .user-message {
+            background: var(--user-message-bg);
+            color: var(--user-message-text);
+            align-self: flex-end;
+            border-bottom-right-radius: 0.3rem;
+        }
+
+        .input-container {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgb(255, 255, 255);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 1.5rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .send-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .send-button:hover {
+            background: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .duck-avatar {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #000000;
+                --text-color: #f5f5f7;
+                --chat-bg: #1c1c1e;
+                --user-message-bg: #2c2c2e;
+                --user-message-text: #ffffff;
+            }
+
+            .app-header {
+                background: rgba(0, 0, 0, 0.8);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .input-container {
+                background: rgba(0, 0, 0, 0.8);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .chat-input {
+                background: #ffffff;
+                color: white;
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <img src="https://em-content.zobj.net/source/microsoft-teams/337/duck_1f986.png" alt="Ducky" class="duck-avatar">
+        <span>Ducky Chat</span>
+    </header>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="message bot-message">
+            Hey there!  *quack quack*!  How can this ducky help you today? 🦆
+        </div>
+    </div>
+
+    <div class="input-container">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." autocomplete="off">
+        <button class="send-button" id="sendButton" onclick="handleSend()">Send</button>
+    </div>
+
+    <script>
+        // Global variables
+        let chatContainer;
+        let chatInput;
+        let sendButton;
+
+        async function generateContent(message) {
+            const ports = [3001, 3002]; // Try both possible ports
+            let lastError;
+
+            for (const port of ports) {
+                try {
+                    const response = await fetch(`http://localhost:${port}/api/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to generate content: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    return result.response;
+                } catch (error) {
+                    console.log(`Failed to connect on port ${port}:`, error);
+                    lastError = error;
+                    continue;
+                }
+            }
+            
+            // If we get here, all ports failed
+            throw lastError || new Error('Failed to connect to server on all ports');
+        }
+
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function handleSend() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            try {
+                // Disable input and button
+                chatInput.disabled = true;
+                sendButton.disabled = true;
+
+                // Add user message
+                addMessage(message, true);
+                chatInput.value = '';
+
+                // Generate response
+                const response = await generateContent(message);
+                addMessage(response);
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage("Oops! Something went wrong. Please try again! *worried quack* 🦆");
+            } finally {
+                // Re-enable input and button
+                chatInput.disabled = false;
+                sendButton.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            chatContainer = document.getElementById('chatContainer');
+            chatInput = document.getElementById('chatInput');
+            sendButton = document.getElementById('sendButton');
+
+            // Add event listeners
+            chatInput.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    await handleSend();
+                }
+            });
+
+            sendButton.addEventListener('click', handleSend);
+        });
+
+        // Make handleSend available globally
+        window.handleSend = handleSend;
+    </script>
+</body>
+</html> 

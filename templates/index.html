@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#007AFF" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Ducky AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content">
+            <div class="hello-animation">
+                <span>H</span>
+                <span>e</span>
+                <span>l</span>
+                <span>l</span>
+                <span>o</span>
+            </div>
+            <div class="splash-logo">
+                <span class="splash-icon">🦆</span>
+                <span class="splash-title">ducky</span>
+            </div>
+            <div class="splash-credits">
+                <span>Created by</span>
+                <span class="credit-name">Amaan Dildar</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Content -->
+    <div class="container" style="display: none;" id="mainContent">
+        <!-- Slide-out Menu -->
+        <div class="slide-menu-overlay" id="menuOverlay"></div>
+        <div class="slide-menu" id="slideMenu">
+            <button class="menu-item" onclick="clearChat()">
+                <span>🗑️</span>
+                Clear Chat
+            </button>
+            <button class="menu-item" onclick="toggleDarkMode()">
+                <span>🌓</span>
+                Theme
+            </button>
+            <button class="menu-item" onclick="shareChat()">
+                <span>📤</span>
+                Share
+            </button>
+            <button class="menu-item" onclick="toggleSound()">
+                <span>🔊</span>
+                Sound
+            </button>
+            <button class="menu-item" onclick="toggleNotifications()">
+                <span>🔔</span>
+                Notifications
+            </button>
+        </div>
+
+        <div class="chat-header">
+            <button class="menu-button" id="menuButton">☰</button>
+            <h1>
+                <span class="icon">🦆</span>
+                <span class="title">Ducky AI</span>
+            </h1>
+            <div style="width: 40px"></div><!-- Spacer for alignment -->
+        </div>
+        <div class="chat-container" id="chatContainer">
+            <div class="pull-indicator">
+                <span>Pull to refresh</span>
+            </div>
+            <div class="message ducky-message">
+                <div class="avatar">🦆</div>
+                <div class="text">
+                    <div class="typing-animation">
+                        <span>Quack! Hello there!</span>
+                        <span>I'm your friendly AI duck assistant.</span>
+                        <span>How can I help you today? 🦆</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Type your message here..." 
+                autocomplete="off"
+                aria-label="Message input"
+            >
+            <button onclick="sendMessage()" id="sendButton">
+                <span class="button-text">Send</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let conversationId = null;
+        
+        // Splash screen handling
+        window.addEventListener('load', function() {
+            const splashScreen = document.getElementById('splashScreen');
+            const mainContent = document.getElementById('mainContent');
+            
+            // Show splash screen for 3 seconds
+            setTimeout(() => {
+                splashScreen.classList.add('fade-out');
+                mainContent.style.display = 'flex';
+                mainContent.classList.add('fade-in');
+                
+                // Remove splash screen after animation
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    document.getElementById('userInput').focus();
+                }, 500);
+            }, 3000);
+        });
+
+        // Add message to chat
+        function addMessageToChat(type, message) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            
+            let content = '';
+            
+            if (type === 'user') {
+                content = `
+                    <div class="text">${escapeHtml(message)}</div>
+                    <div class="avatar">👤</div>
+                `;
+            } else if (type === 'ducky') {
+                content = `
+                    <div class="avatar">🦆</div>
+                    <div class="text">${addTypingAnimation(message)}</div>
+                `;
+            } else if (type === 'error') {
+                content = `
+                    <div class="avatar">⚠️</div>
+                    <div class="text">${escapeHtml(message)}</div>
+                `;
+            }
+            
+            messageDiv.innerHTML = content;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // Scroll to bottom of chat
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Add loading state to button
+        function setButtonLoading(loading) {
+            const button = document.getElementById('sendButton');
+            const buttonText = button.querySelector('.button-text');
+            
+            if (loading) {
+                button.disabled = true;
+                buttonText.textContent = '...';
+                button.classList.add('loading');
+            } else {
+                button.disabled = false;
+                buttonText.textContent = 'Send';
+                button.classList.remove('loading');
+            }
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Add typing animation to messages
+        function addTypingAnimation(text) {
+            return `<div class="typing-animation">
+                ${text.split('\n').map(line => 
+                    `<span>${escapeHtml(line.trim())}</span>`
+                ).join('')}
+            </div>`;
+        }
+
+        function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const message = inputField.value.trim();
+            
+            if (message) {
+                // Add user message to chat
+                addMessageToChat('user', message);
+                inputField.value = '';
+                
+                // Show typing indicator
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'typing-indicator';
+                typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+                document.getElementById('chatContainer').appendChild(typingIndicator);
+                
+                // Send message to server
+                fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        conversation_id: conversationId 
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove typing indicator
+                    const indicator = document.querySelector('.typing-indicator');
+                    if (indicator) {
+                        indicator.remove();
+                    }
+                    
+                    // Store conversation ID
+                    if (data.conversation_id) {
+                        conversationId = data.conversation_id;
+                    }
+                    
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        addMessageToChat('error', 'Sorry, something went wrong. Please try again.');
+                    } else {
+                        // Add bot response to chat
+                        addMessageToChat('ducky', data.response);
+                    }
+                    
+                    // Scroll to bottom
+                    scrollToBottom();
+                })
+                .catch((error) => {
+                    // Remove typing indicator
+                    const indicator = document.querySelector('.typing-indicator');
+                    if (indicator) {
+                        indicator.remove();
+                    }
+                    console.error('Error:', error);
+                    addMessageToChat('error', 'Sorry, something went wrong. Please try again.');
+                });
+                
+                // Scroll to bottom
+                scrollToBottom();
+            }
+        }
+
+        // Add enter key support
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Focus input on page load
+        window.addEventListener('load', function() {
+            document.getElementById('userInput').focus();
+        });
+
+        // Mobile-specific features
+        let startY = 0;
+        let pulling = false;
+
+        // Handle pull-to-refresh
+        document.getElementById('chatContainer').addEventListener('touchstart', (e) => {
+            if (chatContainer.scrollTop === 0) {
+                startY = e.touches[0].pageY;
+                pulling = true;
+            }
+        });
+
+        document.getElementById('chatContainer').addEventListener('touchmove', (e) => {
+            if (pulling && chatContainer.scrollTop === 0) {
+                const pull = e.touches[0].pageY - startY;
+                if (pull > 0) {
+                    chatContainer.classList.add('pulling');
+                    e.preventDefault();
+                }
+            }
+        });
+
+        document.getElementById('chatContainer').addEventListener('touchend', () => {
+            if (pulling) {
+                chatContainer.classList.remove('pulling');
+                pulling = false;
+                // Implement refresh logic here
+            }
+        });
+
+        // Mobile actions
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the chat?')) {
+                const chatContainer = document.getElementById('chatContainer');
+                // Keep the pull indicator and initial message
+                chatContainer.innerHTML = `
+                    <div class="pull-indicator">
+                        <span>Pull to refresh</span>
+                    </div>
+                    <div class="message ducky-message">
+                        <div class="avatar">🦆</div>
+                        <div class="text">
+                            <div class="typing-animation">
+                                <span>Quack! Hello there!</span>
+                                <span>I'm your friendly AI duck assistant.</span>
+                                <span>How can I help you today? 🦆</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleDarkMode() {
+            const body = document.body;
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            
+            let newTheme;
+            if (currentTheme === 'system') {
+                newTheme = 'dark';
+                body.classList.add('force-dark');
+                body.classList.remove('force-light');
+            } else if (currentTheme === 'dark') {
+                newTheme = 'light';
+                body.classList.add('force-light');
+                body.classList.remove('force-dark');
+            } else {
+                newTheme = 'system';
+                body.classList.remove('force-light');
+                body.classList.remove('force-dark');
+            }
+            
+            localStorage.setItem('theme', newTheme);
+            
+            // Update the theme button text
+            const themeButton = document.querySelector('.action-button[onclick="toggleDarkMode()"]');
+            const themeIcon = themeButton.querySelector('span');
+            themeIcon.textContent = getThemeIcon(newTheme);
+        }
+
+        // Add this helper function for theme icons
+        function getThemeIcon(theme) {
+            switch (theme) {
+                case 'dark': return '☀️';
+                case 'light': return '🌑';
+                default: return '🌓';
+            }
+        }
+
+        async function shareChat() {
+            try {
+                // Get all message texts
+                const messages = Array.from(document.querySelectorAll('.message .text'))
+                    .map(el => el.textContent.trim())
+                    .join('\n\n');
+                
+                if (navigator.share) {
+                    await navigator.share({
+                        title: 'Chat with Ducky AI',
+                        text: messages
+                    });
+                } else {
+                    // Fallback for browsers that don't support the Web Share API
+                    const textarea = document.createElement('textarea');
+                    textarea.value = messages;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    alert('Chat copied to clipboard!');
+                }
+            } catch (error) {
+                console.error('Error sharing:', error);
+            }
+        }
+
+        // Show/hide mobile actions on scroll
+        let lastScrollTop = 0;
+        document.getElementById('chatContainer').addEventListener('scroll', () => {
+            const currentScroll = chatContainer.scrollTop;
+            const mobileActions = document.getElementById('mobileActions');
+            
+            if (currentScroll > lastScrollTop) {
+                // Scrolling down
+                mobileActions.classList.remove('active');
+            } else {
+                // Scrolling up
+                mobileActions.classList.add('active');
+            }
+            lastScrollTop = currentScroll;
+        });
+
+        // Add double-tap to like animation
+        let lastTap = 0;
+        document.getElementById('chatContainer').addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                const message = e.target.closest('.message');
+                if (message) {
+                    const heart = document.createElement('div');
+                    heart.className = 'heart-animation';
+                    heart.innerHTML = '❤️';
+                    message.appendChild(heart);
+                    
+                    setTimeout(() => {
+                        message.removeChild(heart);
+                    }, 1000);
+                }
+            }
+            lastTap = currentTime;
+        });
+
+        // Menu handling
+        const menuButton = document.getElementById('menuButton');
+        const slideMenu = document.getElementById('slideMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+
+        menuButton.addEventListener('click', toggleMenu);
+        menuOverlay.addEventListener('click', toggleMenu);
+
+        function toggleMenu() {
+            slideMenu.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            menuButton.textContent = slideMenu.classList.contains('active') ? '✕' : '☰';
+        }
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (slideMenu.classList.contains('active') &&
+                !e.target.closest('.slide-menu') &&
+                !e.target.closest('.menu-button')) {
+                toggleMenu();
+            }
+        });
+
+        // New menu functions
+        function toggleSound() {
+            // Implement sound toggle functionality
+            alert('Sound toggle coming soon!');
+        }
+
+        function toggleNotifications() {
+            // Implement notifications toggle functionality
+            alert('Notifications toggle coming soon!');
+        }
+
+        // Update theme initialization to work with new menu
+        window.addEventListener('load', function() {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            const body = document.body;
+            
+            if (savedTheme === 'dark') {
+                body.classList.add('force-dark');
+                body.classList.remove('force-light');
+            } else if (savedTheme === 'light') {
+                body.classList.add('force-light');
+                body.classList.remove('force-dark');
+            }
+            
+            // Update all theme button icons
+            const themeButtons = document.querySelectorAll('[onclick="toggleDarkMode()"]');
+            themeButtons.forEach(button => {
+                const themeIcon = button.querySelector('span');
+                if (themeIcon) {
+                    themeIcon.textContent = getThemeIcon(savedTheme);
+                }
+            });
+        });
+
+        // Handle swipe to close menu (update for left side)
+        let touchStartX = 0;
+        slideMenu.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        slideMenu.addEventListener('touchmove', (e) => {
+            if (!slideMenu.classList.contains('active')) return;
+            
+            const touchX = e.touches[0].clientX;
+            const diff = touchStartX - touchX;
+            
+            if (diff > 30) {
+                toggleMenu();
+            }
+        });
+
+        // Prevent bounce scrolling on iOS
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.chat-container')) return;
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html> 

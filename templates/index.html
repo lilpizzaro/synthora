@@ -95,6 +95,19 @@
                 <span class="button-text">Send</span>
             </button>
         </div>
+        
+        <!-- Mobile actions menu -->
+        <div class="mobile-actions" id="mobileActions">
+            <button class="action-button" onclick="clearChat()">
+                <span>🗑️</span> Clear
+            </button>
+            <button class="action-button" onclick="toggleDarkMode()">
+                <span>🌓</span> Theme
+            </button>
+            <button class="action-button" onclick="shareChat()">
+                <span>📤</span> Share
+            </button>
+        </div>
     </div>
 
     <script>
@@ -441,12 +454,14 @@
             const currentScroll = chatContainer.scrollTop;
             const mobileActions = document.getElementById('mobileActions');
             
-            if (currentScroll > lastScrollTop) {
-                // Scrolling down
-                mobileActions.classList.remove('active');
-            } else {
-                // Scrolling up
-                mobileActions.classList.add('active');
+            if (mobileActions) {
+                if (currentScroll > lastScrollTop) {
+                    // Scrolling down
+                    mobileActions.classList.remove('active');
+                } else {
+                    // Scrolling up
+                    mobileActions.classList.add('active');
+                }
             }
             lastScrollTop = currentScroll;
         });

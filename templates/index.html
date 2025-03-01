@@ -18,11 +18,8 @@
     <div class="splash-screen" id="splashScreen">
         <div class="splash-content">
             <div class="hello-animation">
-                <span>H</span>
-                <span>e</span>
-                <span>l</span>
-                <span>l</span>
-                <span>o</span>
+                <span class="hello-text">Hello</span>
+                <span class="hello-cursor"></span>
             </div>
             <div class="splash-logo">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="splash-icon">
@@ -126,7 +123,7 @@
             const splashScreen = document.getElementById('splashScreen');
             const mainContent = document.getElementById('mainContent');
             
-            // Show splash screen for 3.5 seconds then fade out
+            // Show splash screen for 4.5 seconds to allow for handwriting animation
             setTimeout(function() {
                 splashScreen.classList.add('fade-out');
                 
@@ -155,7 +152,7 @@
                         document.getElementById('userInput').focus();
                     }, 300);
                 }, 800); // Match this with the animation duration in CSS
-            }, 3500);
+            }, 4500); // Increased to allow handwriting animation to complete
         });
 
         // Add message to chat

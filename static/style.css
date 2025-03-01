@@ -721,28 +721,69 @@ button:active {
 }
 
 .hello-animation {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-    font-size: 48px;
-    font-weight: 600;
+    font-family: 'Dancing Script', cursive;
+    font-size: 64px;
+    font-weight: 500;
+    color: var(--splash-text, #ffffff);
+    margin-bottom: 30px;
+    position: relative;
+    display: inline-block;
+    overflow: visible;
+    white-space: nowrap;
+    text-align: center;
+    width: 100%;
+}
+
+.hello-text {
+    position: relative;
+    display: inline-block;
     background: var(--hello-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: hello-fade-in 1.5s ease-out forwards;
-    opacity: 0;
-    animation-delay: 0.3s;
-    filter: drop-shadow(0 0 15px rgba(var(--splash-text-rgb, 255, 255, 255), 0.3));
+    overflow: hidden;
+    width: 0;
+    animation: writing 1.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    animation-delay: 0.5s;
+    filter: drop-shadow(0 0 10px rgba(var(--splash-text-rgb, 255, 255, 255), 0.3));
 }
 
-@keyframes hello-fade-in {
+.hello-cursor {
+    display: inline-block;
+    position: absolute;
+    right: -4px;
+    top: 15%;
+    height: 70%;
+    width: 3px;
+    background: var(--splash-text, #ffffff);
+    animation: blink 0.8s infinite, move-cursor 1.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    animation-delay: 0s, 0.5s;
+    opacity: 1;
+}
+
+@keyframes writing {
     0% {
-        opacity: 0;
-        transform: scale(0.9);
+        width: 0;
     }
     100% {
+        width: 100%;
+    }
+}
+
+@keyframes move-cursor {
+    0% {
+        left: 0;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes blink {
+    0%, 100% {
         opacity: 1;
-        transform: scale(1);
+    }
+    50% {
+        opacity: 0;
     }
 }
 
@@ -752,7 +793,7 @@ button:active {
     align-items: center;
     opacity: 0;
     animation: splash-fade-in 1s ease-out forwards;
-    animation-delay: 1.5s;
+    animation-delay: 2.2s;
 }
 
 .splash-icon {
@@ -776,7 +817,7 @@ button:active {
     margin-top: 30px;
     opacity: 0;
     animation: splash-fade-in 1s ease-out forwards;
-    animation-delay: 2s;
+    animation-delay: 2.8s;
 }
 
 .splash-credits span {
@@ -1046,5 +1087,17 @@ h1 .icon {
     }
     100% {
         opacity: 1;
+    }
+}
+
+/* Splash screen animations */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&display=swap');
+
+@keyframes writing {
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
     }
 } 

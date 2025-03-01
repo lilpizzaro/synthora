@@ -263,21 +263,7 @@
             // Set button to loading state
             setButtonLoading(true);
             
-            // IMMEDIATE FALLBACK: Generate a response quickly while API call happens in background
-            setTimeout(() => {
-                // Remove typing indicator
-                const typingMessages = document.querySelectorAll('.typing-message');
-                typingMessages.forEach(msg => msg.remove());
-                
-                // Generate a fallback response
-                const fallbackResponse = getFallbackResponse(message);
-                addMessageToChat('ducky', fallbackResponse);
-                
-                // Reset button
-                setButtonLoading(false);
-            }, 1000);
-            
-            // Try API call in background (won't block UI)
+            // Call the API for a response
             fetch('/generate', {
                 method: 'POST',
                 headers: {
@@ -297,52 +283,38 @@
             })
             .then(data => {
                 console.log('API response received:', data);
-                // We've already shown a fallback response, so we don't need to do anything here
-                // In a future version, we could replace the fallback with the real response
+                
+                // Remove typing indicator
+                const typingMessages = document.querySelectorAll('.typing-message');
+                typingMessages.forEach(msg => msg.remove());
+                
+                // Add the actual API response
+                addMessageToChat('ducky', data.response);
+                
+                // Store conversation ID if provided
+                if (data.conversation_id) {
+                    conversationId = data.conversation_id;
+                }
+                
+                // Reset button state
+                setButtonLoading(false);
             })
             .catch(error => {
-                console.error('API error (using fallback):', error);
-                // Already using fallback, so no action needed
+                console.error('API error:', error);
+                
+                // Remove typing indicator
+                const typingMessages = document.querySelectorAll('.typing-message');
+                typingMessages.forEach(msg => msg.remove());
+                
+                // Show error message
+                addMessageToChat('error', 'Sorry, I\'m having trouble connecting right now. Please try again later.');
+                
+                // Reset button state
+                setButtonLoading(false);
             });
             
             // Focus input field
             inputField.focus();
-        }
-        
-        // Fallback response generator
-        function getFallbackResponse(message) {
-            // Simple fallback responses when API is unavailable
-            const fallbackResponses = [
-                "I'm here to help! What would you like to talk about?",
-                "Quack! That's an interesting question. I wish I could give you a more detailed answer right now.",
-                "I understand. Tell me more about what you're thinking!",
-                "Thanks for sharing. Is there anything specific you'd like to discuss?",
-                "I'm processing that. Could you provide a bit more detail?",
-                "That's a great point! I'd love to explore that further.",
-                "I see what you mean. Let's discuss this more!",
-                "Quack! Thanks for chatting with me today.",
-                "I'm here to listen and help. What's on your mind?",
-                "That's fascinating! I'd like to hear more about your perspective."
-            ];
-            
-            // Check for greetings
-            if (message.toLowerCase().match(/^(hi|hello|hey|greetings|howdy)/)) {
-                return "Hello there! Nice to meet you. I'm Ducky, your friendly AI assistant. How can I help you today?";
-            }
-            
-            // Check for thanks
-            if (message.toLowerCase().match(/(thank|thanks|appreciate|grateful)/)) {
-                return "You're very welcome! I'm happy to help anytime. Is there anything else you'd like to talk about?";
-            }
-            
-            // Check for how are you
-            if (message.toLowerCase().match(/(how are you|how're you|how's it going|how are things)/)) {
-                return "I'm doing great, thanks for asking! I'm always ready to chat and help. How are you doing today?";
-            }
-            
-            // Random response for other messages
-            const randomIndex = Math.floor(Math.random() * fallbackResponses.length);
-            return fallbackResponses[randomIndex];
         }
 
         // Add enter key support

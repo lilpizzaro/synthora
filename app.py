@@ -174,30 +174,51 @@ def generate_stream(user_input):
         if hasattr(chunk, 'text'):
             print(chunk.text, end="")
 
-# Add a keep-alive mechanism
+# Improved keep-alive mechanism
 def keep_alive():
     """Function to keep the server awake by pinging it every 14 minutes"""
     app_url = os.environ.get("APP_URL")
+    
+    # If APP_URL isn't set, try to construct it using RENDER_EXTERNAL_URL (provided by Render)
     if not app_url:
-        print("APP_URL not set, keep-alive disabled")
-        return
-        
+        render_external_url = os.environ.get("RENDER_EXTERNAL_URL")
+        if render_external_url:
+            app_url = render_external_url
+            print(f"Using RENDER_EXTERNAL_URL for keep-alive: {app_url}")
+        else:
+            print("Warning: APP_URL not set and RENDER_EXTERNAL_URL not available, keep-alive disabled")
+            return
+    
+    ping_interval = int(os.environ.get("PING_INTERVAL_SECONDS", "840"))  # Default to 14 minutes
+    print(f"Starting keep-alive service with ping interval of {ping_interval} seconds to {app_url}")
+    
     while True:
         try:
-            print(f"Sending keep-alive ping to {app_url}")
+            print(f"Sending keep-alive ping to {app_url}/ping")
             response = requests.get(f"{app_url}/ping")
             print(f"Keep-alive response: {response.status_code}")
+            
+            # If we can't access our own ping endpoint, try the root path
+            if response.status_code != 200:
+                print(f"Ping endpoint failed, trying root path...")
+                root_response = requests.get(app_url)
+                print(f"Root path response: {root_response.status_code}")
         except Exception as e:
             print(f"Keep-alive ping failed: {str(e)}")
         
-        # Sleep for 14 minutes (840 seconds)
-        time.sleep(840)
+        # Sleep for the specified interval (default 14 minutes)
+        time.sleep(ping_interval)
 
-# Start the keep-alive thread
-if os.environ.get("ENABLE_KEEP_ALIVE", "false").lower() == "true":
+# Start the keep-alive thread - enable by default on Render
+is_on_render = os.environ.get("RENDER", "false").lower() == "true" or os.environ.get("IS_RENDER", "false").lower() == "true"
+should_enable_keep_alive = os.environ.get("ENABLE_KEEP_ALIVE", "true" if is_on_render else "false").lower() == "true"
+
+if should_enable_keep_alive:
     keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
     keep_alive_thread.start()
     print("Keep-alive thread started")
+else:
+    print("Keep-alive disabled by configuration")
 
 @app.route('/ping')
 def ping():

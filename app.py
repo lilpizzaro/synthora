@@ -8,6 +8,10 @@ from dotenv import load_dotenv
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
     load_dotenv('/etc/secrets/.env')
+elif os.path.exists('/var/run/secrets/.env'):
+    load_dotenv('/var/run/secrets/.env')
+elif os.path.exists('/.env'):
+    load_dotenv('/.env')
 else:
     # Fallback for local development
     load_dotenv()

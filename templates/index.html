@@ -25,7 +25,7 @@
                 <span>o</span>
             </div>
             <div class="splash-logo">
-                <span class="splash-icon">🦆</span>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="splash-icon">
                 <span class="splash-title">ducky</span>
             </div>
             <div class="splash-credits">
@@ -65,7 +65,7 @@
         <div class="chat-header">
             <button class="menu-button" id="menuButton">☰</button>
             <h1>
-                <span class="icon">🦆</span>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="icon">
                 <span class="title">Ducky AI</span>
             </h1>
             <div style="width: 40px"></div><!-- Spacer for alignment -->
@@ -75,7 +75,9 @@
                 <span>Pull to refresh</span>
             </div>
             <div class="message ducky-message">
-                <div class="avatar">🦆</div>
+                <div class="avatar">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
+                </div>
                 <div class="text">
                     <div class="typing-animation">
                         <span>Quack! Hello there!</span>
@@ -136,7 +138,9 @@
                 `;
             } else if (type === 'ducky') {
                 content = `
-                    <div class="avatar">🦆</div>
+                    <div class="avatar">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
+                    </div>
                     <div class="text">${addTypingAnimation(message)}</div>
                 `;
             } else if (type === 'error') {
@@ -503,6 +507,48 @@
             if (e.target.closest('.chat-container')) return;
             e.preventDefault();
         }, { passive: false });
+
+        // Update the message template to use the logo image
+        function createMessageElement(text, isDucky = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isDucky ? 'ducky-message' : 'user-message'}`;
+            
+            // Create avatar
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'avatar';
+            
+            if (isDucky) {
+                const avatarImg = document.createElement('img');
+                avatarImg.src = "{{ url_for('static', filename='images/logo.png') }}";
+                avatarImg.alt = "Ducky AI Logo";
+                avatarImg.className = "avatar-img";
+                avatarDiv.appendChild(avatarImg);
+            }
+            
+            // Create text container
+            const textDiv = document.createElement('div');
+            textDiv.className = 'text';
+            
+            if (Array.isArray(text)) {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-animation';
+                
+                text.forEach(line => {
+                    const span = document.createElement('span');
+                    span.textContent = line;
+                    typingDiv.appendChild(span);
+                });
+                
+                textDiv.appendChild(typingDiv);
+            } else {
+                textDiv.textContent = text;
+            }
+            
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(textDiv);
+            
+            return messageDiv;
+        }
     </script>
 </body>
 </html> 

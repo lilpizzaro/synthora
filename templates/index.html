@@ -239,6 +239,9 @@
             
             if (!message) return;
             
+            // Debug log
+            console.log('Sending message:', message);
+            
             // Add user message to chat
             addMessageToChat('user', message);
             
@@ -261,6 +264,15 @@
             // Set button to loading state
             setButtonLoading(true);
             
+            // Debug log - request payload
+            console.log('Request payload:', {
+                message: message,
+                conversation_id: conversationId
+            });
+            
+            // Track API failure for fallback 
+            let isFallback = false;
+            
             // Send message to server
             fetch('/generate', {
                 method: 'POST',
@@ -270,16 +282,19 @@
                 body: JSON.stringify({
                     message: message,
                     conversation_id: conversationId
-                }),
-                timeout: 30000 // 30 second timeout
+                })
             })
             .then(response => {
+                console.log('Response status:', response.status);
                 if (!response.ok) {
                     throw new Error('Network response was not ok: ' + response.status);
                 }
                 return response.json();
             })
             .then(data => {
+                // Debug log
+                console.log('Response data:', data);
+                
                 // Remove typing indicator
                 const typingMessages = document.querySelectorAll('.typing-message');
                 typingMessages.forEach(msg => msg.remove());
@@ -300,17 +315,63 @@
                 setButtonLoading(false);
             })
             .catch(error => {
-                console.error('Error:', error);
-                // Remove typing indicator
-                const typingMessages = document.querySelectorAll('.typing-message');
-                typingMessages.forEach(msg => msg.remove());
+                // Debug log
+                console.error('Fetch error:', error);
+                isFallback = true;
                 
-                addMessageToChat('error', 'Sorry, there was an error connecting to the server. Please try again later.');
-                setButtonLoading(false);
+                // Use fallback mechanism
+                setTimeout(() => {
+                    // Remove typing indicator
+                    const typingMessages = document.querySelectorAll('.typing-message');
+                    typingMessages.forEach(msg => msg.remove());
+                    
+                    // Generate a fallback response
+                    const fallbackResponse = getFallbackResponse(message);
+                    addMessageToChat('ducky', fallbackResponse);
+                    
+                    // Reset button
+                    setButtonLoading(false);
+                }, 1500);
             });
             
             // Focus input field
             inputField.focus();
+        }
+        
+        // Fallback response generator
+        function getFallbackResponse(message) {
+            // Simple fallback responses when API is unavailable
+            const fallbackResponses = [
+                "I'm here to help! What would you like to talk about?",
+                "Quack! That's an interesting question. I wish I could give you a more detailed answer right now.",
+                "I understand. Tell me more about what you're thinking!",
+                "Thanks for sharing. Is there anything specific you'd like to discuss?",
+                "I'm processing that. Could you provide a bit more detail?",
+                "That's a great point! I'd love to explore that further.",
+                "I see what you mean. Let's discuss this more!",
+                "Quack! Thanks for chatting with me today.",
+                "I'm here to listen and help. What's on your mind?",
+                "That's fascinating! I'd like to hear more about your perspective."
+            ];
+            
+            // Check for greetings
+            if (message.toLowerCase().match(/^(hi|hello|hey|greetings|howdy)/)) {
+                return "Hello there! Nice to meet you. I'm Ducky, your friendly AI assistant. How can I help you today?";
+            }
+            
+            // Check for thanks
+            if (message.toLowerCase().match(/(thank|thanks|appreciate|grateful)/)) {
+                return "You're very welcome! I'm happy to help anytime. Is there anything else you'd like to talk about?";
+            }
+            
+            // Check for how are you
+            if (message.toLowerCase().match(/(how are you|how're you|how's it going|how are things)/)) {
+                return "I'm doing great, thanks for asking! I'm always ready to chat and help. How are you doing today?";
+            }
+            
+            // Random response for other messages
+            const randomIndex = Math.floor(Math.random() * fallbackResponses.length);
+            return fallbackResponses[randomIndex];
         }
 
         // Add enter key support

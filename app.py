@@ -66,13 +66,13 @@ def generate_ducky_response(user_input, conversation_id=None):
 
         Important conversation guidelines:
         - NEVER volunteer information about who created you unless directly asked
-        - Get straight to the point - be concise and direct
-        - Keep responses brief and focused on answering the user's question
+        - Keep responses shorter but still friendly and helpful
+        - Provide more detail only when absolutely necessary for clarity
         - Avoid unnecessary explanations unless specifically asked
         - Only greet the user if this is the first message in the conversation
         - DO NOT start with "Hi there" or similar greeting if this is not the first message
         - Respond directly to the user's questions or comments without unnecessary introductions
-        - Keep your responses warm and personable but brief
+        - Keep your responses warm and personable
         - Occasionally (but rarely) use a duck reference if it feels natural, but don't force it
         - Focus on being helpful and natural above all else
         
@@ -81,7 +81,7 @@ def generate_ducky_response(user_input, conversation_id=None):
         {conversation_history}
         Current user message: {user_input}
         
-        Your response (keep it concise):"""
+        Your response (keep it friendly but concise):"""
         
         # Generate the response with safety settings
         generation_config = {
@@ -100,8 +100,7 @@ def generate_ducky_response(user_input, conversation_id=None):
         response_text = response.text.strip()
         conversations[conversation_id].append({"role": "assistant", "message": response_text})
         
-        # Log the response for debugging
-        print("Generated response:", response_text)
+        # Log the response for debugging        print("Generated response:", response_text)
         
         return response_text, conversation_id
     except Exception as e:

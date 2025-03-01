@@ -1,41 +1,60 @@
 :root {
-    --primary-color: #10a37f; /* ChatGPT green */
-    --background-color: #f7f7f8; /* Light gray background */
-    --text-color: #343541; /* Dark gray text */
+    --primary-color: #007AFF;
+    --secondary-color: #5AC8FA;
+    --accent-color: #5856D6;
+    --background-color: #f5f5f7;
+    --text-color: #1d1d1f;
+    --border-color: #d2d2d7;
+    --input-background: #ffffff;
+    --message-background: #f5f5f7;
+    --message-background-alt: #ffffff;
+    --message-text: #1d1d1f;
+    --splash-background: #000000;
+    --splash-text: #ffffff;
+    --splash-text-rgb: 255, 255, 255;
+    --hello-gradient: linear-gradient(90deg, #007AFF, #5AC8FA, #5856D6);
     --chat-bg: #ffffff; /* White chat background */
     --message-bg: #10a37f; /* User message bubble color */
-    --message-text: #ffffff; /* User message text color */
     --bot-message-bg: #f7f7f8; /* Bot message bubble color */
     --bot-message-text: #343541; /* Bot message text color */
     --error-color: #ff3b30; /* Error color */
     --blur-bg: rgba(255, 255, 255, 0.8); /* Blur background */
-    --border-color: rgba(0, 0, 0, 0.05); /* Border color */
     --input-bg: #ffffff; /* Input background */
     --input-border: #e5e5e7; /* Input border */
     --input-shadow: rgba(0, 0, 0, 0.05); /* Input shadow */
     --bubble-shadow: rgba(0, 0, 0, 0.08); /* Bubble shadow */
     --premium-gradient: linear-gradient(135deg, #11a683 0%, #0d8f6f 100%); /* Premium gradient */
     --card-shadow: 0 2px 15px rgba(0, 0, 0, 0.08); /* Card shadow */
+    --splash-bg: #000000;
+    --hello-gradient: linear-gradient(90deg, #007AFF, #5AC8FA, #5856D6, #FF2D55, #FF9500, #FFCC00);
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --primary-color: #10a37f; /* ChatGPT green */
-        --background-color: #18191a; /* Dark gray background - darker for premium feel */
-        --text-color: #f7f7f8; /* Light gray text */
+        --background-color: #1d1d1f;
+        --text-color: #f5f5f7;
+        --border-color: #424245;
+        --input-background: #2c2c2e;
+        --message-background: #1d1d1f;
+        --message-background-alt: #2c2c2e;
+        --message-text: #f5f5f7;
+        --splash-background: #000000;
+        --splash-text: #ffffff;
+        --splash-text-rgb: 255, 255, 255;
+        --hello-gradient: linear-gradient(90deg, #007AFF, #5AC8FA, #5856D6);
         --chat-bg: #252526; /* Slightly lighter than background */
         --message-bg: #10a37f; /* User message bubble color */
-        --message-text: #ffffff; /* User message text color */
         --bot-message-bg: #2d2d30; /* Bot message bubble color */
         --bot-message-text: #f7f7f8; /* Bot message text color */
         --blur-bg: rgba(25, 26, 27, 0.8); /* Blur background */
-        --border-color: rgba(255, 255, 255, 0.05); /* Border color */
         --input-bg: #323234; /* Input background */
         --input-border: #444446; /* Input border */
         --input-shadow: rgba(0, 0, 0, 0.3); /* Input shadow */
         --bubble-shadow: rgba(0, 0, 0, 0.25); /* Bubble shadow */
         --premium-gradient: linear-gradient(135deg, #0f9975 0%, #0a7d61 100%); /* Premium gradient */
         --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* Card shadow */
+        --splash-bg: #000000;
+        --hello-gradient: linear-gradient(90deg, #007AFF, #5AC8FA, #5856D6, #FF2D55, #FF9500, #FFCC00);
     }
 }
 
@@ -54,6 +73,9 @@ body.force-light {
     --input-bg: #ffffff; /* Input background */
     --input-border: #e5e5e7; /* Input border */
     --input-shadow: rgba(0, 0, 0, 0.05); /* Input shadow */
+    --splash-bg: #ffffff;
+    --splash-text: #000000;
+    --hello-gradient: linear-gradient(90deg, #007AFF, #5AC8FA, #5856D6, #FF2D55, #FF9500, #FFCC00);
 }
 
 body.force-dark {
@@ -70,6 +92,9 @@ body.force-dark {
     --input-bg: #40414f; /* Input background */
     --input-border: #565869; /* Input border */
     --input-shadow: rgba(0, 0, 0, 0.3); /* Input shadow */
+    --splash-bg: #000000;
+    --splash-text: #ffffff;
+    --hello-gradient: linear-gradient(90deg, #007AFF, #5AC8FA, #5856D6, #FF2D55, #FF9500, #FFCC00);
 }
 
 body {
@@ -88,14 +113,16 @@ body {
 .container {
     display: flex;
     flex-direction: column;
+    height: 100%;
     width: 100%;
-    height: 100vh;
-    background-color: var(--background-color);
-    overflow: hidden;
-    position: relative;
-    max-width: 1200px;
+    max-width: 800px;
     margin: 0 auto;
-    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.container.fade-in {
+    animation: main-fade-in 0.5s ease-in-out forwards;
 }
 
 @media (min-width: 992px) {
@@ -671,59 +698,51 @@ button:active {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #000000;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
-    transition: opacity 0.5s ease;
+    background-color: var(--splash-background);
+    z-index: 1000;
+    transition: opacity 0.8s ease-in-out, visibility 0.8s ease-in-out;
+    animation: splash-fade-in 0.5s ease-in-out forwards;
 }
 
 .splash-screen.fade-out {
-    opacity: 0;
+    animation: splash-fade-out 0.8s ease-in-out forwards;
 }
 
 .splash-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 40px;
+    justify-content: center;
+    gap: 20px;
 }
 
 .hello-animation {
-    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 64px;
-    font-weight: 300;
-    color: #ffffff;
     display: flex;
-    gap: 2px;
-}
-
-.hello-animation span {
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 48px;
+    font-weight: 600;
+    background: var(--hello-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: hello-fade-in 1.5s ease-out forwards;
     opacity: 0;
-    transform: translateY(10px);
+    animation-delay: 0.3s;
+    filter: drop-shadow(0 0 15px rgba(var(--splash-text-rgb, 255, 255, 255), 0.3));
 }
 
-.hello-animation span:nth-child(1) {
-    animation: letterAppear 0.3s ease forwards 0.1s;
-}
-.hello-animation span:nth-child(2) {
-    animation: letterAppear 0.3s ease forwards 0.2s;
-}
-.hello-animation span:nth-child(3) {
-    animation: letterAppear 0.3s ease forwards 0.3s;
-}
-.hello-animation span:nth-child(4) {
-    animation: letterAppear 0.3s ease forwards 0.4s;
-}
-.hello-animation span:nth-child(5) {
-    animation: letterAppear 0.3s ease forwards 0.5s;
-}
-
-@keyframes letterAppear {
-    to {
+@keyframes hello-fade-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    100% {
         opacity: 1;
-        transform: translateY(0);
+        transform: scale(1);
     }
 }
 
@@ -731,49 +750,38 @@ button:active {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
     opacity: 0;
-    transform: scale(0.9);
-    animation: logo-appear 0.5s ease forwards;
+    animation: splash-fade-in 1s ease-out forwards;
     animation-delay: 1.5s;
 }
 
 .splash-icon {
-    width: 90px;
-    height: 90px;
-    object-fit: contain;
+    width: 80px;
+    height: 80px;
     margin-bottom: 10px;
-    animation: splash-bounce 2s ease-in-out infinite;
-    animation-delay: 2s;
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
 }
 
 .splash-title {
-    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 48px;
+    font-size: 42px;
     font-weight: 600;
-    background: linear-gradient(90deg, #007AFF, #5AC8FA, #5856D6);
+    background: var(--hello-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
-    filter: drop-shadow(0 0 10px rgba(90, 200, 250, 0.2));
 }
 
 .splash-credits {
-    position: fixed;
-    bottom: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    margin-top: 30px;
     opacity: 0;
-    animation: credits-appear 0.5s ease forwards;
+    animation: splash-fade-in 1s ease-out forwards;
     animation-delay: 2s;
 }
 
 .splash-credits span {
     font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #ffffff;
+    color: var(--splash-text, #ffffff);
     opacity: 0.6;
     font-size: 14px;
 }
@@ -782,41 +790,25 @@ button:active {
     font-size: 16px;
     font-weight: 500;
     opacity: 1;
-    color: #ffffff;
+    color: var(--splash-text, #ffffff);
 }
 
-@keyframes logo-appear {
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes credits-appear {
-    to {
-        opacity: 1;
-    }
-}
-
-.fade-in {
-    opacity: 0;
-    animation: fadeIn 0.5s ease-in forwards;
-}
-
-@keyframes fadeIn {
-    to {
-        opacity: 1;
-    }
-}
-
-.fade-out {
-    opacity: 1;
-    animation: fadeOut 0.5s ease-out forwards;
-}
-
-@keyframes fadeOut {
-    to {
+@keyframes splash-fade-in {
+    0% {
         opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes splash-fade-out {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        visibility: hidden;
     }
 }
 
@@ -1044,5 +1036,15 @@ h1 .icon {
     }
     50% {
         transform: translateY(-10px);
+    }
+}
+
+/* Main content fade in animation */
+@keyframes main-fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
     }
 } 

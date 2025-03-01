@@ -121,21 +121,17 @@
             // Don't add message here - will be handled after splash screen
         });
         
-        // Splash screen handling
-        window.addEventListener('load', function() {
+        // Handle splash screen
+        document.addEventListener('DOMContentLoaded', function() {
             const splashScreen = document.getElementById('splashScreen');
             const mainContent = document.getElementById('mainContent');
             
-            // Force splash screen to be visible initially
-            splashScreen.style.display = 'flex';
-            mainContent.style.display = 'none';
-            
-            // Show splash screen for 4 seconds
-            setTimeout(() => {
+            // Show splash screen for 3.5 seconds then fade out
+            setTimeout(function() {
                 splashScreen.classList.add('fade-out');
                 
-                // Ensure main content shows up after splash screen fades out
-                setTimeout(() => {
+                // After animation completes, hide splash and show main content
+                setTimeout(function() {
                     splashScreen.style.display = 'none';
                     mainContent.style.display = 'flex';
                     mainContent.classList.add('fade-in');
@@ -149,11 +145,17 @@
                         if (pullIndicator) chatContainer.appendChild(pullIndicator);
                         
                         // Add the welcome message
-                        addMessageToChat('ducky', 'Hi there! I\'m Ducky, your friendly AI assistant. How can I help you today?');
+                        addMessageToChat('ducky', [
+                            'Quack! Hello there!',
+                            'I\'m your friendly AI duck assistant.',
+                            'How can I help you today? 🦆'
+                        ]);
+                        
+                        // Focus on input after splash screen
                         document.getElementById('userInput').focus();
                     }, 300);
-                }, 500);
-            }, 4000);
+                }, 800); // Match this with the animation duration in CSS
+            }, 3500);
         });
 
         // Add message to chat
@@ -387,29 +389,33 @@
 
         function toggleDarkMode() {
             const body = document.body;
-            const currentTheme = localStorage.getItem('theme') || 'system';
+            const isDarkMode = body.classList.contains('dark-mode');
             
-            let newTheme;
-            if (currentTheme === 'system') {
-                newTheme = 'dark';
+            if (isDarkMode) {
+                body.classList.remove('dark-mode');
+                body.classList.remove('force-dark');
+                body.classList.add('force-light');
+                localStorage.setItem('darkMode', 'false');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.add('dark-mode');
                 body.classList.add('force-dark');
                 body.classList.remove('force-light');
-            } else if (currentTheme === 'dark') {
-                newTheme = 'light';
-                body.classList.add('force-light');
-                body.classList.remove('force-dark');
-            } else {
-                newTheme = 'system';
-                body.classList.remove('force-light');
-                body.classList.remove('force-dark');
+                localStorage.setItem('darkMode', 'true');
+                localStorage.setItem('theme', 'dark');
             }
             
-            localStorage.setItem('theme', newTheme);
+            // Update splash screen colors based on theme
+            updateSplashScreenTheme(!isDarkMode);
             
-            // Update the theme button text
-            const themeButton = document.querySelector('.action-button[onclick="toggleDarkMode()"]');
-            const themeIcon = themeButton.querySelector('span');
-            themeIcon.textContent = getThemeIcon(newTheme);
+            // Update theme button icons
+            const themeButtons = document.querySelectorAll('[onclick="toggleDarkMode()"]');
+            themeButtons.forEach(button => {
+                const themeIcon = button.querySelector('span');
+                if (themeIcon) {
+                    themeIcon.textContent = getThemeIcon(!isDarkMode ? 'dark' : 'light');
+                }
+            });
         }
 
         // Add this helper function for theme icons
@@ -525,14 +531,22 @@
         // Update theme initialization to work with new menu
         window.addEventListener('load', function() {
             const savedTheme = localStorage.getItem('theme') || 'system';
+            const savedDarkMode = localStorage.getItem('darkMode');
             const body = document.body;
             
-            if (savedTheme === 'dark') {
+            if (savedTheme === 'dark' || savedDarkMode === 'true') {
                 body.classList.add('force-dark');
+                body.classList.add('dark-mode');
                 body.classList.remove('force-light');
-            } else if (savedTheme === 'light') {
+                updateSplashScreenTheme(true);
+            } else if (savedTheme === 'light' || savedDarkMode === 'false') {
                 body.classList.add('force-light');
                 body.classList.remove('force-dark');
+                body.classList.remove('dark-mode');
+                updateSplashScreenTheme(false);
+            } else {
+                // Default theme based on system preference
+                updateSplashScreenTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
             }
             
             // Update all theme button icons
@@ -608,6 +622,20 @@
             messageDiv.appendChild(textDiv);
             
             return messageDiv;
+        }
+
+        // Function to update splash screen theme
+        function updateSplashScreenTheme(isDarkMode) {
+            const root = document.documentElement;
+            if (isDarkMode) {
+                root.style.setProperty('--splash-background', '#000000');
+                root.style.setProperty('--splash-text', '#ffffff');
+                root.style.setProperty('--splash-text-rgb', '255, 255, 255');
+            } else {
+                root.style.setProperty('--splash-background', '#000000');
+                root.style.setProperty('--splash-text', '#ffffff');
+                root.style.setProperty('--splash-text-rgb', '255, 255, 255');
+            }
         }
     </script>
 </body>

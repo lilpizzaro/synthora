@@ -2,8 +2,15 @@ from flask import Flask, render_template, request, jsonify, session
 import os
 import google.generativeai as genai
 import traceback
-from google.generativeai import types
 import uuid
+from dotenv import load_dotenv
+
+# Load environment variables from secret file first, then regular .env
+if os.path.exists('/etc/secrets/.env'):
+    load_dotenv('/etc/secrets/.env')
+else:
+    # Fallback for local development
+    load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -12,7 +19,11 @@ app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
 conversations = {}
 
 # Configure the Gemini API
-genai.configure(api_key="AIzaSyB0MmJjgLLRDCSs89VkUTGRLLCeoP0djEc")
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
+if not gemini_api_key:
+    raise ValueError("GEMINI_API_KEY environment variable is not set")
+    
+genai.configure(api_key=gemini_api_key)
 
 def generate_ducky_response(user_input, conversation_id=None):
     try:
@@ -155,4 +166,6 @@ def generate_stream(user_input):
             print(chunk.text, end="")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True) 
+    # Use the PORT environment variable provided by Render
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host='0.0.0.0', port=port, debug=False) 

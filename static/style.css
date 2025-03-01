@@ -685,10 +685,24 @@ button:active {
     transition: opacity 0.5s ease-out;
 }
 
+.splash-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 .splash-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.splash-logo img {
     width: 120px;
     height: 120px;
-    margin-bottom: 32px;
+    margin-bottom: 12px;
     animation: splash-bounce 1.5s ease-in-out infinite;
 }
 
@@ -709,6 +723,36 @@ button:active {
     text-align: center;
     opacity: 0;
     animation: credits-appear 1s ease forwards 0.5s;
+    display: flex;
+    gap: 4px;
+}
+
+.hello-animation span {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.hello-animation span:nth-child(1) {
+    animation: letterAppear 0.3s ease forwards 0.1s;
+}
+.hello-animation span:nth-child(2) {
+    animation: letterAppear 0.3s ease forwards 0.2s;
+}
+.hello-animation span:nth-child(3) {
+    animation: letterAppear 0.3s ease forwards 0.3s;
+}
+.hello-animation span:nth-child(4) {
+    animation: letterAppear 0.3s ease forwards 0.4s;
+}
+.hello-animation span:nth-child(5) {
+    animation: letterAppear 0.3s ease forwards 0.5s;
+}
+
+@keyframes letterAppear {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .splash-credits {
@@ -719,6 +763,7 @@ button:active {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 8px;
     color: rgba(255, 255, 255, 0.7);
     font-size: 14px;
     opacity: 0;
@@ -731,6 +776,28 @@ button:active {
     }
     50% {
         transform: translateY(-10px);
+    }
+}
+
+@keyframes logo-appear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes credits-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 

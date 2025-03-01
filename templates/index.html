@@ -102,10 +102,10 @@
         
         // Add initial welcome message when the page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Add initial welcome message from Ducky after the splash screen
-            setTimeout(() => {
-                addMessageToChat('ducky', 'Hi there! I\'m Ducky, your friendly AI assistant. How can I help you today?');
-            }, 5500); // Slightly after splash screen fade out
+            // Initialize conversation ID
+            conversationId = null;
+            
+            // Don't add message here - will be handled after splash screen
         });
         
         // Splash screen handling
@@ -113,18 +113,34 @@
             const splashScreen = document.getElementById('splashScreen');
             const mainContent = document.getElementById('mainContent');
             
-            // Show splash screen for 3 seconds
+            // Force splash screen to be visible initially
+            splashScreen.style.display = 'flex';
+            mainContent.style.display = 'none';
+            
+            // Show splash screen for 4 seconds
             setTimeout(() => {
                 splashScreen.classList.add('fade-out');
-                mainContent.style.display = 'flex';
-                mainContent.classList.add('fade-in');
                 
-                // Remove splash screen after animation
+                // Ensure main content shows up after splash screen fades out
                 setTimeout(() => {
                     splashScreen.style.display = 'none';
-                    document.getElementById('userInput').focus();
+                    mainContent.style.display = 'flex';
+                    mainContent.classList.add('fade-in');
+                    
+                    // Add initial welcome message from Ducky
+                    setTimeout(() => {
+                        const chatContainer = document.getElementById('chatContainer');
+                        // Clear existing elements except for pull indicator
+                        const pullIndicator = chatContainer.querySelector('.pull-indicator');
+                        chatContainer.innerHTML = '';
+                        if (pullIndicator) chatContainer.appendChild(pullIndicator);
+                        
+                        // Add the welcome message
+                        addMessageToChat('ducky', 'Hi there! I\'m Ducky, your friendly AI assistant. How can I help you today?');
+                        document.getElementById('userInput').focus();
+                    }, 300);
                 }, 500);
-            }, 5000);
+            }, 4000);
         });
 
         // Add message to chat
@@ -255,8 +271,14 @@
                     message: message,
                     conversation_id: conversationId
                 }),
+                timeout: 30000 // 30 second timeout
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
                 // Remove typing indicator
                 const typingMessages = document.querySelectorAll('.typing-message');
@@ -283,7 +305,7 @@
                 const typingMessages = document.querySelectorAll('.typing-message');
                 typingMessages.forEach(msg => msg.remove());
                 
-                addMessageToChat('error', 'Sorry, there was an error processing your request. Please try again.');
+                addMessageToChat('error', 'Sorry, there was an error connecting to the server. Please try again later.');
                 setButtonLoading(false);
             });
             

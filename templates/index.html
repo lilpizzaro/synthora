@@ -68,9 +68,6 @@
             <div style="width: 40px"></div><!-- Spacer for alignment -->
         </div>
         <div class="chat-container" id="chatContainer">
-            <div class="pull-indicator">
-                <span>Pull to refresh</span>
-            </div>
             <div class="message ducky-message">
                 <div class="avatar">
                     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
@@ -90,19 +87,6 @@
             </div>
             <button id="sendButton" onclick="sendMessage()">
                 <span class="button-text">Send</span>
-            </button>
-        </div>
-        
-        <!-- Mobile actions menu -->
-        <div class="mobile-actions" id="mobileActions">
-            <button class="action-button" onclick="clearChat()">
-                <span>🗑️</span> Clear
-            </button>
-            <button class="action-button" onclick="toggleDarkMode()">
-                <span>🌓</span> Theme
-            </button>
-            <button class="action-button" onclick="shareChat()">
-                <span>📤</span> Share
             </button>
         </div>
     </div>
@@ -136,10 +120,8 @@
                     // Add initial welcome message from Ducky
                     setTimeout(() => {
                         const chatContainer = document.getElementById('chatContainer');
-                        // Clear existing elements except for pull indicator
-                        const pullIndicator = chatContainer.querySelector('.pull-indicator');
+                        // Clear existing elements
                         chatContainer.innerHTML = '';
-                        if (pullIndicator) chatContainer.appendChild(pullIndicator);
                         
                         // Add the welcome message
                         addMessageToChat('ducky', [
@@ -342,45 +324,20 @@
             document.getElementById('userInput').focus();
         });
 
-        // Mobile-specific features
-        let startY = 0;
-        let pulling = false;
-
-        // Handle pull-to-refresh
-        document.getElementById('chatContainer').addEventListener('touchstart', (e) => {
-            if (chatContainer.scrollTop === 0) {
-                startY = e.touches[0].pageY;
-                pulling = true;
-            }
-        });
-
-        document.getElementById('chatContainer').addEventListener('touchmove', (e) => {
-            if (pulling && chatContainer.scrollTop === 0) {
-                const pull = e.touches[0].pageY - startY;
-                if (pull > 0) {
-                    chatContainer.classList.add('pulling');
-                    e.preventDefault();
-                }
-            }
-        });
-
-        document.getElementById('chatContainer').addEventListener('touchend', () => {
-            if (pulling) {
-                chatContainer.classList.remove('pulling');
-                pulling = false;
-                // Implement refresh logic here
-            }
-        });
-
-        // Mobile actions
+        // Menu functions
         function clearChat() {
             const chatContainer = document.getElementById('chatContainer');
+            // Clear the chat
             chatContainer.innerHTML = '';
             conversationId = null;
             
             // Add initial welcome message from Ducky
             setTimeout(() => {
-                addMessageToChat('ducky', 'Hi there! I\'m Ducky, your friendly AI assistant. How can I help you today?');
+                addMessageToChat('ducky', [
+                    'Quack! Hello there!',
+                    'I\'m your friendly AI duck assistant.',
+                    'How can I help you today? 🦆'
+                ]);
             }, 300);
         }
 
@@ -404,18 +361,9 @@
             
             // Update splash screen colors based on theme
             updateSplashScreenTheme(!isDarkMode);
-            
-            // Update theme button icons
-            const themeButtons = document.querySelectorAll('[onclick="toggleDarkMode()"]');
-            themeButtons.forEach(button => {
-                const themeIcon = button.querySelector('span');
-                if (themeIcon) {
-                    themeIcon.textContent = getThemeIcon(!isDarkMode ? 'dark' : 'light');
-                }
-            });
         }
 
-        // Add this helper function for theme icons
+        // Add helper function for theme icons
         function getThemeIcon(theme) {
             switch (theme) {
                 case 'dark': return '☀️';
@@ -450,46 +398,6 @@
                 console.error('Error sharing:', error);
             }
         }
-
-        // Show/hide mobile actions on scroll
-        let lastScrollTop = 0;
-        document.getElementById('chatContainer').addEventListener('scroll', () => {
-            const currentScroll = chatContainer.scrollTop;
-            const mobileActions = document.getElementById('mobileActions');
-            
-            if (mobileActions) {
-                if (currentScroll > lastScrollTop) {
-                    // Scrolling down
-                    mobileActions.classList.remove('active');
-                } else {
-                    // Scrolling up
-                    mobileActions.classList.add('active');
-                }
-            }
-            lastScrollTop = currentScroll;
-        });
-
-        // Add double-tap to like animation
-        let lastTap = 0;
-        document.getElementById('chatContainer').addEventListener('touchend', (e) => {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            
-            if (tapLength < 300 && tapLength > 0) {
-                const message = e.target.closest('.message');
-                if (message) {
-                    const heart = document.createElement('div');
-                    heart.className = 'heart-animation';
-                    heart.innerHTML = '❤️';
-                    message.appendChild(heart);
-                    
-                    setTimeout(() => {
-                        message.removeChild(heart);
-                    }, 1000);
-                }
-            }
-            lastTap = currentTime;
-        });
 
         // Menu handling
         const menuButton = document.getElementById('menuButton');

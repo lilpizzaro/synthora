@@ -117,6 +117,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    width: 100%;
     max-width: 100%;
     margin: 0 auto;
     background-color: var(--background-color);
@@ -128,11 +129,29 @@ body {
     animation: main-fade-in 0.5s ease-in-out forwards;
 }
 
+@media (min-width: 769px) {
+    .container {
+        max-width: 800px;
+        height: 100vh;
+        margin: 0 auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-message .text,
+    .ducky-message .text {
+        max-width: 65%;
+    }
+    
+    .chat-container {
+        padding: 20px;
+    }
+}
+
+/* New styles for responsive layout */
 @media (min-width: 992px) {
     .container {
-        height: calc(100vh - 40px);
-        margin: 20px auto;
-        border-radius: 16px;
+        max-width: 900px;
     }
 }
 
@@ -274,21 +293,41 @@ body {
     justify-content: center;
     flex-shrink: 0;
     overflow: hidden;
-    background-color: var(--button-bg);
+    background-color: var(--background-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
 }
 
 .user-message .avatar {
     margin-left: 12px;
     margin-right: 0;
+    background: var(--premium-gradient);
+    box-shadow: 0 2px 6px rgba(16, 163, 127, 0.2);
 }
 
 .ducky-message .avatar {
     margin-right: 12px;
     margin-left: 0;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
 }
 
 .user-icon {
     color: white;
+    background: var(--premium-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Input area enhancements */
@@ -388,8 +427,10 @@ button:active {
 @media (max-width: 768px) {
     .container {
         max-width: 100%;
+        width: 100%;
         height: 100%;
         border-radius: 0;
+        margin: 0;
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
@@ -437,13 +478,17 @@ button:active {
     .input-container {
         padding: 12px;
         padding-bottom: max(12px, env(safe-area-inset-bottom));
+        position: sticky;
+        bottom: 0;
+        background-color: var(--background-color);
+        border-top: 1px solid var(--border-color);
+        z-index: 10;
     }
 
     input {
         padding: 12px 16px;
+        font-size: 15px;
     }
-
-    /* Remove all mobile actions related CSS */
 }
 
 /* Remove mobile actions CSS */

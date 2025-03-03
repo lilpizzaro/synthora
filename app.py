@@ -176,7 +176,7 @@ def generate_stream(user_input):
 
 # Improved keep-alive mechanism
 def keep_alive():
-    """Function to keep the server awake by pinging it every 14 minutes"""
+    """Function to keep the server awake by pinging it every 2 minutes"""
     app_url = os.environ.get("APP_URL")
     
     # If APP_URL isn't set, try to construct it using RENDER_EXTERNAL_URL (provided by Render)
@@ -189,7 +189,7 @@ def keep_alive():
             print("Warning: APP_URL not set and RENDER_EXTERNAL_URL not available, keep-alive disabled")
             return
     
-    ping_interval = int(os.environ.get("PING_INTERVAL_SECONDS", "840"))  # Default to 14 minutes
+    ping_interval = int(os.environ.get("PING_INTERVAL_SECONDS", "120"))  # Default to 2 minutes
     print(f"Starting keep-alive service with ping interval of {ping_interval} seconds to {app_url}")
     
     while True:
@@ -206,7 +206,7 @@ def keep_alive():
         except Exception as e:
             print(f"Keep-alive ping failed: {str(e)}")
         
-        # Sleep for the specified interval (default 14 minutes)
+        # Sleep for the specified interval (default 2 minutes)
         time.sleep(ping_interval)
 
 # Start the keep-alive thread - enable by default on Render

@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 import threading
 import time
 import requests
+import json
+import hashlib
+from functools import wraps
 
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
@@ -31,6 +34,55 @@ if not gemini_api_key:
     raise ValueError("GEMINI_API_KEY environment variable is not set")
     
 genai.configure(api_key=gemini_api_key)
+
+# File paths for user data and memories
+USERS_FILE = 'data/users.json'
+MEMORIES_FILE = 'data/memories.json'
+
+# Create data directory if it doesn't exist
+os.makedirs('data', exist_ok=True)
+
+# Initialize empty data files if they don't exist
+if not os.path.exists(USERS_FILE):
+    with open(USERS_FILE, 'w') as f:
+        json.dump({}, f)
+
+if not os.path.exists(MEMORIES_FILE):
+    with open(MEMORIES_FILE, 'w') as f:
+        json.dump({}, f)
+
+def load_users():
+    try:
+        with open(USERS_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_users(users):
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f)
+
+def load_memories():
+    try:
+        with open(MEMORIES_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_memories(memories):
+    with open(MEMORIES_FILE, 'w') as f:
+        json.dump(memories, f)
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            return jsonify({'error': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 def generate_ducky_response(user_input, conversation_id=None):
     try:
@@ -115,7 +167,64 @@ def index():
         session['conversation_id'] = str(uuid.uuid4())
     return render_template('index.html')
 
+@app.route('/auth/signup', methods=['POST'])
+def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    users = load_users()
+    if username in users:
+        return jsonify({'error': 'Username already exists'}), 400
+    
+    # Create new user
+    users[username] = {
+        'password': hash_password(password),
+        'created_at': time.time()
+    }
+    save_users(users)
+    
+    # Initialize empty memories for user
+    memories = load_memories()
+    memories[username] = []
+    save_memories(memories)
+    
+    session['username'] = username
+    return jsonify({'success': True, 'username': username})
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    users = load_users()
+    if username not in users or users[username]['password'] != hash_password(password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+    
+    session['username'] = username
+    return jsonify({'success': True, 'username': username})
+
+@app.route('/auth/logout', methods=['POST'])
+def logout():
+    session.pop('username', None)
+    return jsonify({'success': True})
+
+@app.route('/auth/status', methods=['GET'])
+def auth_status():
+    return jsonify({
+        'authenticated': 'username' in session,
+        'username': session.get('username')
+    })
+
 @app.route('/generate', methods=['POST'])
+@login_required
 def generate():
     try:
         if not request.is_json:
@@ -125,11 +234,24 @@ def generate():
         if not user_message:
             return jsonify({'error': 'Message is required'}), 400
         
-        # Get conversation ID from session or request
-        conversation_id = session.get('conversation_id') or request.json.get('conversation_id')
+        username = session['username']
+        conversation_id = session.get('conversation_id') or str(uuid.uuid4())
         
-        print("Received message:", user_message)
+        # Generate response
         ducky_response, conversation_id = generate_ducky_response(user_message, conversation_id)
+        
+        # Save to memories
+        memories = load_memories()
+        if username not in memories:
+            memories[username] = []
+        
+        memories[username].append({
+            'timestamp': time.time(),
+            'user_message': user_message,
+            'ducky_response': ducky_response,
+            'conversation_id': conversation_id
+        })
+        save_memories(memories)
         
         # Store conversation ID in session
         session['conversation_id'] = conversation_id
@@ -148,6 +270,18 @@ def generate():
             'details': error_msg,
             'traceback': traceback_msg
         }), 500
+
+@app.route('/memories', methods=['GET'])
+@login_required
+def get_memories():
+    username = session['username']
+    memories = load_memories()
+    user_memories = memories.get(username, [])
+    
+    # Sort memories by timestamp in descending order
+    user_memories.sort(key=lambda x: x['timestamp'], reverse=True)
+    
+    return jsonify(user_memories)
 
 def generate_stream(user_input):
     # Using genai that was already imported and configured

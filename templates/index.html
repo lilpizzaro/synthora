@@ -14,6 +14,43 @@
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Auth Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-container">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <input type="text" id="loginUsername" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                </div>
+                <button type="submit" class="auth-button">Login</button>
+            </form>
+            
+            <!-- Signup Form -->
+            <form id="signupForm" class="auth-form" style="display: none;" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <input type="text" id="signupUsername" placeholder="Choose Username" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="signupPassword" placeholder="Choose Password" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                </div>
+                <button type="submit" class="auth-button">Sign Up</button>
+            </form>
+            
+            <div id="authError" class="auth-error"></div>
+        </div>
+    </div>
+
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
         <div class="splash-content">
@@ -41,6 +78,10 @@
                 <span>🗑️</span>
                 Clear Chat
             </button>
+            <button class="menu-item" onclick="showMemories()">
+                <span>💭</span>
+                Memories
+            </button>
             <button class="menu-item" onclick="toggleDarkMode()">
                 <span>🌓</span>
                 Theme
@@ -56,6 +97,10 @@
             <button class="menu-item" onclick="toggleNotifications()">
                 <span>🔔</span>
                 Notifications
+            </button>
+            <button class="menu-item" onclick="logout()">
+                <span>🚪</span>
+                Logout
             </button>
         </div>
 
@@ -91,51 +136,184 @@
         </div>
     </div>
 
+    <!-- Add Memories Modal -->
+    <div class="memories-modal" id="memoriesModal">
+        <div class="memories-content">
+            <div class="memories-header">
+                <h2>Your Memories</h2>
+                <button class="close-button" onclick="hideMemories()">✕</button>
+            </div>
+            <div class="memories-list" id="memoriesList"></div>
+        </div>
+    </div>
+
     <script>
         let conversationId = null;
+        let pingInterval = null;
+        let pingFailCount = 0;
+        const MAX_PING_FAILURES = 3;
+        const PING_INTERVAL = 120000; // 2 minutes in milliseconds
+        let currentUser = null;
         
-        // Add initial welcome message when the page loads
+        // Check authentication status on load
         document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
+
+        function checkAuthStatus() {
+            fetch('/auth/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.authenticated) {
+                        currentUser = data.username;
+                        hideAuthOverlay();
+                        startApp();
+                    } else {
+                        showAuthOverlay();
+                    }
+                })
+                .catch(error => {
+                    console.error('Auth status error:', error);
+                    showAuthOverlay();
+                });
+        }
+
+        function showAuthOverlay() {
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.getElementById('splashScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
+        }
+
+        function hideAuthOverlay() {
+            document.getElementById('authOverlay').style.display = 'none';
+        }
+
+        function switchAuthTab(tab) {
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'flex' : 'none';
+            document.getElementById('signupForm').style.display = tab === 'signup' ? 'flex' : 'none';
+            
+            // Update active tab
+            document.querySelectorAll('.auth-tab').forEach(button => {
+                button.classList.toggle('active', button.textContent.toLowerCase() === tab);
+            });
+            
+            // Clear error message
+            document.getElementById('authError').textContent = '';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('authError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentUser = data.username;
+                    hideAuthOverlay();
+                    startApp();
+                } else {
+                    showError(data.error || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentUser = data.username;
+                    hideAuthOverlay();
+                    startApp();
+                } else {
+                    showError(data.error || 'Signup failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                currentUser = null;
+                showAuthOverlay();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        function startApp() {
             // Initialize conversation ID
             conversationId = null;
             
-            // Don't add message here - will be handled after splash screen
-        });
-        
-        // Handle splash screen
-        document.addEventListener('DOMContentLoaded', function() {
-            const splashScreen = document.getElementById('splashScreen');
-            const mainContent = document.getElementById('mainContent');
+            // Start the ping interval
+            startPingInterval();
             
-            // Show splash screen for 4.5 seconds then fade out
+            // Show splash screen
+            const splashScreen = document.getElementById('splashScreen');
+            splashScreen.style.display = 'flex';
+            
+            // Continue with existing splash screen logic
             setTimeout(function() {
                 splashScreen.classList.add('fade-out');
                 
-                // After animation completes, hide splash and show main content
                 setTimeout(function() {
                     splashScreen.style.display = 'none';
-                    mainContent.style.display = 'flex';
-                    mainContent.classList.add('fade-in');
+                    document.getElementById('mainContent').style.display = 'flex';
+                    document.getElementById('mainContent').classList.add('fade-in');
                     
-                    // Add initial welcome message from Ducky
                     setTimeout(() => {
                         const chatContainer = document.getElementById('chatContainer');
-                        // Clear existing elements
                         chatContainer.innerHTML = '';
                         
-                        // Add the welcome message
                         addMessageToChat('ducky', [
-                            'Quack! Hello there!',
+                            `Welcome back, ${currentUser}! 👋`,
                             'I\'m your friendly AI duck assistant.',
                             'How can I help you today? 🦆'
                         ]);
                         
-                        // Focus on input after splash screen
                         document.getElementById('userInput').focus();
                     }, 300);
-                }, 800); // Match this with the animation duration in CSS
+                }, 800);
             }, 4500);
-        });
+        }
 
         // Add message to chat
         function addMessageToChat(type, message) {
@@ -153,10 +331,10 @@
             
             if (type === 'user') {
                 content = `
+                    <div class="text">${escapeHtml(message)}</div>
                     <div class="avatar">
                         <span class="user-icon">👤</span>
                     </div>
-                    <div class="text">${escapeHtml(message)}</div>
                 `;
             } else if (type === 'ducky') {
                 content = `
@@ -541,6 +719,55 @@
                 root.style.setProperty('--splash-text', '#ffffff');
                 root.style.setProperty('--splash-text-rgb', '255, 255, 255');
             }
+        }
+
+        async function showMemories() {
+            try {
+                const response = await fetch('/memories');
+                const memories = await response.json();
+                
+                const memoriesList = document.getElementById('memoriesList');
+                memoriesList.innerHTML = '';
+                
+                if (memories.length === 0) {
+                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with Ducky to create some.</div>';
+                } else {
+                    memories.forEach(memory => {
+                        const memoryDiv = document.createElement('div');
+                        memoryDiv.className = 'memory-item';
+                        
+                        const date = new Date(memory.timestamp * 1000);
+                        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                        
+                        memoryDiv.innerHTML = `
+                            <div class="memory-header">
+                                <span class="memory-date">${formattedDate}</span>
+                            </div>
+                            <div class="memory-messages">
+                                <div class="memory-user-message">
+                                    <span class="memory-label">You:</span>
+                                    ${escapeHtml(memory.user_message)}
+                                </div>
+                                <div class="memory-ducky-message">
+                                    <span class="memory-label">Ducky:</span>
+                                    ${escapeHtml(memory.ducky_response)}
+                                </div>
+                            </div>
+                        `;
+                        
+                        memoriesList.appendChild(memoryDiv);
+                    });
+                }
+                
+                document.getElementById('memoriesModal').classList.add('show');
+                toggleMenu(); // Close the slide menu
+            } catch (error) {
+                console.error('Failed to load memories:', error);
+            }
+        }
+
+        function hideMemories() {
+            document.getElementById('memoriesModal').classList.remove('show');
         }
     </script>
 </body>

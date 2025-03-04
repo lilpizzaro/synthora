@@ -354,10 +354,10 @@ if should_enable_keep_alive:
 else:
     print("Keep-alive disabled by configuration")
 
-@app.route('/ping')
+@app.route('/ping', methods=['GET'])
 def ping():
-    """Simple endpoint for keep-alive pings"""
-    return jsonify({"status": "ok", "message": "Ducky is awake!"}), 200
+    """Simple endpoint to keep the server alive"""
+    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

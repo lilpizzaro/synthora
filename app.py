@@ -59,29 +59,44 @@ def save_avatar(file, username):
             # Ensure avatar directory exists
             os.makedirs(AVATAR_FOLDER, exist_ok=True)
             
-            # Open and resize image
-            image = Image.open(file)
+            # Read the image data
+            image_data = file.read()
+            image = Image.open(io.BytesIO(image_data))
             
-            # Convert to RGBA if necessary
+            # Convert to RGB first, then RGBA
+            if image.mode not in ('RGB', 'RGBA'):
+                image = image.convert('RGB')
             if image.mode != 'RGBA':
                 image = image.convert('RGBA')
             
+            # Create a square image with white background
+            size = max(image.size)
+            square_img = Image.new('RGBA', (size, size), (255, 255, 255, 0))
+            
+            # Paste the original image in the center
+            paste_x = (size - image.size[0]) // 2
+            paste_y = (size - image.size[1]) // 2
+            square_img.paste(image, (paste_x, paste_y))
+            
             # Create a circular mask
-            mask = Image.new('L', image.size, 0)
+            mask = Image.new('L', (size, size), 0)
             draw = ImageDraw.Draw(mask)
-            draw.ellipse((0, 0) + image.size, fill=255)
+            draw.ellipse((0, 0, size, size), fill=255)
             
             # Apply the mask
-            output = Image.new('RGBA', image.size, (0, 0, 0, 0))
-            output.paste(image, (0, 0))
+            output = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+            output.paste(square_img, (0, 0))
             output.putalpha(mask)
             
-            # Resize to standard size (e.g., 256x256)
+            # Resize to standard size
             output = output.resize((256, 256), Image.Resampling.LANCZOS)
             
             # Save the processed image
             avatar_path = os.path.join(AVATAR_FOLDER, f"{username}.png")
             output.save(avatar_path, 'PNG')
+            
+            # Clear the file pointer position
+            file.seek(0)
             
             return avatar_path
         except Exception as e:
@@ -114,6 +129,24 @@ def save_memories(memories):
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(plain_password, hashed_password):
+    """Verify a password against its hash"""
+    if not plain_password or not hashed_password:
+        return False
+    return hash_password(plain_password) == hashed_password
+
+def update_memories_username(old_username, new_username):
+    """Update username in memories when user changes their username"""
+    try:
+        memories = load_memories()
+        if old_username in memories:
+            memories[new_username] = memories[old_username]
+            del memories[old_username]
+            save_memories(memories)
+    except Exception as e:
+        print(f"Error updating memories username: {str(e)}")
+        traceback.print_exc()
 
 def login_required(f):
     @wraps(f)
@@ -412,34 +445,57 @@ def update_account():
     current_username = session['username']
     
     try:
+        # Ensure data directory exists
+        os.makedirs('data', exist_ok=True)
+        
         # Load existing users
-        with open(USERS_FILE, 'r') as f:
-            users = json.load(f)
+        try:
+            with open(USERS_FILE, 'r') as f:
+                users = json.load(f)
+        except FileNotFoundError:
+            users = {}
+        except json.JSONDecodeError:
+            users = {}
         
         if current_username not in users:
-            return jsonify({'error': 'User not found'}), 404
+            users[current_username] = {'password': None}  # Create user if doesn't exist
         
         # Get form data
         username = request.form.get('username', current_username)
         current_password = request.form.get('current_password')
         new_password = request.form.get('new_password')
-        avatar = request.files.get('avatar')
+        
+        # Handle avatar file
+        avatar_url = None
+        try:
+            avatar = request.files.get('avatar')
+            if avatar and avatar.filename:
+                if not allowed_file(avatar.filename):
+                    return jsonify({'error': 'Invalid file type. Allowed types are: png, jpg, jpeg, gif'}), 400
+                
+                # Ensure avatar directory exists
+                os.makedirs(AVATAR_FOLDER, exist_ok=True)
+                
+                # Save the avatar
+                avatar_path = save_avatar(avatar, username)
+                if avatar_path:
+                    avatar_url = url_for('get_avatar', username=username, _external=True)
+                else:
+                    return jsonify({'error': 'Failed to process avatar image'}), 400
+        except Exception as e:
+            print(f"Error processing avatar: {str(e)}")
+            traceback.print_exc()
+            return jsonify({'error': f'Failed to process avatar: {str(e)}'}), 400
         
         # Verify current password if changing password or username
-        if (new_password or username != current_username) and not verify_password(current_password, users[current_username]['password']):
-            return jsonify({'error': 'Current password is incorrect'}), 400
+        stored_password = users[current_username].get('password')
+        if (new_password or username != current_username) and current_password:
+            if not verify_password(current_password, stored_password):
+                return jsonify({'error': 'Current password is incorrect'}), 400
         
         # Check if new username is available
         if username != current_username and username in users:
             return jsonify({'error': 'Username already taken'}), 400
-        
-        # Handle avatar upload
-        avatar_url = None
-        if avatar and allowed_file(avatar.filename):
-            # Save the avatar
-            avatar_path = save_avatar(avatar, username)
-            if avatar_path:
-                avatar_url = url_for('get_avatar', username=username, _external=True)
         
         # Update user data
         user_data = users[current_username].copy()
@@ -460,8 +516,13 @@ def update_account():
             users[current_username] = user_data
         
         # Save updated users
-        with open(USERS_FILE, 'w') as f:
-            json.dump(users, f, indent=4)
+        try:
+            with open(USERS_FILE, 'w') as f:
+                json.dump(users, f, indent=4)
+        except Exception as e:
+            print(f"Error saving users file: {str(e)}")
+            traceback.print_exc()
+            return jsonify({'error': 'Failed to save user data'}), 500
         
         return jsonify({
             'message': 'Account updated successfully',
@@ -472,7 +533,7 @@ def update_account():
     except Exception as e:
         print(f"Error updating account: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Failed to update account'}), 500
+        return jsonify({'error': f'Account update failed: {str(e)}'}), 500
 
 @app.route('/auth/avatar/<username>')
 def get_avatar(username):

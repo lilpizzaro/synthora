@@ -13,6 +13,8 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageDraw
 import io
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
@@ -28,6 +30,31 @@ else:
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
 
+# Configure SQLite database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+# Define database models
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(120), nullable=False)
+    avatar_url = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    memories = db.relationship('Memory', backref='user', lazy=True)
+
+class Memory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_message = db.Column(db.Text, nullable=False)
+    ducky_response = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+# Create database tables
+with app.app_context():
+    db.create_all()
+
 # Store conversations in memory (for development)
 conversations = {}
 
@@ -38,13 +65,10 @@ if not gemini_api_key:
     
 genai.configure(api_key=gemini_api_key)
 
-# File paths for user data and avatars
-USERS_FILE = 'data/users.json'
-MEMORIES_FILE = 'data/memories.json'
+# File paths for avatars
 AVATAR_FOLDER = 'static/avatars'
 
 # Create necessary directories
-os.makedirs('data', exist_ok=True)
 os.makedirs(AVATAR_FOLDER, exist_ok=True)
 
 # Allowed image extensions
@@ -105,28 +129,6 @@ def save_avatar(file, username):
             return None
     return None
 
-def load_users():
-    try:
-        with open(USERS_FILE, 'r') as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_users(users):
-    with open(USERS_FILE, 'w') as f:
-        json.dump(users, f)
-
-def load_memories():
-    try:
-        with open(MEMORIES_FILE, 'r') as f:
-            return json.load(f)
-    except:
-        return {}
-
-def save_memories(memories):
-    with open(MEMORIES_FILE, 'w') as f:
-        json.dump(memories, f)
-
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
@@ -135,18 +137,6 @@ def verify_password(plain_password, hashed_password):
     if not plain_password or not hashed_password:
         return False
     return hash_password(plain_password) == hashed_password
-
-def update_memories_username(old_username, new_username):
-    """Update username in memories when user changes their username"""
-    try:
-        memories = load_memories()
-        if old_username in memories:
-            memories[new_username] = memories[old_username]
-            del memories[old_username]
-            save_memories(memories)
-    except Exception as e:
-        print(f"Error updating memories username: {str(e)}")
-        traceback.print_exc()
 
 def login_required(f):
     @wraps(f)
@@ -225,7 +215,17 @@ def generate_ducky_response(user_input, conversation_id=None):
         response_text = response.text.strip()
         conversations[conversation_id].append({"role": "assistant", "message": response_text})
         
-        # Log the response for debugging        print("Generated response:", response_text)
+        # Save the conversation to memories if user is logged in
+        if 'username' in session:
+            user = User.query.filter_by(username=session['username']).first()
+            if user:
+                memory = Memory(
+                    user_id=user.id,
+                    user_message=user_input,
+                    ducky_response=response_text
+                )
+                db.session.add(memory)
+                db.session.commit()
         
         return response_text, conversation_id
     except Exception as e:
@@ -249,24 +249,20 @@ def signup():
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
     
-    users = load_users()
-    if username in users:
+    # Check if username already exists
+    if User.query.filter_by(username=username).first():
         return jsonify({'error': 'Username already exists'}), 400
     
     # Create new user
-    users[username] = {
-        'password': hash_password(password),
-        'created_at': time.time()
-    }
-    save_users(users)
-    
-    # Initialize empty memories for user
-    memories = load_memories()
-    memories[username] = []
-    save_memories(memories)
+    user = User(
+        username=username,
+        password_hash=hash_password(password)
+    )
+    db.session.add(user)
+    db.session.commit()
     
     session['username'] = username
-    return jsonify({'success': True, 'username': username})
+    return jsonify({'message': 'Signup successful', 'username': username})
 
 @app.route('/auth/login', methods=['POST'])
 def login():
@@ -277,115 +273,109 @@ def login():
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
     
-    users = load_users()
-    if username not in users or users[username]['password'] != hash_password(password):
+    user = User.query.filter_by(username=username).first()
+    if not user or not verify_password(password, user.password_hash):
         return jsonify({'error': 'Invalid username or password'}), 401
     
     session['username'] = username
-    return jsonify({'success': True, 'username': username})
+    return jsonify({'message': 'Login successful', 'username': username})
 
 @app.route('/auth/logout', methods=['POST'])
 def logout():
     session.pop('username', None)
-    return jsonify({'success': True})
+    return jsonify({'message': 'Logout successful'})
 
 @app.route('/auth/status')
 def auth_status():
     if 'username' in session:
-        username = session['username']
-        avatar_path = os.path.join(AVATAR_FOLDER, f"{username}.png")
-        avatar_url = url_for('get_avatar', username=username, _external=True) if os.path.exists(avatar_path) else url_for('static', filename='images/def_avatar.png', _external=True)
-        return jsonify({
-            'authenticated': True,
-            'username': username,
-            'avatar_url': avatar_url
-        })
+        user = User.query.filter_by(username=session['username']).first()
+        if user:
+            return jsonify({
+                'authenticated': True,
+                'username': user.username,
+                'avatar_url': user.avatar_url
+            })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
 @login_required
 def generate():
     try:
-        if not request.is_json:
-            return jsonify({'error': 'Request must be JSON'}), 400
+        data = request.json
+        user_input = data.get('message', '')
+        conversation_id = data.get('conversation_id')
         
-        user_message = request.json.get('message')
-        if not user_message:
+        if not user_input:
             return jsonify({'error': 'Message is required'}), 400
         
-        username = session['username']
-        conversation_id = session.get('conversation_id') or str(uuid.uuid4())
-        
-        # Generate response
-        ducky_response, conversation_id = generate_ducky_response(user_message, conversation_id)
-        
-        # Save to memories
-        memories = load_memories()
-        if username not in memories:
-            memories[username] = []
-        
-        memories[username].append({
-            'timestamp': time.time(),
-            'user_message': user_message,
-            'ducky_response': ducky_response,
-            'conversation_id': conversation_id
-        })
-        save_memories(memories)
-        
-        # Store conversation ID in session
-        session['conversation_id'] = conversation_id
+        response_text, conversation_id = generate_ducky_response(user_input, conversation_id)
         
         return jsonify({
-            'response': ducky_response,
+            'response': response_text,
             'conversation_id': conversation_id
         })
     except Exception as e:
-        error_msg = str(e)
-        traceback_msg = traceback.format_exc()
-        print("Error in generate endpoint:", error_msg)
-        print("Traceback:", traceback_msg)
-        return jsonify({
-            'error': 'Failed to generate response',
-            'details': error_msg,
-            'traceback': traceback_msg
-        }), 500
+        print("Error in generate route:", str(e))
+        print("Traceback:", traceback.format_exc())
+        return jsonify({'error': 'An error occurred while generating response'}), 500
 
 @app.route('/memories', methods=['GET'])
 @login_required
 def get_memories():
-    username = session['username']
-    memories = load_memories()
-    user_memories = memories.get(username, [])
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
     
-    # Sort memories by timestamp in descending order
-    user_memories.sort(key=lambda x: x['timestamp'], reverse=True)
+    memories = Memory.query.filter_by(user_id=user.id).order_by(Memory.timestamp.desc()).all()
+    memory_list = [{
+        'user_message': memory.user_message,
+        'ducky_response': memory.ducky_response,
+        'timestamp': memory.timestamp.isoformat()
+    } for memory in memories]
     
-    return jsonify(user_memories)
+    return jsonify({'memories': memory_list})
 
-def generate_stream(user_input):
-    # Using genai that was already imported and configured
-    model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
-    
-    system_instruction = """Your name is just ducky. You have to be friendly and human like. 
-    The user should feel like their talking to a human. Cut out on the duck jokes."""
-    
-    generation_config = {
-        "temperature": 0.7,
-        "top_p": 0.95,
-        "top_k": 64,
-        "max_output_tokens": 65536,
-    }
-    
-    response = model.generate_content(
-        user_input,
-        generation_config=generation_config,
-        system_instruction=system_instruction,
-        stream=True
-    )
-    
-    for chunk in response:
-        if hasattr(chunk, 'text'):
-            print(chunk.text, end="")
+@app.route('/auth/update', methods=['POST'])
+@login_required
+def update_account():
+    try:
+        user = User.query.filter_by(username=session['username']).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Handle file upload
+        avatar_file = request.files.get('avatar')
+        if avatar_file:
+            avatar_path = save_avatar(avatar_file, user.username)
+            if avatar_path:
+                user.avatar_url = avatar_path
+        
+        # Handle username update
+        new_username = request.form.get('username')
+        if new_username and new_username != user.username:
+            if User.query.filter_by(username=new_username).first():
+                return jsonify({'error': 'Username already exists'}), 400
+            user.username = new_username
+            session['username'] = new_username
+        
+        # Handle password update
+        new_password = request.form.get('password')
+        if new_password:
+            user.password_hash = hash_password(new_password)
+        
+        db.session.commit()
+        return jsonify({'message': 'Account updated successfully'})
+    except Exception as e:
+        print(f"Error updating account: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred while updating account'}), 500
+
+@app.route('/auth/avatar/<username>')
+def get_avatar(username):
+    user = User.query.filter_by(username=username).first()
+    if not user or not user.avatar_url:
+        return send_file('static/images/default-avatar.png', mimetype='image/png')
+    return send_file(user.avatar_url, mimetype='image/png')
 
 # Improved keep-alive mechanism
 def keep_alive():
@@ -437,113 +427,6 @@ else:
 def ping():
     """Simple endpoint for keep-alive pings"""
     return jsonify({"status": "ok", "message": "Ducky is awake!"}), 200
-
-@app.route('/auth/update', methods=['POST'])
-def update_account():
-    if 'username' not in session:
-        return jsonify({'error': 'Not authenticated'}), 401
-
-    current_username = session['username']
-    
-    try:
-        # Ensure data directory exists
-        os.makedirs('data', exist_ok=True)
-        
-        # Load existing users
-        try:
-            with open(USERS_FILE, 'r') as f:
-                users = json.load(f)
-        except FileNotFoundError:
-            users = {}
-        except json.JSONDecodeError:
-            users = {}
-        
-        if current_username not in users:
-            users[current_username] = {'password': None}  # Create user if doesn't exist
-        
-        # Get form data
-        username = request.form.get('username', current_username)
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        
-        # Handle avatar file
-        avatar_url = None
-        try:
-            avatar = request.files.get('avatar')
-            if avatar and avatar.filename:
-                if not allowed_file(avatar.filename):
-                    return jsonify({'error': 'Invalid file type. Allowed types are: png, jpg, jpeg, gif'}), 400
-                
-                # Ensure avatar directory exists
-                os.makedirs(AVATAR_FOLDER, exist_ok=True)
-                
-                # Save the avatar
-                avatar_path = save_avatar(avatar, username)
-                if avatar_path:
-                    avatar_url = url_for('get_avatar', username=username, _external=True)
-                else:
-                    return jsonify({'error': 'Failed to process avatar image'}), 400
-        except Exception as e:
-            print(f"Error processing avatar: {str(e)}")
-            traceback.print_exc()
-            return jsonify({'error': f'Failed to process avatar: {str(e)}'}), 400
-        
-        # Verify current password if changing password or username
-        stored_password = users[current_username].get('password')
-        if (new_password or username != current_username) and current_password:
-            if not verify_password(current_password, stored_password):
-                return jsonify({'error': 'Current password is incorrect'}), 400
-        
-        # Check if new username is available
-        if username != current_username and username in users:
-            return jsonify({'error': 'Username already taken'}), 400
-        
-        # Update user data
-        user_data = users[current_username].copy()
-        if new_password:
-            user_data['password'] = hash_password(new_password)
-        
-        # If username is changing, update the user entry
-        if username != current_username:
-            users[username] = user_data
-            del users[current_username]
-            
-            # Update memories with new username
-            update_memories_username(current_username, username)
-            
-            # Update session
-            session['username'] = username
-        else:
-            users[current_username] = user_data
-        
-        # Save updated users
-        try:
-            with open(USERS_FILE, 'w') as f:
-                json.dump(users, f, indent=4)
-        except Exception as e:
-            print(f"Error saving users file: {str(e)}")
-            traceback.print_exc()
-            return jsonify({'error': 'Failed to save user data'}), 500
-        
-        return jsonify({
-            'message': 'Account updated successfully',
-            'username': username,
-            'avatar_url': avatar_url
-        })
-        
-    except Exception as e:
-        print(f"Error updating account: {str(e)}")
-        traceback.print_exc()
-        return jsonify({'error': f'Account update failed: {str(e)}'}), 500
-
-@app.route('/auth/avatar/<username>')
-def get_avatar(username):
-    avatar_path = os.path.join(AVATAR_FOLDER, f"{username}.png")
-    default_avatar = os.path.join('static', 'images', 'def_avatar.png')
-    
-    if os.path.exists(avatar_path):
-        return send_file(avatar_path, mimetype='image/png')
-    return send_file(default_avatar, mimetype='image/png')
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

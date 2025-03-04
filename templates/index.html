@@ -462,6 +462,7 @@
 
         // Escape HTML to prevent XSS
         function escapeHtml(unsafe) {
+            if (!unsafe) return '';
             return unsafe
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")

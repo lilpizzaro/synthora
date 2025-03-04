@@ -867,24 +867,32 @@ body.force-dark button:hover {
 
 /* Menu Button */
 .menu-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
-    background-color: var(--chat-bg);
-    border: 1px solid var(--border-color);
+    background: transparent;
+    border: none;
     color: var(--text-color);
     font-size: 24px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-right: 12px;
-    z-index: 1001;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
 }
 
-.menu-button:active {
-    transform: scale(0.95);
+.menu-button:hover {
+    background-color: var(--menu-item-hover);
+    transform: scale(1.05);
+}
+
+.menu-button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
 }
 
 /* Mobile Slide-out Menu */
@@ -960,33 +968,6 @@ body.force-dark button:hover {
     font-size: 20px;
     text-align: left;
     min-width: 24px;
-}
-
-.menu-button {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: var(--text-color);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    position: relative;
-    z-index: 1001;
-}
-
-.menu-button:hover {
-    transform: scale(1.1);
-    background: var(--menu-item-hover);
-}
-
-.menu-button:focus {
-    outline: none;
 }
 
 /* Container background fix */

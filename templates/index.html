@@ -248,6 +248,10 @@
                 .then(data => {
                     if (data.authenticated) {
                         currentUser = data.username;
+                        // Update avatar if available
+                        if (data.avatar_url) {
+                            document.getElementById('avatarImage').src = `${data.avatar_url}?t=${new Date().getTime()}`;
+                        }
                         hideAuthOverlay();
                         startApp();
                     } else {
@@ -417,10 +421,12 @@
             let content = '';
             
             if (type === 'user') {
+                // Fetch current avatar URL from the account modal or use default
+                const currentAvatar = document.getElementById('avatarImage').src;
                 content = `
-                    <div class="text">${escapeHtml(message)}</div>
+                    <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
                     <div class="avatar">
-                        <span class="user-icon">👤</span>
+                        <img src="${currentAvatar}" alt="User Avatar" class="avatar-img">
                     </div>
                 `;
             } else if (type === 'ducky') {
@@ -428,12 +434,12 @@
                     <div class="avatar">
                         <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
                     </div>
-                    <div class="text">${escapeHtml(message)}</div>
+                    <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
                 `;
             } else if (type === 'error') {
                 content = `
                     <div class="avatar">⚠️</div>
-                    <div class="text">${escapeHtml(message)}</div>
+                    <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
                 `;
             }
             
@@ -915,6 +921,15 @@
                     currentUser = username;
                     hideAccount();
                     showSuccess('Account updated successfully');
+                    
+                    // Update all user avatars in the chat
+                    if (data.avatar_url) {
+                        const userAvatars = document.querySelectorAll('.user-message .avatar');
+                        userAvatars.forEach(avatar => {
+                            avatar.innerHTML = `<img src="${data.avatar_url}?t=${new Date().getTime()}" alt="User Avatar" class="avatar-img">`;
+                        });
+                    }
+                    
                     // Update the welcome message with new username
                     const chatContainer = document.getElementById('chatContainer');
                     const firstMessage = chatContainer.querySelector('.ducky-message .text');

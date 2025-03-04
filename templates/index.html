@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#007AFF" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Ducky AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -152,38 +152,38 @@
     </div>
 
     <!-- Account Modal -->
-    <div class="account-modal" id="accountModal">
+    <div class="account-modal" id="accountModal" onclick="if(event.target === this) hideAccount()">
         <div class="account-content">
             <div class="account-header">
                 <h2>Account Settings</h2>
-                <button class="close-button" onclick="hideAccount()">✕</button>
+                <button class="close-button" onclick="hideAccount()" aria-label="Close">✕</button>
             </div>
             <div class="account-body">
                 <div class="avatar-section">
-                    <div class="avatar-preview" onclick="document.getElementById('avatarUpload').click()">
+                    <div class="avatar-preview" onclick="document.getElementById('avatarUpload').click()" role="button" tabindex="0">
                         <img id="avatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture">
                     </div>
-                    <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)">
+                    <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)" aria-label="Upload profile picture">
                     <button class="avatar-button" onclick="document.getElementById('avatarUpload').click()">
                         Change Picture
                     </button>
                 </div>
                 <form class="account-form" onsubmit="updateAccount(event)">
                     <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="accountUsername" placeholder="Enter username" required>
+                        <label for="accountUsername">Username</label>
+                        <input type="text" id="accountUsername" name="username" placeholder="Enter username" required autocomplete="username">
                     </div>
                     <div class="form-group">
                         <label for="currentPassword">Current Password</label>
-                        <input type="password" id="currentPassword" placeholder="Enter current password">
+                        <input type="password" id="currentPassword" name="current_password" placeholder="Enter current password" autocomplete="current-password">
                     </div>
                     <div class="form-group">
                         <label for="newPassword">New Password</label>
-                        <input type="password" id="newPassword" placeholder="Enter new password">
+                        <input type="password" id="newPassword" name="new_password" placeholder="Enter new password" autocomplete="new-password">
                     </div>
                     <div class="form-group">
                         <label for="confirmNewPassword">Confirm New Password</label>
-                        <input type="password" id="confirmNewPassword" placeholder="Confirm new password">
+                        <input type="password" id="confirmNewPassword" name="confirm_password" placeholder="Confirm new password" autocomplete="new-password">
                     </div>
                     <div class="account-actions">
                         <button type="button" class="cancel-button" onclick="hideAccount()">Cancel</button>

@@ -271,8 +271,9 @@ body {
     background: var(--premium-gradient);
     color: var(--message-text);
     margin: 0;
-    text-align: right;
+    text-align: left;
     max-width: 70%;
+    box-shadow: 0 2px 8px rgba(16, 163, 127, 0.15);
 }
 
 .ducky-message .text {
@@ -356,13 +357,13 @@ body {
     background-color: var(--input-bg);
     border-radius: 24px;
     padding: 0;
-    box-shadow: 0 2px 10px var(--input-shadow), 0 0 0 1px var(--input-border);
+    box-shadow: 0 2px 10px var(--input-shadow);
     transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .input-wrapper:focus-within {
-    box-shadow: 0 4px 15px var(--bubble-shadow), 0 0 0 2px var(--primary-color);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--input-shadow);
+    transform: translateY(-1px);
 }
 
 input {
@@ -390,17 +391,42 @@ button {
     font-weight: 500;
     transition: all 0.2s ease;
     margin-left: 12px;
-    box-shadow: 0 2px 8px rgba(16, 163, 127, 0.2);
 }
 
 button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
 }
 
 button:active {
     transform: translateY(1px);
-    box-shadow: 0 1px 4px rgba(16, 163, 127, 0.2);
+}
+
+/* Light theme button shadows */
+body:not(.force-dark) button {
+    box-shadow: 0 2px 8px rgba(16, 163, 127, 0.2);
+}
+
+body:not(.force-dark) button:hover {
+    box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
+}
+
+/* Dark theme button shadows */
+body.force-dark button {
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+}
+
+body.force-dark button:hover {
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not(.force-light) button {
+        box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+    }
+    
+    body:not(.force-light) button:hover {
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+    }
 }
 
 /* Scrollbar styling */
@@ -1384,4 +1410,136 @@ h1 .icon {
     .memory-item {
         margin-bottom: 12px;
     }
+}
+
+/* Account Page Styles */
+.account-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.account-modal.show {
+    display: flex;
+}
+
+.account-content {
+    background-color: var(--input-background);
+    width: 90%;
+    max-width: 480px;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.account-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.account-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.account-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.avatar-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: var(--background-color);
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.avatar-preview:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.02);
+}
+
+.avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-upload {
+    display: none;
+}
+
+.avatar-button {
+    background: var(--premium-gradient);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+}
+
+.account-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.account-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.account-actions button {
+    flex: 1;
+}
+
+.account-actions .cancel-button {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.account-actions .save-button {
+    background: var(--premium-gradient);
 } 

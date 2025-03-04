@@ -74,9 +74,9 @@
         <!-- Slide-out Menu -->
         <div class="slide-menu-overlay" id="menuOverlay"></div>
         <div class="slide-menu" id="slideMenu">
-            <button class="menu-item" onclick="clearChat()">
-                <span>🗑️</span>
-                Clear Chat
+            <button class="menu-item" onclick="showAccount()">
+                <span>👤</span>
+                Account
             </button>
             <button class="menu-item" onclick="showMemories()">
                 <span>💭</span>
@@ -85,6 +85,10 @@
             <button class="menu-item" onclick="toggleDarkMode()">
                 <span>🌓</span>
                 Theme
+            </button>
+            <button class="menu-item" onclick="clearChat()">
+                <span>🗑️</span>
+                Clear Chat
             </button>
             <button class="menu-item" onclick="shareChat()">
                 <span>📤</span>
@@ -144,6 +148,49 @@
                 <button class="close-button" onclick="hideMemories()">✕</button>
             </div>
             <div class="memories-list" id="memoriesList"></div>
+        </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div class="account-modal" id="accountModal">
+        <div class="account-content">
+            <div class="account-header">
+                <h2>Account Settings</h2>
+                <button class="close-button" onclick="hideAccount()">✕</button>
+            </div>
+            <div class="account-body">
+                <div class="avatar-section">
+                    <div class="avatar-preview" onclick="document.getElementById('avatarUpload').click()">
+                        <img id="avatarImage" src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Profile Picture">
+                    </div>
+                    <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)">
+                    <button class="avatar-button" onclick="document.getElementById('avatarUpload').click()">
+                        Change Picture
+                    </button>
+                </div>
+                <form class="account-form" onsubmit="updateAccount(event)">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="accountUsername" placeholder="Enter username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input type="password" id="currentPassword" placeholder="Enter current password">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input type="password" id="newPassword" placeholder="Enter new password">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Confirm New Password</label>
+                        <input type="password" id="confirmNewPassword" placeholder="Confirm new password">
+                    </div>
+                    <div class="account-actions">
+                        <button type="button" class="cancel-button" onclick="hideAccount()">Cancel</button>
+                        <button type="submit" class="save-button">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -799,6 +846,77 @@
 
         function hideMemories() {
             document.getElementById('memoriesModal').classList.remove('show');
+        }
+
+        function showAccount() {
+            document.getElementById('accountModal').classList.add('show');
+            document.getElementById('menuOverlay').classList.remove('active');
+            document.getElementById('slideMenu').classList.remove('active');
+            
+            // Populate current username
+            document.getElementById('accountUsername').value = currentUser || '';
+        }
+
+        function hideAccount() {
+            document.getElementById('accountModal').classList.remove('show');
+        }
+
+        function handleAvatarChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('avatarImage').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function updateAccount(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('accountUsername').value;
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+            
+            if (newPassword && newPassword !== confirmNewPassword) {
+                showError('New passwords do not match');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                const avatarFile = document.getElementById('avatarUpload').files[0];
+                if (avatarFile) {
+                    formData.append('avatar', avatarFile);
+                }
+                
+                formData.append('username', username);
+                if (currentPassword) {
+                    formData.append('current_password', currentPassword);
+                }
+                if (newPassword) {
+                    formData.append('new_password', newPassword);
+                }
+                
+                const response = await fetch('/auth/update', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    currentUser = username;
+                    hideAccount();
+                    showError('Account updated successfully');
+                } else {
+                    showError(data.error);
+                }
+            } catch (error) {
+                console.error('Update account error:', error);
+                showError('Failed to update account');
+            }
         }
     </script>
 </body>

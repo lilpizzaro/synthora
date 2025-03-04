@@ -10,6 +10,9 @@ import requests
 import json
 import hashlib
 from functools import wraps
+from werkzeug.utils import secure_filename
+from PIL import Image
+import io
 
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
@@ -35,21 +38,36 @@ if not gemini_api_key:
     
 genai.configure(api_key=gemini_api_key)
 
-# File paths for user data and memories
+# File paths for user data and avatars
 USERS_FILE = 'data/users.json'
 MEMORIES_FILE = 'data/memories.json'
+AVATAR_FOLDER = 'static/avatars'
 
-# Create data directory if it doesn't exist
+# Create necessary directories
 os.makedirs('data', exist_ok=True)
+os.makedirs(AVATAR_FOLDER, exist_ok=True)
 
-# Initialize empty data files if they don't exist
-if not os.path.exists(USERS_FILE):
-    with open(USERS_FILE, 'w') as f:
-        json.dump({}, f)
+# Allowed image extensions
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
-if not os.path.exists(MEMORIES_FILE):
-    with open(MEMORIES_FILE, 'w') as f:
-        json.dump({}, f)
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_avatar(file, username):
+    if file and allowed_file(file.filename):
+        # Create a unique filename
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{username}_{uuid.uuid4()}.{ext}"
+        filepath = os.path.join(AVATAR_FOLDER, filename)
+        
+        # Open and resize image
+        image = Image.open(file)
+        image.thumbnail((200, 200))  # Resize to max 200x200 while maintaining aspect ratio
+        
+        # Save the processed image
+        image.save(filepath)
+        return f"/static/avatars/{filename}"
+    return None
 
 def load_users():
     try:
@@ -311,16 +329,16 @@ def generate_stream(user_input):
 # Improved keep-alive mechanism
 def keep_alive():
     """Function to keep the server awake by pinging it every 2 minutes"""
-    app_url = os.environ.get("APP_URL", "https://ducky-ai.onrender.com").rstrip('/')
+    app_url = os.environ.get("APP_URL")
     
     # If APP_URL isn't set, try to construct it using RENDER_EXTERNAL_URL (provided by Render)
     if not app_url:
         render_external_url = os.environ.get("RENDER_EXTERNAL_URL")
         if render_external_url:
-            app_url = render_external_url.rstrip('/')
+            app_url = render_external_url
             print(f"Using RENDER_EXTERNAL_URL for keep-alive: {app_url}")
         else:
-            print("Warning: APP_URL not set and RENDER_EXTERNAL_URL not available")
+            print("Warning: APP_URL not set and RENDER_EXTERNAL_URL not available, keep-alive disabled")
             return
     
     ping_interval = int(os.environ.get("PING_INTERVAL_SECONDS", "120"))  # Default to 2 minutes
@@ -328,23 +346,24 @@ def keep_alive():
     
     while True:
         try:
-            # Try the root path first as it's more reliable
-            root_response = requests.get(f"{app_url}/")
-            print(f"Root path response: {root_response.status_code}")
+            print(f"Sending keep-alive ping to {app_url}/ping")
+            response = requests.get(f"{app_url}/ping")
+            print(f"Keep-alive response: {response.status_code}")
             
-            if root_response.status_code == 200:
-                print("Keep-alive successful")
-            else:
-                print(f"Root path failed with status code: {root_response.status_code}")
-                
+            # If we can't access our own ping endpoint, try the root path
+            if response.status_code != 200:
+                print(f"Ping endpoint failed, trying root path...")
+                root_response = requests.get(app_url)
+                print(f"Root path response: {root_response.status_code}")
         except Exception as e:
             print(f"Keep-alive ping failed: {str(e)}")
         
+        # Sleep for the specified interval (default 2 minutes)
         time.sleep(ping_interval)
 
-# Start the keep-alive thread if we're on Render
-is_on_render = bool(os.environ.get("RENDER", False)) or bool(os.environ.get("IS_RENDER", False))
-should_enable_keep_alive = os.environ.get("ENABLE_KEEP_ALIVE", str(is_on_render)).lower() == "true"
+# Start the keep-alive thread - enable by default on Render
+is_on_render = os.environ.get("RENDER", "false").lower() == "true" or os.environ.get("IS_RENDER", "false").lower() == "true"
+should_enable_keep_alive = os.environ.get("ENABLE_KEEP_ALIVE", "true" if is_on_render else "false").lower() == "true"
 
 if should_enable_keep_alive:
     keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
@@ -355,12 +374,73 @@ else:
 
 @app.route('/ping')
 def ping():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'ok',
-        'timestamp': time.time(),
-        'environment': 'render' if is_on_render else 'local'
-    })
+    """Simple endpoint for keep-alive pings"""
+    return jsonify({"status": "ok", "message": "Ducky is awake!"}), 200
+
+@app.route('/auth/update', methods=['POST'])
+@login_required
+def update_account():
+    try:
+        username = session['username']
+        users = load_users()
+        user = users.get(username)
+        
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Handle avatar upload
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file:
+                avatar_path = save_avatar(file, username)
+                if avatar_path:
+                    user['avatar'] = avatar_path
+        
+        # Update username
+        new_username = request.form.get('username')
+        if new_username and new_username != username:
+            if new_username in users:
+                return jsonify({'error': 'Username already taken'}), 400
+            
+            # Create new user entry with updated username
+            users[new_username] = user
+            del users[username]
+            
+            # Update session
+            session['username'] = new_username
+            
+            # Update memories
+            memories = load_memories()
+            if username in memories:
+                memories[new_username] = memories[username]
+                del memories[username]
+                save_memories(memories)
+        
+        # Update password
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        
+        if current_password and new_password:
+            if user['password'] != hash_password(current_password):
+                return jsonify({'error': 'Current password is incorrect'}), 400
+            user['password'] = hash_password(new_password)
+        
+        save_users(users)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        print("Error in update_account:", str(e))
+        print("Traceback:", traceback.format_exc())
+        return jsonify({'error': 'Failed to update account'}), 500
+
+@app.route('/auth/avatar/<username>')
+def get_avatar(username):
+    users = load_users()
+    user = users.get(username)
+    
+    if user and 'avatar' in user:
+        return jsonify({'avatar': user['avatar']})
+    return jsonify({'avatar': None})
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

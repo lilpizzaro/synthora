@@ -3,7 +3,7 @@
     --secondary-color: #5AC8FA;
     --accent-color: #5856D6;
     --background-color: #f5f5f7;
-    --text-color: #1d1d1f;
+    --text-color: #000000;
     --border-color: #d2d2d7;
     --input-background: #ffffff;
     --message-background: #f5f5f7;
@@ -20,22 +20,30 @@
     --error-color: #ff3b30;
     --blur-bg: rgba(255, 255, 255, 0.8);
     --input-bg: #ffffff;
-    --input-border: #e5e5e7;
+    --input-border: rgba(0, 0, 0, 0.1);
     --input-shadow: rgba(0, 0, 0, 0.05);
-    --bubble-shadow: rgba(0, 0, 0, 0.08);
+    --bubble-shadow: rgba(0, 0, 0, 0.1);
     --premium-gradient: linear-gradient(135deg, #11a683 0%, #0d8f6f 100%);
     --card-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
     --splash-title-color: #007AFF;
-    --menu-bg: rgba(255, 255, 255, 0.95);
+    --menu-bg: rgba(255, 255, 255, 0.8);
     --menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     --menu-item-hover: rgba(0, 0, 0, 0.05);
     --menu-border: rgba(0, 0, 0, 0.1);
+    --bubble-bg-user: #007AFF;
+    --bubble-bg-ducky: #f0f0f0;
+    --bubble-text-user: #ffffff;
+    --bubble-text-ducky: #000000;
+    --input-text: #000000;
+    --input-placeholder: #666666;
+    --button-bg: #007AFF;
+    --button-text: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
         --background-color: #000000;
-        --text-color: #f5f5f7;
+        --text-color: #ffffff;
         --border-color: #424245;
         --input-background: #2c2c2e;
         --message-background: #1d1d1f;
@@ -56,10 +64,18 @@
         --premium-gradient: linear-gradient(135deg, #0f9975 0%, #0a7d61 100%);
         --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         --splash-title-color: #5AC8FA;
-        --menu-bg: rgba(45, 45, 45, 0.95);
+        --menu-bg: rgba(30, 30, 32, 0.8);
         --menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        --menu-item-hover: rgba(255, 255, 255, 0.1);
+        --menu-item-hover: rgba(255, 255, 255, 0.05);
         --menu-border: rgba(255, 255, 255, 0.1);
+        --bubble-bg-user: #0A84FF;
+        --bubble-bg-ducky: #1c1c1e;
+        --bubble-text-user: #ffffff;
+        --bubble-text-ducky: #ffffff;
+        --input-text: #ffffff;
+        --input-placeholder: #8e8e93;
+        --button-bg: #0A84FF;
+        --button-text: #ffffff;
     }
 }
 
@@ -172,8 +188,9 @@ body {
     align-items: center;
     gap: 12px;
     height: 64px;
-    z-index: 10;
+    z-index: 1001;
     box-shadow: 0 1px 8px var(--bubble-shadow);
+    position: relative;
 }
 
 .logo-container {
@@ -224,16 +241,10 @@ body {
 .chat-container {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+    padding: 20px;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    background-color: var(--background-color);
+    z-index: 1;
+    background: var(--background-color);
 }
 
 .message {
@@ -879,39 +890,39 @@ body.force-dark button:hover {
 .slide-menu {
     position: fixed;
     top: 0;
-    left: 0;
+    left: -300px;
+    width: 280px;
     height: 100%;
-    width: 300px;
     background: var(--menu-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: var(--menu-shadow);
-    z-index: 999;
-    transform: translateX(-100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1000;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--menu-border);
+    padding: 20px 0;
     display: flex;
     flex-direction: column;
-    padding: 20px 0;
-    border-right: 1px solid var(--menu-border);
+    gap: 5px;
+    box-shadow: var(--menu-shadow);
 }
 
 .slide-menu.active {
-    transform: translateX(0);
+    transform: translateX(300px);
 }
 
 .slide-menu-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: 998;
+    z-index: 999;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .slide-menu-overlay.active {
@@ -922,51 +933,54 @@ body.force-dark button:hover {
 .menu-item {
     display: flex;
     align-items: center;
-    padding: 12px 24px;
-    color: var(--text-color);
+    gap: 12px;
+    padding: 12px 20px;
     font-size: 16px;
     font-weight: 500;
-    background: transparent;
+    color: var(--text-color);
+    background: none;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
-    gap: 12px;
     width: 100%;
     text-align: left;
+    transition: all 0.2s ease;
 }
 
 .menu-item:hover {
     background: var(--menu-item-hover);
 }
 
+.menu-item:focus {
+    outline: none;
+}
+
 .menu-item span {
     font-size: 20px;
-    opacity: 0.9;
 }
 
 .menu-button {
-    background: transparent;
+    background: none;
     border: none;
-    color: var(--text-color);
     font-size: 24px;
-    padding: 8px;
+    color: var(--text-color);
     cursor: pointer;
-    transition: transform 0.2s ease;
-    width: 40px;
-    height: 40px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
 }
 
 .menu-button:hover {
+    transform: scale(1.1);
     background: var(--menu-item-hover);
-    transform: scale(1.05);
 }
 
-.menu-button:active {
-    transform: scale(0.95);
+.menu-button:focus {
+    outline: none;
 }
 
 /* Container background fix */
@@ -1419,13 +1433,14 @@ h1 .icon {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.4);
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 2000;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    transition: background-color 0.3s ease;
 }
 
 .account-modal.show {
@@ -1433,7 +1448,7 @@ h1 .icon {
 }
 
 .account-content {
-    background-color: var(--input-background);
+    background-color: var(--background-color);
     width: 90%;
     max-width: 480px;
     border-radius: 16px;
@@ -1441,6 +1456,8 @@ h1 .icon {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
 }
 
 .account-header {
@@ -1449,6 +1466,7 @@ h1 .icon {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: var(--background-color);
 }
 
 .account-header h2 {
@@ -1463,6 +1481,7 @@ h1 .icon {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    background-color: var(--background-color);
 }
 
 .avatar-section {
@@ -1476,7 +1495,7 @@ h1 .icon {
     width: 100px;
     height: 100px;
     border-radius: 50%;
-    background-color: var(--background-color);
+    background-color: var(--input-bg);
     border: 2px solid var(--border-color);
     overflow: hidden;
     display: flex;
@@ -1497,24 +1516,20 @@ h1 .icon {
     object-fit: cover;
 }
 
-.avatar-upload {
-    display: none;
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    transition: all 0.3s ease;
 }
 
-.avatar-button {
-    background: var(--premium-gradient);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    cursor: pointer;
-    border: none;
-}
-
-.account-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+.form-group input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
 }
 
 .form-group label {
@@ -1532,14 +1547,184 @@ h1 .icon {
 
 .account-actions button {
     flex: 1;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .account-actions .cancel-button {
-    background: transparent;
+    background-color: var(--input-bg);
     border: 1px solid var(--border-color);
     color: var(--text-color);
 }
 
+.account-actions .cancel-button:hover {
+    background-color: var(--menu-item-hover);
+}
+
 .account-actions .save-button {
     background: var(--premium-gradient);
+    color: white;
+    border: none;
+}
+
+.account-actions .save-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 163, 127, 0.2);
+}
+
+/* Dark mode specific styles */
+.dark-mode .account-modal {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.dark-mode .account-content {
+    background-color: var(--background-color);
+    border-color: var(--border-color);
+}
+
+.dark-mode .form-group input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.dark-mode .account-actions .cancel-button {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+/* Force light mode styles */
+body.force-light .account-modal {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+body.force-light .account-content,
+body.force-light .account-header,
+body.force-light .account-body {
+    background-color: var(--background-color);
+}
+
+body.force-light .form-group input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+body.force-light .account-actions .cancel-button {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+/* Menu button container */
+.menu-button-container {
+    position: relative;
+    z-index: 1001;
+    width: 40px;
+    height: 40px;
+}
+
+/* Menu button styles */
+.menu-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.menu-button:hover {
+    transform: scale(1.1);
+    background: var(--menu-item-hover);
+}
+
+.menu-button:focus {
+    outline: none;
+}
+
+/* Menu overlay */
+.slide-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.slide-menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Slide menu */
+.slide-menu {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 280px;
+    height: 100%;
+    background: var(--menu-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1000;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--menu-border);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    box-shadow: var(--menu-shadow);
+}
+
+.slide-menu.active {
+    transform: translateX(300px);
+}
+
+/* Menu items */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-color);
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+    background: var(--menu-item-hover);
+}
+
+.menu-item:focus {
+    outline: none;
+}
+
+.menu-item span {
+    font-size: 20px;
 } 

@@ -30,17 +30,19 @@ else:
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
 
-# Configure database based on environment
-is_production = os.environ.get('RENDER', '').lower() == 'true'
-if is_production:
-    # Use PostgreSQL on Render
-    database_url = os.environ.get('DATABASE_URL')
-    if database_url and database_url.startswith('postgres://'):
+# Configure database
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Handle Render's postgres:// URLs
+    if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"Using database URL: {database_url}")
 else:
-    # Use SQLite locally
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+    # Fallback to SQLite for local development
+    sqlite_path = 'sqlite:///database.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = sqlite_path
+    print(f"No DATABASE_URL found, using SQLite: {sqlite_path}")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)

@@ -54,20 +54,38 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def save_avatar(file, username):
-    if file and allowed_file(file.filename):
-        # Create a unique filename
-        ext = file.filename.rsplit('.', 1)[1].lower()
-        filename = f"{username}_{uuid.uuid4()}.{ext}"
+    try:
+        # Ensure filename is secure
+        filename = secure_filename(f"{username}_avatar.jpg")
         filepath = os.path.join(AVATAR_FOLDER, filename)
         
         # Open and resize image
-        image = Image.open(file)
-        image.thumbnail((200, 200))  # Resize to max 200x200 while maintaining aspect ratio
+        with Image.open(file) as img:
+            # Convert to RGB if necessary
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Resize maintaining aspect ratio
+            size = (200, 200)
+            img.thumbnail(size, Image.Resampling.LANCZOS)
+            
+            # Create a new image with white background
+            background = Image.new('RGB', size, (255, 255, 255))
+            
+            # Calculate position to paste the image
+            pos = ((size[0] - img.size[0]) // 2, (size[1] - img.size[1]) // 2)
+            
+            # Paste the image onto the background
+            background.paste(img, pos)
+            
+            # Save the processed image
+            background.save(filepath, 'JPEG', quality=85)
         
-        # Save the processed image
-        image.save(filepath)
-        return f"/static/avatars/{filename}"
-    return None
+        return filename
+    except Exception as e:
+        print(f"Error processing avatar: {str(e)}")
+        traceback.print_exc()
+        raise
 
 def load_users():
     try:
@@ -128,37 +146,38 @@ def generate_ducky_response(user_input, conversation_id=None):
             conversation_history += "\n"
         
         # Include the system instruction in the prompt
-        prompt = f"""You are Ducky, a friendly assistant with a playful personality. Your name is Ducky but you don't need to constantly act like a duck or use duck puns. Keep your responses friendly, helpful, and conversational. Maintain a consistent personality throughout the conversation.
+        prompt = f"""You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
 
         Important knowledge (ONLY share when SPECIFICALLY asked):
         - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
         - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary
 
-        Important conversation guidelines:
-        - NEVER volunteer information about who created you unless directly asked
-        - Keep responses shorter but still friendly and helpful
-        - Provide more detail only when absolutely necessary for clarity
-        - Avoid unnecessary explanations unless specifically asked
-        - Only greet the user if this is the first message in the conversation
-        - DO NOT start with "Hi there" or similar greeting if this is not the first message
-        - Respond directly to the user's questions or comments without unnecessary introductions
-        - Keep your responses warm, personable, and conversational
+        Conversation style:
+        - Be warm, friendly, and genuinely interested in what the user has to say
+        - Encourage open dialogue by asking relevant follow-up questions
+        - Show empathy and understanding in your responses
+        - Keep responses conversational and natural, like chatting with a friend
+        - Feel free to share relevant thoughts or experiences (while staying within AI bounds)
+        - Use casual language but remain respectful and helpful
+        - Don't be overly formal - it's okay to use common expressions and contractions
+        - If the user seems to want to just chat, engage in the conversation naturally
+        - If they need help, provide clear and helpful guidance
         - Occasionally (but rarely) use a duck reference if it feels natural, but don't force it
-        - Focus on being helpful and natural above all else
-        
+        - Keep responses concise but friendly
+
         {'This is the first message in the conversation.' if is_first_message else 'This is NOT the first message. Do not greet the user again.'}
         
         {conversation_history}
         Current user message: {user_input}
         
-        Your response (keep it friendly but concise):"""
+        Your response (keep it friendly and conversational):"""
         
         # Generate the response with safety settings
         generation_config = {
-            "temperature": 0.6,
-            "top_p": 0.95,
-            "top_k": 64,
-            "max_output_tokens": 800,
+            "temperature": 0.75,
+            "top_p": 0.92,
+            "top_k": 40,
+            "max_output_tokens": 1000,
         }
 
         response = model.generate_content(
@@ -378,60 +397,102 @@ def ping():
     return jsonify({"status": "ok", "message": "Ducky is awake!"}), 200
 
 @app.route('/auth/update', methods=['POST'])
-@login_required
 def update_account():
     try:
-        username = session['username']
+        if 'username' not in session:
+            return jsonify({'error': 'Not authenticated'}), 401
+
+        current_username = session['username']
+        
+        # Handle form data and files
+        data = {}
+        if request.form:
+            data = request.form.to_dict()
+        elif request.is_json:
+            data = request.get_json()
+        
+        if not data and not request.files:
+            return jsonify({'error': 'No data provided'}), 400
+
+        # Load current users
         users = load_users()
-        user = users.get(username)
-        
-        if not user:
+        if current_username not in users:
             return jsonify({'error': 'User not found'}), 404
-        
-        # Handle avatar upload
-        if 'avatar' in request.files:
-            file = request.files['avatar']
-            if file:
-                avatar_path = save_avatar(file, username)
-                if avatar_path:
-                    user['avatar'] = avatar_path
-        
-        # Update username
-        new_username = request.form.get('username')
-        if new_username and new_username != username:
+
+        # Verify current password if provided
+        if 'currentPassword' in data:
+            current_password = data['currentPassword']
+            if not verify_password(users[current_username]['password'], current_password):
+                return jsonify({'error': 'Current password is incorrect'}), 401
+
+        # Update username if provided
+        new_username = data.get('newUsername')
+        if new_username and new_username != current_username:
             if new_username in users:
-                return jsonify({'error': 'Username already taken'}), 400
+                return jsonify({'error': 'Username already exists'}), 400
             
-            # Create new user entry with updated username
-            users[new_username] = user
-            del users[username]
+            # Create new user entry with old user's data
+            users[new_username] = users[current_username].copy()
+            del users[current_username]
             
             # Update session
             session['username'] = new_username
             
-            # Update memories
-            memories = load_memories()
-            if username in memories:
-                memories[new_username] = memories[username]
-                del memories[username]
-                save_memories(memories)
-        
-        # Update password
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        
-        if current_password and new_password:
-            if user['password'] != hash_password(current_password):
-                return jsonify({'error': 'Current password is incorrect'}), 400
-            user['password'] = hash_password(new_password)
-        
+            # Update memories username
+            update_memories_username(current_username, new_username)
+            current_username = new_username
+
+        # Update password if provided
+        new_password = data.get('newPassword')
+        if new_password:
+            users[current_username]['password'] = hash_password(new_password)
+
+        # Handle avatar upload
+        if 'avatar' in request.files:
+            avatar_file = request.files['avatar']
+            if avatar_file and allowed_file(avatar_file.filename):
+                try:
+                    # Create avatars directory if it doesn't exist
+                    if not os.path.exists(AVATAR_FOLDER):
+                        os.makedirs(AVATAR_FOLDER)
+                    
+                    # Save and process avatar
+                    filename = save_avatar(avatar_file, current_username)
+                    users[current_username]['avatar'] = filename
+                except Exception as e:
+                    print(f"Error saving avatar: {str(e)}")
+                    return jsonify({'error': 'Failed to save avatar'}), 500
+
+        # Save updated users
         save_users(users)
-        return jsonify({'success': True})
+        
+        return jsonify({
+            'message': 'Account updated successfully',
+            'username': current_username,
+            'avatar': users[current_username].get('avatar')
+        }), 200
         
     except Exception as e:
-        print("Error in update_account:", str(e))
-        print("Traceback:", traceback.format_exc())
-        return jsonify({'error': 'Failed to update account'}), 500
+        print(f"Error updating account: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'Internal server error'}), 500
+
+def update_memories_username(old_username, new_username):
+    try:
+        memories = load_memories()
+        updated = False
+        
+        for memory in memories:
+            if memory['username'] == old_username:
+                memory['username'] = new_username
+                updated = True
+        
+        if updated:
+            save_memories(memories)
+            
+    except Exception as e:
+        print(f"Error updating memories username: {str(e)}")
+        traceback.print_exc()
 
 @app.route('/auth/avatar/<username>')
 def get_avatar(username):

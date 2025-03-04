@@ -195,12 +195,16 @@
     </div>
 
     <script>
+        // Add base URL configuration
+        const API_BASE_URL = window.location.hostname === 'localhost' ? '' : 'https://duckyai.onrender.com';
+        let currentUser = null;
+        let darkMode = localStorage.getItem('darkMode') === 'true';
+        
         let conversationId = null;
         let pingInterval = null;
         let pingFailCount = 0;
         const MAX_PING_FAILURES = 3;
         const PING_INTERVAL = 120000; // 2 minutes in milliseconds
-        let currentUser = null;
         
         // Add ping functionality
         function startPingInterval() {
@@ -876,17 +880,17 @@
         async function updateAccount(event) {
             event.preventDefault();
             
-            const username = document.getElementById('accountUsername').value;
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-            
-            if (newPassword && newPassword !== confirmNewPassword) {
-                showError('New passwords do not match');
-                return;
-            }
-            
             try {
+                const username = document.getElementById('accountUsername').value;
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+                
+                if (newPassword && newPassword !== confirmNewPassword) {
+                    showError('New passwords do not match');
+                    return;
+                }
+                
                 const formData = new FormData();
                 const avatarFile = document.getElementById('avatarUpload').files[0];
                 if (avatarFile) {
@@ -907,17 +911,33 @@
                 });
                 
                 const data = await response.json();
-                if (data.success) {
+                if (response.ok) {
                     currentUser = username;
                     hideAccount();
-                    showError('Account updated successfully');
+                    showSuccess('Account updated successfully');
+                    // Update the welcome message with new username
+                    const chatContainer = document.getElementById('chatContainer');
+                    const firstMessage = chatContainer.querySelector('.ducky-message .text');
+                    if (firstMessage) {
+                        firstMessage.innerHTML = `Welcome back, ${username}! 👋<br>I'm your friendly AI duck assistant.<br>How can I help you today? 🦆`;
+                    }
                 } else {
-                    showError(data.error);
+                    throw new Error(data.error || 'Failed to update account');
                 }
             } catch (error) {
                 console.error('Update account error:', error);
-                showError('Failed to update account');
+                showError(error.message || 'Failed to update account. Please try again.');
             }
+        }
+
+        // Add success message function
+        function showSuccess(message) {
+            const errorElement = document.getElementById('authError');
+            errorElement.style.color = '#10a37f';
+            errorElement.textContent = message;
+            setTimeout(() => {
+                errorElement.textContent = '';
+            }, 3000);
         }
     </script>
 </body>

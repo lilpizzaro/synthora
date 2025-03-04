@@ -90,38 +90,42 @@
         <!-- Slide-out Menu -->
         <div class="slide-menu-overlay" id="menuOverlay"></div>
         <div class="slide-menu" id="slideMenu">
-            <button class="menu-item" onclick="showAccount()">
-                <span>👤</span>
-                Account
-            </button>
-            <button class="menu-item" onclick="showMemories()">
-                <span>💭</span>
-                Memories
-            </button>
-            <button class="menu-item" onclick="toggleDarkMode()">
-                <span>🌓</span>
-                Theme
-            </button>
-            <button class="menu-item" onclick="clearChat()">
-                <span>🗑️</span>
-                Clear Chat
-            </button>
-            <button class="menu-item" onclick="shareChat()">
-                <span>📤</span>
-                Share
-            </button>
-            <button class="menu-item" onclick="toggleSound()">
-                <span>🔊</span>
-                Sound
-            </button>
-            <button class="menu-item" onclick="toggleNotifications()">
-                <span>🔔</span>
-                Notifications
-            </button>
-            <button class="menu-item" onclick="logout()">
-                <span>🚪</span>
-                Logout
-            </button>
+            <div class="menu-items">
+                <button class="menu-item" onclick="showMemories()">
+                    <span>💭</span>
+                    Memories
+                </button>
+                <button class="menu-item" onclick="toggleDarkMode()">
+                    <span>🌓</span>
+                    Theme
+                </button>
+                <button class="menu-item" onclick="clearChat()">
+                    <span>🗑️</span>
+                    Clear Chat
+                </button>
+                <button class="menu-item" onclick="shareChat()">
+                    <span>📤</span>
+                    Share
+                </button>
+                <button class="menu-item" onclick="toggleSound()">
+                    <span>🔊</span>
+                    Sound
+                </button>
+                <button class="menu-item" onclick="toggleNotifications()">
+                    <span>🔔</span>
+                    Notifications
+                </button>
+                <button class="menu-item" onclick="logout()">
+                    <span>🚪</span>
+                    Logout
+                </button>
+            </div>
+            <div class="menu-account" onclick="showAccount()">
+                <div class="account-preview">
+                    <img id="menuAvatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture" class="account-avatar">
+                    <span id="menuUsername" class="account-username">Account</span>
+                </div>
+            </div>
         </div>
 
         <div class="chat-header">

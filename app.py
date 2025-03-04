@@ -399,17 +399,29 @@ def ping():
 @app.route('/auth/update', methods=['POST'])
 def update_account():
     try:
+        print("Received /auth/update request")  # Debug log
+        
         if 'username' not in session:
+            print("No username in session")  # Debug log
             return jsonify({'error': 'Not authenticated'}), 401
 
         current_username = session['username']
+        print(f"Current username: {current_username}")  # Debug log
+        
+        # Debug log request data
+        print("Content-Type:", request.content_type)
+        print("Form data:", request.form.to_dict() if request.form else "No form data")
+        print("JSON data:", request.get_json(silent=True))
+        print("Files:", request.files.to_dict() if request.files else "No files")
         
         # Handle form data and files
         data = {}
-        if request.form:
+        if request.content_type and 'multipart/form-data' in request.content_type:
             data = request.form.to_dict()
-        elif request.is_json:
-            data = request.get_json()
+        elif request.content_type and 'application/json' in request.content_type:
+            data = request.get_json(silent=True) or {}
+        
+        print(f"Processed data: {data}")  # Debug log
         
         if not data and not request.files:
             return jsonify({'error': 'No data provided'}), 400
@@ -417,12 +429,14 @@ def update_account():
         # Load current users
         users = load_users()
         if current_username not in users:
+            print(f"User not found: {current_username}")  # Debug log
             return jsonify({'error': 'User not found'}), 404
 
         # Verify current password if provided
         if 'currentPassword' in data:
             current_password = data['currentPassword']
             if not verify_password(users[current_username]['password'], current_password):
+                print("Invalid current password")  # Debug log
                 return jsonify({'error': 'Current password is incorrect'}), 401
 
         # Update username if provided
@@ -430,6 +444,8 @@ def update_account():
         if new_username and new_username != current_username:
             if new_username in users:
                 return jsonify({'error': 'Username already exists'}), 400
+            
+            print(f"Updating username from {current_username} to {new_username}")  # Debug log
             
             # Create new user entry with old user's data
             users[new_username] = users[current_username].copy()
@@ -445,11 +461,14 @@ def update_account():
         # Update password if provided
         new_password = data.get('newPassword')
         if new_password:
+            print("Updating password")  # Debug log
             users[current_username]['password'] = hash_password(new_password)
 
         # Handle avatar upload
         if 'avatar' in request.files:
             avatar_file = request.files['avatar']
+            print(f"Processing avatar file: {avatar_file.filename}")  # Debug log
+            
             if avatar_file and allowed_file(avatar_file.filename):
                 try:
                     # Create avatars directory if it doesn't exist
@@ -459,23 +478,31 @@ def update_account():
                     # Save and process avatar
                     filename = save_avatar(avatar_file, current_username)
                     users[current_username]['avatar'] = filename
+                    print(f"Avatar saved as: {filename}")  # Debug log
                 except Exception as e:
                     print(f"Error saving avatar: {str(e)}")
+                    traceback.print_exc()
                     return jsonify({'error': 'Failed to save avatar'}), 500
 
         # Save updated users
         save_users(users)
+        print("Users saved successfully")  # Debug log
         
-        return jsonify({
+        response_data = {
             'message': 'Account updated successfully',
             'username': current_username,
             'avatar': users[current_username].get('avatar')
-        }), 200
+        }
+        print(f"Sending response: {response_data}")  # Debug log
+        return jsonify(response_data), 200
         
     except Exception as e:
         print(f"Error updating account: {str(e)}")
         traceback.print_exc()
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({
+            'error': 'Internal server error',
+            'details': str(e)
+        }), 500
 
 def update_memories_username(old_username, new_username):
     try:

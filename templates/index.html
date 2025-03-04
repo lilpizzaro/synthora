@@ -17,6 +17,11 @@
     <!-- Auth Overlay -->
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-container">
+            <div class="auth-header">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="auth-logo">
+                <h1 class="auth-title">Ducky AI</h1>
+                <p class="auth-subtitle">Your friendly AI duck assistant</p>
+            </div>
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
                 <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
@@ -25,26 +30,37 @@
             <!-- Login Form -->
             <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
                 <div class="form-group">
+                    <div class="input-icon">👤</div>
                     <input type="text" id="loginUsername" placeholder="Username" required>
                 </div>
                 <div class="form-group">
+                    <div class="input-icon">🔒</div>
                     <input type="password" id="loginPassword" placeholder="Password" required>
                 </div>
-                <button type="submit" class="auth-button">Login</button>
+                <button type="submit" class="auth-button">
+                    <span class="button-text">Login</span>
+                    <span class="button-icon">→</span>
+                </button>
             </form>
             
             <!-- Signup Form -->
             <form id="signupForm" class="auth-form" style="display: none;" onsubmit="handleSignup(event)">
                 <div class="form-group">
+                    <div class="input-icon">👤</div>
                     <input type="text" id="signupUsername" placeholder="Choose Username" required>
                 </div>
                 <div class="form-group">
+                    <div class="input-icon">🔒</div>
                     <input type="password" id="signupPassword" placeholder="Choose Password" required>
                 </div>
                 <div class="form-group">
+                    <div class="input-icon">🔒</div>
                     <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
                 </div>
-                <button type="submit" class="auth-button">Sign Up</button>
+                <button type="submit" class="auth-button">
+                    <span class="button-text">Create Account</span>
+                    <span class="button-icon">→</span>
+                </button>
             </form>
             
             <div id="authError" class="auth-error"></div>

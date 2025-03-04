@@ -311,16 +311,16 @@ def generate_stream(user_input):
 # Improved keep-alive mechanism
 def keep_alive():
     """Function to keep the server awake by pinging it every 2 minutes"""
-    app_url = os.environ.get("APP_URL")
+    app_url = os.environ.get("APP_URL", "https://ducky-ai.onrender.com").rstrip('/')
     
     # If APP_URL isn't set, try to construct it using RENDER_EXTERNAL_URL (provided by Render)
     if not app_url:
         render_external_url = os.environ.get("RENDER_EXTERNAL_URL")
         if render_external_url:
-            app_url = render_external_url
+            app_url = render_external_url.rstrip('/')
             print(f"Using RENDER_EXTERNAL_URL for keep-alive: {app_url}")
         else:
-            print("Warning: APP_URL not set and RENDER_EXTERNAL_URL not available, keep-alive disabled")
+            print("Warning: APP_URL not set and RENDER_EXTERNAL_URL not available")
             return
     
     ping_interval = int(os.environ.get("PING_INTERVAL_SECONDS", "120"))  # Default to 2 minutes
@@ -328,24 +328,23 @@ def keep_alive():
     
     while True:
         try:
-            print(f"Sending keep-alive ping to {app_url}/ping")
-            response = requests.get(f"{app_url}/ping")
-            print(f"Keep-alive response: {response.status_code}")
+            # Try the root path first as it's more reliable
+            root_response = requests.get(f"{app_url}/")
+            print(f"Root path response: {root_response.status_code}")
             
-            # If we can't access our own ping endpoint, try the root path
-            if response.status_code != 200:
-                print(f"Ping endpoint failed, trying root path...")
-                root_response = requests.get(app_url)
-                print(f"Root path response: {root_response.status_code}")
+            if root_response.status_code == 200:
+                print("Keep-alive successful")
+            else:
+                print(f"Root path failed with status code: {root_response.status_code}")
+                
         except Exception as e:
             print(f"Keep-alive ping failed: {str(e)}")
         
-        # Sleep for the specified interval (default 2 minutes)
         time.sleep(ping_interval)
 
-# Start the keep-alive thread - enable by default on Render
-is_on_render = os.environ.get("RENDER", "false").lower() == "true" or os.environ.get("IS_RENDER", "false").lower() == "true"
-should_enable_keep_alive = os.environ.get("ENABLE_KEEP_ALIVE", "true" if is_on_render else "false").lower() == "true"
+# Start the keep-alive thread if we're on Render
+is_on_render = bool(os.environ.get("RENDER", False)) or bool(os.environ.get("IS_RENDER", False))
+should_enable_keep_alive = os.environ.get("ENABLE_KEEP_ALIVE", str(is_on_render)).lower() == "true"
 
 if should_enable_keep_alive:
     keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
@@ -354,10 +353,14 @@ if should_enable_keep_alive:
 else:
     print("Keep-alive disabled by configuration")
 
-@app.route('/ping', methods=['GET'])
+@app.route('/ping')
 def ping():
-    """Simple endpoint to keep the server alive"""
-    return jsonify({'status': 'ok'})
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'ok',
+        'timestamp': time.time(),
+        'environment': 'render' if is_on_render else 'local'
+    })
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

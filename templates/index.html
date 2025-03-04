@@ -155,6 +155,37 @@
         const PING_INTERVAL = 120000; // 2 minutes in milliseconds
         let currentUser = null;
         
+        // Add ping functionality
+        function startPingInterval() {
+            // Clear any existing interval
+            if (pingInterval) {
+                clearInterval(pingInterval);
+            }
+            
+            // Reset failure count
+            pingFailCount = 0;
+            
+            // Start new ping interval
+            pingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/ping');
+                    if (!response.ok) {
+                        throw new Error('Ping failed');
+                    }
+                    // Reset failure count on successful ping
+                    pingFailCount = 0;
+                } catch (error) {
+                    console.error('Ping error:', error);
+                    pingFailCount++;
+                    
+                    if (pingFailCount >= MAX_PING_FAILURES) {
+                        clearInterval(pingInterval);
+                        showError('Lost connection to server. Please refresh the page.');
+                    }
+                }
+            }, PING_INTERVAL);
+        }
+
         // Check authentication status on load
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthStatus();
@@ -286,31 +317,36 @@
             // Start the ping interval
             startPingInterval();
             
-            // Show splash screen
+            // Show main content and hide auth overlay
+            const authOverlay = document.getElementById('authOverlay');
+            const mainContent = document.getElementById('mainContent');
             const splashScreen = document.getElementById('splashScreen');
-            splashScreen.style.display = 'flex';
             
-            // Continue with existing splash screen logic
+            authOverlay.style.display = 'none';
+            splashScreen.style.display = 'flex';
+            mainContent.style.display = 'none';
+            
+            // Show splash screen animation
             setTimeout(function() {
                 splashScreen.classList.add('fade-out');
                 
                 setTimeout(function() {
                     splashScreen.style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'flex';
-                    document.getElementById('mainContent').classList.add('fade-in');
+                    mainContent.style.display = 'flex';
+                    mainContent.classList.add('fade-in');
                     
-                    setTimeout(() => {
-                        const chatContainer = document.getElementById('chatContainer');
-                        chatContainer.innerHTML = '';
-                        
-                        addMessageToChat('ducky', [
-                            `Welcome back, ${currentUser}! 👋`,
-                            'I\'m your friendly AI duck assistant.',
-                            'How can I help you today? 🦆'
-                        ]);
-                        
-                        document.getElementById('userInput').focus();
-                    }, 300);
+                    // Clear chat and add welcome message
+                    const chatContainer = document.getElementById('chatContainer');
+                    chatContainer.innerHTML = '';
+                    
+                    addMessageToChat('ducky', [
+                        `Welcome back, ${currentUser}! 👋`,
+                        'I\'m your friendly AI duck assistant.',
+                        'How can I help you today? 🦆'
+                    ]);
+                    
+                    // Focus input field
+                    document.getElementById('userInput').focus();
                 }, 800);
             }, 4500);
         }
@@ -527,13 +563,11 @@
                 body.classList.remove('dark-mode');
                 body.classList.remove('force-dark');
                 body.classList.add('force-light');
-                localStorage.setItem('darkMode', 'false');
                 localStorage.setItem('theme', 'light');
             } else {
                 body.classList.add('dark-mode');
                 body.classList.add('force-dark');
                 body.classList.remove('force-light');
-                localStorage.setItem('darkMode', 'true');
                 localStorage.setItem('theme', 'dark');
             }
             
@@ -611,25 +645,22 @@
             alert('Notifications toggle coming soon!');
         }
 
-        // Update theme initialization to work with new menu
+        // Update theme initialization
         window.addEventListener('load', function() {
             const savedTheme = localStorage.getItem('theme') || 'system';
-            const savedDarkMode = localStorage.getItem('darkMode');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const body = document.body;
             
-            if (savedTheme === 'dark' || savedDarkMode === 'true') {
+            if (savedTheme === 'dark' || (savedTheme === 'system' && prefersDark)) {
                 body.classList.add('force-dark');
                 body.classList.add('dark-mode');
                 body.classList.remove('force-light');
                 updateSplashScreenTheme(true);
-            } else if (savedTheme === 'light' || savedDarkMode === 'false') {
+            } else if (savedTheme === 'light' || (savedTheme === 'system' && !prefersDark)) {
                 body.classList.add('force-light');
                 body.classList.remove('force-dark');
                 body.classList.remove('dark-mode');
                 updateSplashScreenTheme(false);
-            } else {
-                // Default theme based on system preference
-                updateSplashScreenTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
             }
             
             // Update all theme button icons
@@ -711,13 +742,13 @@
         function updateSplashScreenTheme(isDarkMode) {
             const root = document.documentElement;
             if (isDarkMode) {
-                root.style.setProperty('--splash-background', '#000000');
+                root.style.setProperty('--splash-background', '#1d1d1f');
                 root.style.setProperty('--splash-text', '#ffffff');
                 root.style.setProperty('--splash-text-rgb', '255, 255, 255');
             } else {
-                root.style.setProperty('--splash-background', '#000000');
-                root.style.setProperty('--splash-text', '#ffffff');
-                root.style.setProperty('--splash-text-rgb', '255, 255, 255');
+                root.style.setProperty('--splash-background', '#ffffff');
+                root.style.setProperty('--splash-text', '#000000');
+                root.style.setProperty('--splash-text-rgb', '0, 0, 0');
             }
         }
 

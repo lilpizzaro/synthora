@@ -161,7 +161,7 @@
             <div class="account-body">
                 <div class="avatar-section">
                     <div class="avatar-preview" onclick="document.getElementById('avatarUpload').click()">
-                        <img id="avatarImage" src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Profile Picture">
+                        <img id="avatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture">
                     </div>
                     <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)">
                     <button class="avatar-button" onclick="document.getElementById('avatarUpload').click()">
@@ -248,10 +248,9 @@
                 .then(data => {
                     if (data.authenticated) {
                         currentUser = data.username;
-                        // Update avatar if available
-                        if (data.avatar_url) {
-                            document.getElementById('avatarImage').src = `${data.avatar_url}?t=${new Date().getTime()}`;
-                        }
+                        // Update avatar if available, otherwise use default
+                        const defaultAvatar = "{{ url_for('static', filename='images/def_avatar.png') }}";
+                        document.getElementById('avatarImage').src = data.avatar_url ? `${data.avatar_url}?t=${new Date().getTime()}` : defaultAvatar;
                         hideAuthOverlay();
                         startApp();
                     } else {
@@ -423,10 +422,11 @@
             if (type === 'user') {
                 // Fetch current avatar URL from the account modal or use default
                 const currentAvatar = document.getElementById('avatarImage').src;
+                const defaultAvatar = "{{ url_for('static', filename='images/def_avatar.png') }}";
                 content = `
                     <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
                     <div class="avatar">
-                        <img src="${currentAvatar}" alt="User Avatar" class="avatar-img">
+                        <img src="${currentAvatar || defaultAvatar}" alt="User Avatar" class="avatar-img" onerror="this.src='${defaultAvatar}'">
                     </div>
                 `;
             } else if (type === 'ducky') {

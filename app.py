@@ -293,7 +293,8 @@ def logout():
 def auth_status():
     if 'username' in session:
         username = session['username']
-        avatar_url = url_for('get_avatar', username=username, _external=True) if os.path.exists(os.path.join(AVATAR_FOLDER, f"{username}.png")) else None
+        avatar_path = os.path.join(AVATAR_FOLDER, f"{username}.png")
+        avatar_url = url_for('get_avatar', username=username, _external=True) if os.path.exists(avatar_path) else url_for('static', filename='images/def_avatar.png', _external=True)
         return jsonify({
             'authenticated': True,
             'username': username,
@@ -538,9 +539,11 @@ def update_account():
 @app.route('/auth/avatar/<username>')
 def get_avatar(username):
     avatar_path = os.path.join(AVATAR_FOLDER, f"{username}.png")
+    default_avatar = os.path.join('static', 'images', 'def_avatar.png')
+    
     if os.path.exists(avatar_path):
         return send_file(avatar_path, mimetype='image/png')
-    return send_file('static/images/default-avatar.png', mimetype='image/png')
+    return send_file(default_avatar, mimetype='image/png')
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

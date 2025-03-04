@@ -188,9 +188,10 @@ body {
     align-items: center;
     gap: 12px;
     height: 64px;
-    z-index: 1001;
+    z-index: 998;
     box-shadow: 0 1px 8px var(--bubble-shadow);
     position: relative;
+    transition: background-color 0.3s ease;
 }
 
 .logo-container {
@@ -972,6 +973,8 @@ body.force-dark button:hover {
     justify-content: center;
     width: 40px;
     height: 40px;
+    position: relative;
+    z-index: 1001;
 }
 
 .menu-button:hover {
@@ -998,6 +1001,9 @@ body.force-dark button:hover {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border-color);
+    position: relative;
+    z-index: 998;
+    transition: background-color 0.3s ease;
 }
 
 /* Focus styling for better keyboard navigation */
@@ -1644,6 +1650,8 @@ body.force-light .account-actions .cancel-button {
     justify-content: center;
     width: 40px;
     height: 40px;
+    position: relative;
+    z-index: 1001;
 }
 
 .menu-button:hover {
@@ -1727,4 +1735,34 @@ body.force-light .account-actions .cancel-button {
 
 .menu-item span {
     font-size: 20px;
+}
+
+/* Theme-specific menu styles */
+:root {
+    --menu-bg: rgba(255, 255, 255, 0.8);
+    --menu-border: rgba(0, 0, 0, 0.1);
+    --menu-item-hover: rgba(0, 0, 0, 0.05);
+    --menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode {
+    --menu-bg: rgba(28, 28, 30, 0.8);
+    --menu-border: rgba(255, 255, 255, 0.1);
+    --menu-item-hover: rgba(255, 255, 255, 0.05);
+    --menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Force light/dark mode overrides */
+body.force-light {
+    --menu-bg: rgba(255, 255, 255, 0.8);
+    --menu-border: rgba(0, 0, 0, 0.1);
+    --menu-item-hover: rgba(0, 0, 0, 0.05);
+    --menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+body.force-dark {
+    --menu-bg: rgba(28, 28, 30, 0.8);
+    --menu-border: rgba(255, 255, 255, 0.1);
+    --menu-item-hover: rgba(255, 255, 255, 0.05);
+    --menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 } 

@@ -891,14 +891,14 @@ body.force-dark button:hover {
 .slide-menu {
     position: fixed;
     top: 0;
-    left: -300px;
-    width: 280px;
+    left: -320px;
+    width: 300px;
     height: 100%;
     background: var(--menu-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 1000;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-right: 1px solid var(--menu-border);
     padding: 20px 0;
     display: flex;
@@ -908,7 +908,7 @@ body.force-dark button:hover {
 }
 
 .slide-menu.active {
-    transform: translateX(300px);
+    transform: translateX(320px);
 }
 
 .slide-menu-overlay {
@@ -935,7 +935,7 @@ body.force-dark button:hover {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 20px;
+    padding: 12px 24px;
     font-size: 16px;
     font-weight: 500;
     color: var(--text-color);
@@ -945,6 +945,7 @@ body.force-dark button:hover {
     width: 100%;
     text-align: left;
     transition: all 0.2s ease;
+    justify-content: flex-start;
 }
 
 .menu-item:hover {
@@ -957,6 +958,8 @@ body.force-dark button:hover {
 
 .menu-item span {
     font-size: 20px;
+    text-align: left;
+    min-width: 24px;
 }
 
 .menu-button {
@@ -1688,8 +1691,8 @@ body.force-light .account-actions .cancel-button {
 .slide-menu {
     position: fixed;
     top: 0;
-    left: -300px;
-    width: 280px;
+    left: -320px;
+    width: 300px;
     height: 100%;
     background: var(--menu-bg);
     backdrop-filter: blur(10px);
@@ -1705,7 +1708,7 @@ body.force-light .account-actions .cancel-button {
 }
 
 .slide-menu.active {
-    transform: translateX(300px);
+    transform: translateX(320px);
 }
 
 /* Menu items */
@@ -1713,7 +1716,7 @@ body.force-light .account-actions .cancel-button {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 20px;
+    padding: 12px 24px;
     font-size: 16px;
     font-weight: 500;
     color: var(--text-color);
@@ -1723,6 +1726,7 @@ body.force-light .account-actions .cancel-button {
     width: 100%;
     text-align: left;
     transition: all 0.2s ease;
+    justify-content: flex-start;
 }
 
 .menu-item:hover {
@@ -1735,6 +1739,8 @@ body.force-light .account-actions .cancel-button {
 
 .menu-item span {
     font-size: 20px;
+    text-align: left;
+    min-width: 24px;
 }
 
 /* Theme-specific menu styles */

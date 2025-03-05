@@ -431,53 +431,80 @@ def get_avatar(username):
 # Improved keep-alive mechanism
 def keep_alive():
     """Function to keep the server awake by pinging it every 2 minutes"""
-    app_url = os.environ.get("APP_URL")
-    
-    # If APP_URL isn't set, try to construct it using RENDER_EXTERNAL_URL (provided by Render)
-    if not app_url:
-        render_external_url = os.environ.get("RENDER_EXTERNAL_URL")
-        if render_external_url:
-            app_url = render_external_url
-            print(f"Using RENDER_EXTERNAL_URL for keep-alive: {app_url}")
-        else:
-            print("Warning: APP_URL not set and RENDER_EXTERNAL_URL not available, keep-alive disabled")
-            return
-    
-    ping_interval = int(os.environ.get("PING_INTERVAL_SECONDS", "120"))  # Default to 2 minutes
-    print(f"Starting keep-alive service with ping interval of {ping_interval} seconds to {app_url}")
-    
     while True:
         try:
-            print(f"Sending keep-alive ping to {app_url}/ping")
-            response = requests.get(f"{app_url}/ping")
-            print(f"Keep-alive response: {response.status_code}")
+            # Get the base URL from environment variables
+            base_url = os.environ.get('RENDER_EXTERNAL_URL')
+            if not base_url:
+                print("Warning: RENDER_EXTERNAL_URL not set, keep-alive disabled")
+                return
+
+            # Make sure the URL doesn't end with a slash
+            base_url = base_url.rstrip('/')
+            ping_url = f"{base_url}/ping"
             
-            # If we can't access our own ping endpoint, try the root path
-            if response.status_code != 200:
-                print(f"Ping endpoint failed, trying root path...")
-                root_response = requests.get(app_url)
-                print(f"Root path response: {root_response.status_code}")
+            print(f"Sending keep-alive ping to {ping_url}")
+            
+            # Use a session to maintain connections
+            with requests.Session() as session:
+                # Set a reasonable timeout
+                response = session.get(
+                    ping_url,
+                    timeout=10,
+                    headers={'User-Agent': 'DuckyAI-KeepAlive/1.0'}
+                )
+                
+                if response.status_code == 200:
+                    print(f"Keep-alive successful: {response.status_code}")
+                else:
+                    print(f"Keep-alive failed with status: {response.status_code}")
+                    # Try root path as fallback
+                    root_response = session.get(base_url, timeout=10)
+                    print(f"Root path response: {root_response.status_code}")
+                
+        except requests.RequestException as e:
+            print(f"Keep-alive request failed: {str(e)}")
         except Exception as e:
-            print(f"Keep-alive ping failed: {str(e)}")
+            print(f"Unexpected error in keep-alive: {str(e)}")
         
-        # Sleep for the specified interval (default 2 minutes)
-        time.sleep(ping_interval)
+        # Sleep for 2 minutes before next ping
+        time.sleep(120)
 
-# Start the keep-alive thread - enable by default on Render
-is_on_render = os.environ.get("RENDER", "false").lower() == "true" or os.environ.get("IS_RENDER", "false").lower() == "true"
-should_enable_keep_alive = os.environ.get("ENABLE_KEEP_ALIVE", "true" if is_on_render else "false").lower() == "true"
-
-if should_enable_keep_alive:
+# Start the keep-alive thread only on Render
+if os.environ.get('RENDER') == 'true':
+    print("Starting keep-alive thread for Render deployment")
     keep_alive_thread = threading.Thread(target=keep_alive, daemon=True)
     keep_alive_thread.start()
-    print("Keep-alive thread started")
 else:
-    print("Keep-alive disabled by configuration")
+    print("Not running on Render, keep-alive disabled")
 
 @app.route('/ping')
 def ping():
-    """Simple endpoint for keep-alive pings"""
-    return jsonify({"status": "ok", "message": "Ducky is awake!"}), 200
+    """Health check endpoint"""
+    try:
+        # Verify database connection
+        db.session.execute('SELECT 1')
+        db_status = "healthy"
+    except Exception as e:
+        print(f"Database health check failed: {str(e)}")
+        db_status = "unhealthy"
+    
+    return jsonify({
+        "status": "ok",
+        "timestamp": datetime.utcnow().isoformat(),
+        "database": db_status,
+        "message": "Ducky is awake!"
+    }), 200
+
+# Add a root health check endpoint
+@app.route('/health')
+def health_check():
+    """Alternative health check endpoint"""
+    return jsonify({
+        "status": "ok",
+        "service": "Ducky AI",
+        "timestamp": datetime.utcnow().isoformat()
+    }), 200
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

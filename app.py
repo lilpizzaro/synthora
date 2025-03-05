@@ -160,6 +160,7 @@ def verify_password(plain_password, hashed_password):
     try:
         # Debug logging
         print(f"Verifying password:")
+        print(f"- Plain password: {plain_password}")
         print(f"- Hash type before conversion: {type(hashed_password)}")
         print(f"- Raw stored hash: {hashed_password}")
         
@@ -167,21 +168,25 @@ def verify_password(plain_password, hashed_password):
         try:
             # Convert password to bytes
             pass_bytes = plain_password.encode('utf-8')
+            print(f"- Password bytes: {pass_bytes}")
             # Convert hash string back to bytes
-            hash_bytes = hashed_password.encode('utf-8', 'strict')
+            hash_bytes = hashed_password.encode('utf-8')
+            print(f"- Hash bytes: {hash_bytes}")
             print("- Successfully converted strings to bytes")
-        except Exception as e:
-            print(f"- Error converting to bytes: {str(e)}")
-            return False
-        
-        # Verify the password
-        try:
+            
+            # Test hash generation with same salt
+            test_hash = bcrypt.hashpw(pass_bytes, hash_bytes)
+            print(f"- Test hash with same salt: {test_hash}")
+            print(f"- Do hashes match? {test_hash == hash_bytes}")
+            
+            # Verify the password
             result = bcrypt.checkpw(pass_bytes, hash_bytes)
             print(f"Password verification result: {'Success' if result else 'Failed'}")
             return result
         except Exception as e:
-            print(f"- Error in bcrypt.checkpw: {str(e)}")
-            print(f"- Raw hash bytes: {hash_bytes}")
+            print(f"- Error during verification: {str(e)}")
+            print(f"- Error type: {type(e)}")
+            print(f"- Full error details: {traceback.format_exc()}")
             return False
             
     except Exception as e:

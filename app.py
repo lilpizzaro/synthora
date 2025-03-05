@@ -148,8 +148,9 @@ def hash_password(password):
         raise ValueError("Password cannot be empty")
     # Generate a salt and hash the password
     salt = bcrypt.gensalt()
-    # Return the hash directly as a string, without additional encoding
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    # Store the raw bytes as a string, without any encoding/escaping
+    return hashed.decode('utf-8', 'strict')
 
 def verify_password(plain_password, hashed_password):
     """Verify a password against its hash using bcrypt"""
@@ -160,18 +161,15 @@ def verify_password(plain_password, hashed_password):
         # Debug logging
         print(f"Verifying password:")
         print(f"- Hash type before conversion: {type(hashed_password)}")
-        print(f"- Hash length before conversion: {len(str(hashed_password))}")
+        print(f"- Raw stored hash: {hashed_password}")
         
-        # Ensure we're working with clean strings/bytes
-        if isinstance(hashed_password, bytes):
-            hashed_password = hashed_password.decode('utf-8')
-        
-        # Convert to clean bytes for bcrypt
+        # Convert to bytes for bcrypt
         try:
-            hash_bytes = hashed_password.encode('utf-8')
+            # Convert password to bytes
             pass_bytes = plain_password.encode('utf-8')
+            # Convert hash string back to bytes
+            hash_bytes = hashed_password.encode('utf-8', 'strict')
             print("- Successfully converted strings to bytes")
-            print(f"- Hash bytes format: {hash_bytes[:20]}")
         except Exception as e:
             print(f"- Error converting to bytes: {str(e)}")
             return False
@@ -183,7 +181,7 @@ def verify_password(plain_password, hashed_password):
             return result
         except Exception as e:
             print(f"- Error in bcrypt.checkpw: {str(e)}")
-            print(f"- Hash format appears to be: {hash_bytes[:30]}")
+            print(f"- Raw hash bytes: {hash_bytes}")
             return False
             
     except Exception as e:

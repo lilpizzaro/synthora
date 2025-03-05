@@ -54,6 +54,8 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     avatar_url = db.Column(db.String(200))
+    avatar_data = db.Column(db.LargeBinary)
+    avatar_content_type = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     memories = db.relationship('Memory', backref='user', lazy=True)
 
@@ -93,9 +95,6 @@ def allowed_file(filename):
 def save_avatar(file, username):
     if file and allowed_file(file.filename):
         try:
-            # Ensure avatar directory exists
-            os.makedirs(AVATAR_FOLDER, exist_ok=True)
-            
             # Read the image data
             image_data = file.read()
             image = Image.open(io.BytesIO(image_data))
@@ -128,14 +127,23 @@ def save_avatar(file, username):
             # Resize to standard size
             output = output.resize((256, 256), Image.Resampling.LANCZOS)
             
-            # Save the processed image
-            avatar_path = os.path.join(AVATAR_FOLDER, f"{username}.png")
-            output.save(avatar_path, 'PNG')
+            # Save the processed image to a bytes buffer
+            img_byte_arr = io.BytesIO()
+            output.save(img_byte_arr, format='PNG')
+            img_byte_arr = img_byte_arr.getvalue()
+            
+            # Store image data in the database
+            user = User.query.filter_by(username=username).first()
+            if user:
+                user.avatar_data = img_byte_arr
+                user.avatar_content_type = 'image/png'
+                db.session.commit()
             
             # Clear the file pointer position
             file.seek(0)
             
-            return avatar_path
+            # Return a URL that will serve the avatar from the database
+            return f'/auth/avatar/{username}'
         except Exception as e:
             print(f"Error saving avatar: {str(e)}")
             traceback.print_exc()
@@ -471,9 +479,14 @@ def update_account():
 @app.route('/auth/avatar/<username>')
 def get_avatar(username):
     user = User.query.filter_by(username=username).first()
-    if not user or not user.avatar_url:
-        return send_file('static/images/default-avatar.png', mimetype='image/png')
-    return send_file(user.avatar_url, mimetype='image/png')
+    if not user or not user.avatar_data:
+        return send_file('static/images/def_avatar.png', mimetype='image/png')
+    
+    return send_file(
+        io.BytesIO(user.avatar_data),
+        mimetype=user.avatar_content_type or 'image/png',
+        as_attachment=False
+    )
 
 @app.route('/auth/reset-password', methods=['POST'])
 def reset_password():

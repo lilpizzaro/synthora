@@ -155,7 +155,7 @@
                 <input type="text" id="userInput" placeholder="Message Ducky..." autocomplete="off">
             </div>
             <button id="sendButton" onclick="sendMessage()">
-                <span class="button-text">Send</span>
+                <img src="{{ url_for('static', filename='images/send.png') }}" alt="Send">
             </button>
         </div>
     </div>
@@ -477,15 +477,12 @@
         // Add loading state to button
         function setButtonLoading(loading) {
             const button = document.getElementById('sendButton');
-            const buttonText = button.querySelector('.button-text');
             
             if (loading) {
                 button.disabled = true;
-                buttonText.textContent = '...';
                 button.classList.add('loading');
             } else {
                 button.disabled = false;
-                buttonText.textContent = 'Send';
                 button.classList.remove('loading');
             }
         }

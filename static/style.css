@@ -403,8 +403,8 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 20px;
-    background: var(--premium-gradient);
+    padding: 12px;
+    background: transparent;
     color: white;
     border: none;
     border-radius: 18px;
@@ -413,10 +413,19 @@ button {
     font-weight: 500;
     transition: all 0.2s ease;
     margin-left: 12px;
+    width: 40px;
+    height: 40px;
+}
+
+button img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
 }
 
 button:hover {
     transform: translateY(-1px);
+    opacity: 0.8;
 }
 
 button:active {

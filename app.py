@@ -142,13 +142,20 @@ def save_avatar(file, username):
     return None
 
 def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash a password using SHA-256"""
+    if not password:
+        raise ValueError("Password cannot be empty")
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 def verify_password(plain_password, hashed_password):
     """Verify a password against its hash"""
     if not plain_password or not hashed_password:
+        print("Password verification failed: Empty password or hash")
         return False
-    return hash_password(plain_password) == hashed_password
+    calculated_hash = hash_password(plain_password)
+    matches = calculated_hash == hashed_password
+    print(f"Password verification: {'Success' if matches else 'Failed'}")
+    return matches
 
 def login_required(f):
     @wraps(f)
@@ -259,22 +266,35 @@ def signup():
     password = data.get('password')
     
     if not username or not password:
+        print(f"Signup failed: Missing username or password")
         return jsonify({'error': 'Username and password are required'}), 400
+    
+    # Debug logging
+    print(f"Signup attempt for username: {username}")
     
     # Check if username already exists
     if User.query.filter_by(username=username).first():
+        print(f"Signup failed: Username {username} already exists")
         return jsonify({'error': 'Username already exists'}), 400
+    
+    # Hash password and create user
+    password_hash = hash_password(password)
+    print(f"Creating user with password hash: {password_hash[:10]}...")
     
     # Create new user
     user = User(
         username=username,
-        password_hash=hash_password(password)
+        password_hash=password_hash
     )
     db.session.add(user)
     db.session.commit()
     
+    print(f"Signup successful for user {username}")
     session['username'] = username
-    return jsonify({'message': 'Signup successful', 'username': username})
+    return jsonify({
+        'message': 'Signup successful',
+        'username': username
+    })
 
 @app.route('/auth/login', methods=['POST'])
 def login():
@@ -283,14 +303,33 @@ def login():
     password = data.get('password')
     
     if not username or not password:
+        print(f"Login attempt failed: Missing username or password")
         return jsonify({'error': 'Username and password are required'}), 400
     
+    # Debug logging
+    print(f"Login attempt for username: {username}")
+    
     user = User.query.filter_by(username=username).first()
-    if not user or not verify_password(password, user.password_hash):
+    if not user:
+        print(f"Login failed: User {username} not found")
         return jsonify({'error': 'Invalid username or password'}), 401
     
+    # Debug password verification
+    hashed_password = hash_password(password)
+    stored_password = user.password_hash
+    print(f"Password verification - Provided hash: {hashed_password[:10]}..., Stored hash: {stored_password[:10]}...")
+    
+    if not verify_password(password, user.password_hash):
+        print(f"Login failed: Invalid password for user {username}")
+        return jsonify({'error': 'Invalid username or password'}), 401
+    
+    print(f"Login successful for user {username}")
     session['username'] = username
-    return jsonify({'message': 'Login successful', 'username': username})
+    return jsonify({
+        'message': 'Login successful',
+        'username': username,
+        'avatar_url': user.avatar_url
+    })
 
 @app.route('/auth/logout', methods=['POST'])
 def logout():

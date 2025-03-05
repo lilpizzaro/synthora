@@ -155,7 +155,7 @@ body {
 
 @media (min-width: 769px) {
     .container {
-        padding: 24px;
+        padding: 0;
         height: calc(100vh - 48px);
         max-width: 100%;
         margin: 0 auto;
@@ -163,13 +163,19 @@ body {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
     
-    .user-message .text,
-    .ducky-message .text {
-        max-width: 65%;
+    .chat-header {
+        margin: 0;
+        padding: 16px 24px;
+        border-radius: 12px 12px 0 0;
     }
     
     .chat-container {
-        padding: 20px;
+        padding: 24px;
+    }
+    
+    .user-message .text,
+    .ducky-message .text {
+        max-width: 65%;
     }
 }
 
@@ -924,21 +930,21 @@ body.force-dark button:hover {
 .slide-menu {
     position: fixed;
     top: 0;
-    right: -300px;
+    left: -300px;
     width: 300px;
     height: 100vh;
     background: var(--menu-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-left: 1px solid var(--menu-border);
+    border-right: 1px solid var(--menu-border);
     box-shadow: var(--menu-shadow);
-    transition: right 0.3s ease;
+    transition: left 0.3s ease;
     z-index: 1001;
     overflow-y: auto;
 }
 
 .slide-menu.active {
-    right: 0;
+    left: 0;
 }
 
 .slide-menu-overlay {
@@ -1844,21 +1850,21 @@ body.force-dark .form-group input {
 .slide-menu {
     position: fixed;
     top: 0;
-    right: -300px;
+    left: -300px;
     width: 300px;
     height: 100vh;
     background: var(--menu-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-left: 1px solid var(--menu-border);
+    border-right: 1px solid var(--menu-border);
     box-shadow: var(--menu-shadow);
-    transition: right 0.3s ease;
+    transition: left 0.3s ease;
     z-index: 1001;
     overflow-y: auto;
 }
 
 .slide-menu.active {
-    right: 0;
+    left: 0;
 }
 
 /* Menu items */

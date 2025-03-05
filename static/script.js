@@ -120,6 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
         accountModal.style.display = '';
         memoriesModal.style.display = '';
     }, 100);
+    handleMobileKeyboard();
+    initTouchScrolling();
 });
 
 // Handle escape key to close modals
@@ -130,4 +132,52 @@ document.addEventListener('keydown', (e) => {
         slideMenu.classList.remove('active');
         menuOverlay.classList.remove('active');
     }
-}); 
+});
+
+// Handle mobile keyboard visibility
+function handleMobileKeyboard() {
+    const header = document.querySelector('.chat-header');
+    const visualViewport = window.visualViewport;
+
+    if (!visualViewport || !header) return;
+
+    let lastHeight = visualViewport.height;
+
+    visualViewport.addEventListener('resize', () => {
+        // If the height decreased significantly, keyboard is likely shown
+        const heightDifference = Math.abs(lastHeight - visualViewport.height);
+        const isKeyboardVisible = visualViewport.height < lastHeight && heightDifference > 150;
+        
+        header.classList.toggle('keyboard-visible', isKeyboardVisible);
+        lastHeight = visualViewport.height;
+    });
+}
+
+// Add touch scrolling handlers
+function initTouchScrolling() {
+    const accountBody = document.querySelector('.account-body');
+    const authContainer = document.querySelector('.auth-container');
+    
+    // Enable smooth scrolling on iOS
+    if (accountBody) {
+        accountBody.style.WebkitOverflowScrolling = 'touch';
+        
+        // Prevent body scroll when modal is open
+        accountBody.addEventListener('touchmove', (e) => {
+            if (accountBody.scrollHeight > accountBody.clientHeight) {
+                e.stopPropagation();
+            }
+        }, { passive: true });
+    }
+    
+    if (authContainer) {
+        authContainer.style.WebkitOverflowScrolling = 'touch';
+        
+        // Prevent body scroll when auth container is scrollable
+        authContainer.addEventListener('touchmove', (e) => {
+            if (authContainer.scrollHeight > authContainer.clientHeight) {
+                e.stopPropagation();
+            }
+        }, { passive: true });
+    }
+} 

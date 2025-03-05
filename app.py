@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw
 import io
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from sqlalchemy import text
 
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
@@ -147,7 +148,9 @@ def hash_password(password):
         raise ValueError("Password cannot be empty")
     # Generate a salt and hash the password
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt)
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    # Convert bytes to string for storage
+    return hashed.decode('utf-8')
 
 def verify_password(plain_password, hashed_password):
     """Verify a password against its hash using bcrypt"""
@@ -155,15 +158,41 @@ def verify_password(plain_password, hashed_password):
         print("Password verification failed: Empty password or hash")
         return False
     try:
+        # Debug logging
+        print(f"Verifying password:")
+        print(f"- Hash type before conversion: {type(hashed_password)}")
+        print(f"- Hash length before conversion: {len(str(hashed_password))}")
+        
         # Convert string hash to bytes if necessary
         if isinstance(hashed_password, str):
-            hashed_password = hashed_password.encode('utf-8')
+            try:
+                hashed_password = hashed_password.encode('utf-8')
+                print("- Successfully converted hash to bytes")
+            except Exception as e:
+                print(f"- Error converting hash to bytes: {str(e)}")
+                return False
+        
+        # Convert plain password to bytes
+        try:
+            plain_password = plain_password.encode('utf-8')
+            print("- Successfully converted password to bytes")
+        except Exception as e:
+            print(f"- Error converting password to bytes: {str(e)}")
+            return False
+        
         # Verify the password
-        result = bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
-        print(f"Password verification: {'Success' if result else 'Failed'}")
-        return result
+        try:
+            result = bcrypt.checkpw(plain_password, hashed_password)
+            print(f"Password verification result: {'Success' if result else 'Failed'}")
+            return result
+        except Exception as e:
+            print(f"- Error in bcrypt.checkpw: {str(e)}")
+            print(f"- Hash format appears to be: {hashed_password[:20]}")
+            return False
+            
     except Exception as e:
         print(f"Password verification error: {str(e)}")
+        print(f"Full error details: {traceback.format_exc()}")
         return False
 
 def login_required(f):
@@ -329,6 +358,11 @@ def login():
         return jsonify({'error': 'Invalid username or password'}), 401
     
     try:
+        # Debug: Print hash details
+        print(f"Stored hash type: {type(user.password_hash)}")
+        print(f"Stored hash length: {len(user.password_hash)}")
+        print(f"First few chars of stored hash: {user.password_hash[:20] if isinstance(user.password_hash, str) else 'Not a string'}")
+        
         if not verify_password(password, user.password_hash):
             print(f"Login failed: Invalid password for user {username}")
             return jsonify({'error': 'Invalid username or password'}), 401
@@ -342,6 +376,7 @@ def login():
         })
     except Exception as e:
         print(f"Error during login: {str(e)}")
+        print(f"Full error details: {traceback.format_exc()}")
         return jsonify({'error': 'An error occurred during login'}), 500
 
 @app.route('/auth/logout', methods=['POST'])
@@ -496,7 +531,7 @@ def ping():
     """Health check endpoint"""
     try:
         # Verify database connection
-        db.session.execute('SELECT 1')
+        db.session.execute(text('SELECT 1'))
         db_status = "healthy"
     except Exception as e:
         print(f"Database health check failed: {str(e)}")

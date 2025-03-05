@@ -148,9 +148,8 @@ def hash_password(password):
         raise ValueError("Password cannot be empty")
     # Generate a salt and hash the password
     salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-    # Convert bytes to string for storage
-    return hashed.decode('utf-8')
+    # Return the hash directly as a string, without additional encoding
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def verify_password(plain_password, hashed_password):
     """Verify a password against its hash using bcrypt"""
@@ -163,31 +162,28 @@ def verify_password(plain_password, hashed_password):
         print(f"- Hash type before conversion: {type(hashed_password)}")
         print(f"- Hash length before conversion: {len(str(hashed_password))}")
         
-        # Convert string hash to bytes if necessary
-        if isinstance(hashed_password, str):
-            try:
-                hashed_password = hashed_password.encode('utf-8')
-                print("- Successfully converted hash to bytes")
-            except Exception as e:
-                print(f"- Error converting hash to bytes: {str(e)}")
-                return False
+        # Ensure we're working with clean strings/bytes
+        if isinstance(hashed_password, bytes):
+            hashed_password = hashed_password.decode('utf-8')
         
-        # Convert plain password to bytes
+        # Convert to clean bytes for bcrypt
         try:
-            plain_password = plain_password.encode('utf-8')
-            print("- Successfully converted password to bytes")
+            hash_bytes = hashed_password.encode('utf-8')
+            pass_bytes = plain_password.encode('utf-8')
+            print("- Successfully converted strings to bytes")
+            print(f"- Hash bytes format: {hash_bytes[:20]}")
         except Exception as e:
-            print(f"- Error converting password to bytes: {str(e)}")
+            print(f"- Error converting to bytes: {str(e)}")
             return False
         
         # Verify the password
         try:
-            result = bcrypt.checkpw(plain_password, hashed_password)
+            result = bcrypt.checkpw(pass_bytes, hash_bytes)
             print(f"Password verification result: {'Success' if result else 'Failed'}")
             return result
         except Exception as e:
             print(f"- Error in bcrypt.checkpw: {str(e)}")
-            print(f"- Hash format appears to be: {hashed_password[:20]}")
+            print(f"- Hash format appears to be: {hash_bytes[:30]}")
             return False
             
     except Exception as e:
@@ -475,6 +471,32 @@ def get_avatar(username):
     if not user or not user.avatar_url:
         return send_file('static/images/default-avatar.png', mimetype='image/png')
     return send_file(user.avatar_url, mimetype='image/png')
+
+@app.route('/auth/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    username = data.get('username')
+    new_password = data.get('password')
+    
+    if not username or not new_password:
+        return jsonify({'error': 'Username and new password are required'}), 400
+    
+    print(f"Password reset attempt for username: {username}")
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    try:
+        # Hash and update the password
+        user.password_hash = hash_password(new_password)
+        db.session.commit()
+        print(f"Password reset successful for user {username}")
+        return jsonify({'message': 'Password reset successful'})
+    except Exception as e:
+        print(f"Error during password reset: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'An error occurred during password reset'}), 500
 
 # Improved keep-alive mechanism
 def keep_alive():

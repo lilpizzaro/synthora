@@ -234,6 +234,9 @@ def generate_ducky_response(user_input, conversation_id=None):
         # Add user message to history
         conversations[conversation_id].append({"role": "user", "message": user_input})
         
+        # Check if this is the first message
+        is_first_message = len(conversations[conversation_id]) <= 1
+        
         # Build messages array
         messages = [
             {

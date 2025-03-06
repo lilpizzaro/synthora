@@ -514,7 +514,7 @@ body.force-dark button:hover {
         width: 20px;
         height: 20px;
     }
-    
+
     .chat-header .title {
         font-size: 18px;
     }
@@ -1166,7 +1166,7 @@ body.force-dark button:hover {
 
 .account-form input {
     width: 100%;
-    padding: 12px;
+        padding: 12px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     background: var(--input-background);
@@ -1188,7 +1188,7 @@ body.force-dark button:hover {
 
 .cancel-button {
     flex: 1;
-    padding: 12px;
+        padding: 12px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     background: transparent;
@@ -1204,7 +1204,7 @@ body.force-dark button:hover {
 
 .save-button {
     flex: 1;
-    padding: 12px;
+        padding: 12px;
     border: none;
     border-radius: 8px;
     background: var(--primary-color);
@@ -1382,8 +1382,8 @@ body.force-dark {
     }
     
     .account-content {
-        width: 100%;
-        height: 100%;
+    width: 100%;
+    height: 100%;
         max-width: none;
         margin: 0;
         border-radius: 0;
@@ -1679,7 +1679,7 @@ body.force-dark {
         transform: translateY(20px);
     }
     to {
-        opacity: 1;
+    opacity: 1;
         transform: translateY(0);
     }
 }
@@ -1715,10 +1715,10 @@ body.force-dark {
 
     .auth-container {
         padding: 24px;
-        width: 100%;
+    width: 100%;
         max-width: none;
         border-radius: 0;
-        height: 100%;
+    height: 100%;
         max-height: 100%;
         box-shadow: none;
     }
@@ -1733,12 +1733,12 @@ body.force-dark {
     }
 
     .auth-subtitle {
-        font-size: 14px;
-    }
+    font-size: 14px;
+}
 
-    .form-group input {
+.form-group input {
         padding: 12px 16px 12px 44px;
-        font-size: 16px;
+    font-size: 16px;
     }
 
     .auth-button {
@@ -1749,17 +1749,17 @@ body.force-dark {
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
     .auth-container {
-        background: var(--input-background);
+    background: var(--input-background);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
+}
 
     .auth-tabs {
         background: rgba(0, 0, 0, 0.2);
-    }
+}
 
     .auth-tab.active {
-        background: var(--primary-color);
-        color: white;
+    background: var(--primary-color);
+    color: white;
     }
 
     .form-group input {
@@ -1935,4 +1935,88 @@ body.force-dark {
     --menu-border: rgba(255, 255, 255, 0.1);
     --menu-item-hover: rgba(255, 255, 255, 0.05);
     --menu-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Auth links */
+.auth-links {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.auth-links a {
+    color: #4CAF50;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.5em;
+}
+
+.modal-body {
+    padding: 0 10px;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-button:hover {
+    color: #333;
+}
+
+#resetError {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+#resetError.success {
+    color: #4CAF50;
+}
+
+#resetError.error {
+    color: #f44336;
 } 

@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, url_for, send_file
 import os
-import google.generativeai as genai
 import traceback
 import uuid
 from dotenv import load_dotenv
@@ -14,8 +13,9 @@ from werkzeug.utils import secure_filename
 from PIL import Image, ImageDraw
 import io
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import text
+import genai
 
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
@@ -27,6 +27,12 @@ elif os.path.exists('/.env'):
 else:
     # Fallback for local development
     load_dotenv()
+
+# Configure API settings
+API_BASE_URL = "https://api.electronhub.top/nsfw"
+API_KEY = "ek-ZDLTvdQtkEWOlZETPIwnnAxmKGyXymDqUrfeabDk8c8lNvxlNz"
+
+# Configure the Gemini API
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -52,12 +58,36 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
     avatar_url = db.Column(db.String(200))
     avatar_data = db.Column(db.LargeBinary)
     avatar_content_type = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    email = db.Column(db.String(120), unique=True)
+    reset_token = db.Column(db.String(100), unique=True)
+    reset_token_expiry = db.Column(db.DateTime)
     memories = db.relationship('Memory', backref='user', lazy=True)
+
+    def generate_reset_token(self):
+        """Generate a secure reset token valid for 1 hour"""
+        self.reset_token = str(uuid.uuid4())
+        self.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+        db.session.commit()
+        return self.reset_token
+
+    def verify_reset_token(self, token):
+        """Verify if the given reset token is valid"""
+        if (self.reset_token != token or 
+            not self.reset_token_expiry or 
+            datetime.utcnow() > self.reset_token_expiry):
+            return False
+        return True
+
+    def clear_reset_token(self):
+        """Clear the reset token after it's been used"""
+        self.reset_token = None
+        self.reset_token_expiry = None
+        db.session.commit()
 
 class Memory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -66,28 +96,8 @@ class Memory(db.Model):
     ducky_response = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Create database tables
-with app.app_context():
-    db.create_all()
-
 # Store conversations in memory (for development)
 conversations = {}
-
-# Configure the Gemini API
-gemini_api_key = os.environ.get("GEMINI_API_KEY")
-if not gemini_api_key:
-    raise ValueError("GEMINI_API_KEY environment variable is not set")
-    
-genai.configure(api_key=gemini_api_key)
-
-# File paths for avatars
-AVATAR_FOLDER = 'static/avatars'
-
-# Create necessary directories
-os.makedirs(AVATAR_FOLDER, exist_ok=True)
-
-# Allowed image extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -220,10 +230,7 @@ def generate_ducky_response(user_input, conversation_id=None):
         # Add user message to history
         conversations[conversation_id].append({"role": "user", "message": user_input})
         
-        # Configure the model with the experimental model
-        model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
-        
-        # Build prompt with conversation history
+        # Build conversation history
         conversation_history = ""
         is_first_message = len(conversations[conversation_id]) <= 1
         
@@ -235,7 +242,7 @@ def generate_ducky_response(user_input, conversation_id=None):
                 conversation_history += f"{role}: {entry['message']}\n"
             conversation_history += "\n"
         
-        # Include the system instruction in the prompt
+        # Prepare the prompt
         prompt = f"""You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
 
         Important knowledge (ONLY share when SPECIFICALLY asked):
@@ -262,21 +269,31 @@ def generate_ducky_response(user_input, conversation_id=None):
         
         Your response (keep it friendly and conversational):"""
         
-        # Generate the response with safety settings
-        generation_config = {
-            "temperature": 0.75,
-            "top_p": 0.92,
-            "top_k": 40,
-            "max_output_tokens": 1000,
+        # Make request to the API
+        headers = {
+            'Authorization': f'Bearer {API_KEY}',
+            'Content-Type': 'application/json'
         }
-
-        response = model.generate_content(
-            prompt,
-            generation_config=generation_config
-        )
+        
+        data = {
+            'prompt': prompt,
+            'max_tokens': 1000,
+            'temperature': 0.75,
+            'top_p': 0.92,
+            'top_k': 40
+        }
+        
+        response = requests.post(API_BASE_URL, headers=headers, json=data)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        
+        # Parse the response
+        response_data = response.json()
+        response_text = response_data.get('text', '').strip()
+        
+        if not response_text:
+            raise ValueError("Empty response from API")
         
         # Store assistant's response in history
-        response_text = response.text.strip()
         conversations[conversation_id].append({"role": "assistant", "message": response_text})
         
         # Save the conversation to memories if user is logged in
@@ -292,6 +309,10 @@ def generate_ducky_response(user_input, conversation_id=None):
                 db.session.commit()
         
         return response_text, conversation_id
+    except requests.exceptions.RequestException as e:
+        print("API request error:", str(e))
+        print("Traceback:", traceback.format_exc())
+        raise
     except Exception as e:
         print("Error in generate_ducky_response:", str(e))
         print("Traceback:", traceback.format_exc())
@@ -326,8 +347,8 @@ def signup():
         # Hash password and create user
         password_hash = hash_password(password)
         print(f"Creating user with bcrypt hash")
-        
-        # Create new user
+    
+    # Create new user
         user = User(
             username=username,
             password_hash=password_hash
@@ -335,12 +356,13 @@ def signup():
         db.session.add(user)
         db.session.commit()
         
-        print(f"Signup successful for user {username}")
-        session['username'] = username
-        return jsonify({
-            'message': 'Signup successful',
-            'username': username
-        })
+    print(f"Signup successful for user {username}")  # This line needs to be inside the try block
+    session['username'] = username
+    return jsonify({
+        'message': 'Signup successful',
+        'username': username
+    })  # Corrected indentation
+
     except Exception as e:
         print(f"Error during signup: {str(e)}")
         db.session.rollback()
@@ -375,7 +397,7 @@ def login():
             return jsonify({'error': 'Invalid username or password'}), 401
         
         print(f"Login successful for user {username}")
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -396,11 +418,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-            return jsonify({
-                'authenticated': True,
+        return jsonify({
+            'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-            })
+        })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
@@ -488,26 +510,67 @@ def get_avatar(username):
         as_attachment=False
     )
 
+@app.route('/auth/request-reset', methods=['POST'])
+def request_reset():
+    """Request a password reset by providing email"""
+    data = request.json
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Don't reveal whether email exists
+        return jsonify({'message': 'If the email exists, you will receive reset instructions'}), 200
+    
+    # Generate reset token
+    token = user.generate_reset_token()
+    
+    # TODO: Send email with reset link
+    reset_link = f"{request.host_url}reset-password?token={token}&email={email}"
+    print(f"Password reset link (TODO - send via email): {reset_link}")
+    
+    return jsonify({'message': 'If the email exists, you will receive reset instructions'}), 200
+
+@app.route('/auth/verify-reset-token', methods=['POST'])
+def verify_reset_token():
+    """Verify if a reset token is valid"""
+    data = request.json
+    token = data.get('token')
+    email = data.get('email')
+    
+    if not token or not email:
+        return jsonify({'error': 'Token and email are required'}), 400
+    
+    user = User.query.filter_by(email=email).first()
+    if not user or not user.verify_reset_token(token):
+        return jsonify({'error': 'Invalid or expired reset token'}), 400
+    
+    return jsonify({'message': 'Token is valid'}), 200
+
 @app.route('/auth/reset-password', methods=['POST'])
 def reset_password():
+    """Reset password using token"""
     data = request.json
-    username = data.get('username')
+    token = data.get('token')
+    email = data.get('email')
     new_password = data.get('password')
     
-    if not username or not new_password:
-        return jsonify({'error': 'Username and new password are required'}), 400
+    if not token or not email or not new_password:
+        return jsonify({'error': 'Token, email and new password are required'}), 400
     
-    print(f"Password reset attempt for username: {username}")
-    
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
+    user = User.query.filter_by(email=email).first()
+    if not user or not user.verify_reset_token(token):
+        return jsonify({'error': 'Invalid or expired reset token'}), 400
     
     try:
-        # Hash and update the password
+        # Update password and clear reset token
         user.password_hash = hash_password(new_password)
+        user.clear_reset_token()
         db.session.commit()
-        print(f"Password reset successful for user {username}")
+        
+        print(f"Password reset successful for user {user.username}")
         return jsonify({'message': 'Password reset successful'})
     except Exception as e:
         print(f"Error during password reset: {str(e)}")
@@ -546,7 +609,7 @@ def keep_alive():
                     print(f"Keep-alive failed with status: {response.status_code}")
                     # Try root path as fallback
                     root_response = session.get(base_url, timeout=10)
-                    print(f"Root path response: {root_response.status_code}")
+                print(f"Root path response: {root_response.status_code}")
                 
         except requests.RequestException as e:
             print(f"Keep-alive request failed: {str(e)}")

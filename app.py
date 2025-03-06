@@ -15,6 +15,7 @@ import io
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from sqlalchemy import text
+from openai import OpenAI
 
 # Load environment variables from secret file first, then regular .env
 if os.path.exists('/etc/secrets/.env'):
@@ -28,10 +29,14 @@ else:
     load_dotenv()
 
 # Configure API settings
-API_BASE_URL = "https://api.electronhub.top/nsfw/chat/completions"
+API_BASE_URL = "https://api.electronhub.top/nsfw/v1"
 API_KEY = "ek-ZDLTvdQtkEWOlZETPIwnnAxmKGyXymDqUrfeabDk8c8lNvxlNz"
 
-# Configure the Gemini API
+# Initialize OpenAI client
+client = OpenAI(
+    base_url=API_BASE_URL,
+    api_key=API_KEY
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -229,61 +234,44 @@ def generate_ducky_response(user_input, conversation_id=None):
         # Add user message to history
         conversations[conversation_id].append({"role": "user", "message": user_input})
         
-        # Build conversation history
-        conversation_history = ""
-        is_first_message = len(conversations[conversation_id]) <= 1
-        
-        if not is_first_message:
-            conversation_history = "Previous conversation:\n"
-            # Include last 10 messages at most
-            for entry in conversations[conversation_id][-10:-1]:
-                role = "User" if entry["role"] == "user" else "Ducky"
-                conversation_history += f"{role}: {entry['message']}\n"
-            conversation_history += "\n"
-        
-        # Make request to the API
-        headers = {
-            'Authorization': f'Bearer {API_KEY}',
-            'Content-Type': 'application/json'
-        }
-        
-        data = {
-            'model': 'gpt-3.5-turbo',
-            'messages': [
-                {
-                    'role': 'system',
-                    'content': """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
+        # Build messages array
+        messages = [
+            {
+                "role": "system",
+                "content": """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
 
-                    Important knowledge (ONLY share when SPECIFICALLY asked):
-                    - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
-                    - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
-                }
-            ],
-            'temperature': 0.75,
-            'top_p': 0.92,
-            'max_tokens': 1000
-        }
+                Important knowledge (ONLY share when SPECIFICALLY asked):
+                - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
+                - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
+            }
+        ]
 
         # Add conversation history if it exists
         if not is_first_message:
+            # Include last 10 messages at most
             for entry in conversations[conversation_id][-10:-1]:
-                data['messages'].append({
-                    'role': 'user' if entry['role'] == 'user' else 'assistant',
-                    'content': entry['message']
+                messages.append({
+                    "role": "user" if entry["role"] == "user" else "assistant",
+                    "content": entry["message"]
                 })
-
+        
         # Add current user message
-        data['messages'].append({
-            'role': 'user',
-            'content': user_input
+        messages.append({
+            "role": "user",
+            "content": user_input
         })
         
-        response = requests.post(API_BASE_URL, headers=headers, json=data)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        # Make request to the API
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.75,
+            top_p=0.92,
+            max_tokens=1000
+        )
         
         # Parse the response
-        response_data = response.json()
-        response_text = response_data.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
+        response_text = response.choices[0].message.content.strip()
         
         if not response_text:
             raise ValueError("Empty response from API")
@@ -304,10 +292,6 @@ def generate_ducky_response(user_input, conversation_id=None):
                 db.session.commit()
         
         return response_text, conversation_id
-    except requests.exceptions.RequestException as e:
-        print("API request error:", str(e))
-        print("Traceback:", traceback.format_exc())
-        raise
     except Exception as e:
         print("Error in generate_ducky_response:", str(e))
         print("Traceback:", traceback.format_exc())

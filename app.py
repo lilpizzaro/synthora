@@ -268,7 +268,7 @@ def generate_ducky_response(user_input, conversation_id=None):
         Current user message: {user_input}
         
         Your response (keep it friendly and conversational):"""
-        
+
         # Make request to the API
         headers = {
             'Authorization': f'Bearer {API_KEY}',
@@ -347,8 +347,8 @@ def signup():
         # Hash password and create user
         password_hash = hash_password(password)
         print(f"Creating user with bcrypt hash")
-    
-    # Create new user
+        
+        # Create new user
         user = User(
             username=username,
             password_hash=password_hash
@@ -356,13 +356,12 @@ def signup():
         db.session.add(user)
         db.session.commit()
         
-    print(f"Signup successful for user {username}")  # This line needs to be inside the try block
-    session['username'] = username
-    return jsonify({
-        'message': 'Signup successful',
-        'username': username
-    })  # Corrected indentation
-
+        print(f"Signup successful for user {username}")
+        session['username'] = username
+        return jsonify({
+            'message': 'Signup successful',
+            'username': username
+        })
     except Exception as e:
         print(f"Error during signup: {str(e)}")
         db.session.rollback()
@@ -397,7 +396,7 @@ def login():
             return jsonify({'error': 'Invalid username or password'}), 401
         
         print(f"Login successful for user {username}")
-    session['username'] = username
+        session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -418,11 +417,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-        return jsonify({
-            'authenticated': True,
+            return jsonify({
+                'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-        })
+            })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])

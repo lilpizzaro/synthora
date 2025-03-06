@@ -28,7 +28,7 @@ else:
     load_dotenv()
 
 # Configure API settings
-API_BASE_URL = "https://api.electronhub.top/nsfw"
+API_BASE_URL = "https://api.electronhub.top/v1/chat/completions"
 API_KEY = "ek-ZDLTvdQtkEWOlZETPIwnnAxmKGyXymDqUrfeabDk8c8lNvxlNz"
 
 # Configure the Gemini API
@@ -241,33 +241,6 @@ def generate_ducky_response(user_input, conversation_id=None):
                 conversation_history += f"{role}: {entry['message']}\n"
             conversation_history += "\n"
         
-        # Prepare the prompt
-        prompt = f"""You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
-
-        Important knowledge (ONLY share when SPECIFICALLY asked):
-        - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
-        - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary
-
-        Conversation style:
-        - Be warm, friendly, and genuinely interested in what the user has to say
-        - Encourage open dialogue by asking relevant follow-up questions
-        - Show empathy and understanding in your responses
-        - Keep responses conversational and natural, like chatting with a friend
-        - Feel free to share relevant thoughts or experiences (while staying within AI bounds)
-        - Use casual language but remain respectful and helpful
-        - Don't be overly formal - it's okay to use common expressions and contractions
-        - If the user seems to want to just chat, engage in the conversation naturally
-        - If they need help, provide clear and helpful guidance
-        - Occasionally (but rarely) use a duck reference if it feels natural, but don't force it
-        - Keep responses concise but friendly
-
-        {'This is the first message in the conversation.' if is_first_message else 'This is NOT the first message. Do not greet the user again.'}
-        
-        {conversation_history}
-        Current user message: {user_input}
-        
-        Your response (keep it friendly and conversational):"""
-
         # Make request to the API
         headers = {
             'Authorization': f'Bearer {API_KEY}',
@@ -275,19 +248,42 @@ def generate_ducky_response(user_input, conversation_id=None):
         }
         
         data = {
-            'prompt': prompt,
-            'max_tokens': 1000,
+            'model': 'gpt-3.5-turbo',
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
+
+                    Important knowledge (ONLY share when SPECIFICALLY asked):
+                    - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
+                    - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
+                }
+            ],
             'temperature': 0.75,
             'top_p': 0.92,
-            'top_k': 40
+            'max_tokens': 1000
         }
+
+        # Add conversation history if it exists
+        if not is_first_message:
+            for entry in conversations[conversation_id][-10:-1]:
+                data['messages'].append({
+                    'role': 'user' if entry['role'] == 'user' else 'assistant',
+                    'content': entry['message']
+                })
+
+        # Add current user message
+        data['messages'].append({
+            'role': 'user',
+            'content': user_input
+        })
         
         response = requests.post(API_BASE_URL, headers=headers, json=data)
         response.raise_for_status()  # Raise an exception for bad status codes
         
         # Parse the response
         response_data = response.json()
-        response_text = response_data.get('text', '').strip()
+        response_text = response_data.get('choices', [{}])[0].get('message', {}).get('content', '').strip()
         
         if not response_text:
             raise ValueError("Empty response from API")

@@ -29,12 +29,12 @@ else:
     load_dotenv()
 
 # Configure API settings
-API_BASE_URL = "https://api.electronhub.top/nsfw/v1"
+API_BASE_URL = "https://api.electronhub.top"
 API_KEY = "ek-ZDLTvdQtkEWOlZETPIwnnAxmKGyXymDqUrfeabDk8c8lNvxlNz"
 
 # Initialize OpenAI client
 client = OpenAI(
-    base_url=API_BASE_URL,
+    base_url=f"{API_BASE_URL}/nsfw",
     api_key=API_KEY
 )
 

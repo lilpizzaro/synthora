@@ -28,7 +28,7 @@ else:
     load_dotenv()
 
 # Configure API settings
-API_BASE_URL = "https://api.electronhub.top/v1/chat/completions"
+API_BASE_URL = "https://api.electronhub.top/nsfw/chat/completions"
 API_KEY = "ek-ZDLTvdQtkEWOlZETPIwnnAxmKGyXymDqUrfeabDk8c8lNvxlNz"
 
 # Configure the Gemini API

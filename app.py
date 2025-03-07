@@ -33,7 +33,6 @@ load_dotenv()
 # Configure the Gemini API
 gemini_api_key = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=gemini_api_key)
-model = genai.GenerativeModel('gemini-pro')
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -231,6 +230,9 @@ def generate_ducky_response(user_input, conversation_id=None):
         # Add user message to history
         conversations[conversation_id].append({"role": "user", "message": user_input})
         
+        # Configure the model with the experimental model
+        model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
+        
         # Build conversation history
         conversation_history = ""
         is_first_message = len(conversations[conversation_id]) <= 1
@@ -248,12 +250,35 @@ def generate_ducky_response(user_input, conversation_id=None):
 
 Important knowledge (ONLY share when SPECIFICALLY asked):
 - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
-- When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
+- When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary
+
+Conversation style:
+- Be warm, friendly, and genuinely interested in what the user has to say
+- Encourage open dialogue by asking relevant follow-up questions
+- Show empathy and understanding in your responses
+- Keep responses conversational and natural, like chatting with a friend
+- Feel free to share relevant thoughts or experiences (while staying within AI bounds)
+- Use casual language but remain respectful and helpful
+- Don't be overly formal - it's okay to use common expressions and contractions
+- If the user seems to want to just chat, engage in the conversation naturally
+- If they need help, provide clear and helpful guidance
+- Occasionally (but rarely) use a duck reference if it feels natural, but don't force it
+- Keep responses concise but friendly"""
 
         full_prompt = f"{system_prompt}\n\n{conversation_history}User: {user_input}\nDucky:"
         
-        # Generate response using Gemini
-        response = model.generate_content(full_prompt)
+        # Generate response using Gemini with specific configuration
+        generation_config = {
+            "temperature": 0.75,
+            "top_p": 0.92,
+            "top_k": 40,
+            "max_output_tokens": 1000,
+        }
+        
+        response = model.generate_content(
+            full_prompt,
+            generation_config=generation_config
+        )
         response_text = response.text.strip()
         
         if not response_text:

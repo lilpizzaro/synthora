@@ -31,7 +31,7 @@ except FileNotFoundError:
     pass
 
 # Load regular .env file
-load_dotenv()
+    load_dotenv()
 
 # Configure the Gemini API
 gemini_api_key = os.getenv('GEMINI_API_KEY')
@@ -251,23 +251,23 @@ def generate_ducky_response(user_input, conversation_id=None):
         # Prepare the prompt
         system_prompt = """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
 
-Important knowledge (ONLY share when SPECIFICALLY asked):
-- When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
-- When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary
+        Important knowledge (ONLY share when SPECIFICALLY asked):
+        - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
+        - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary
 
-Conversation style:
-- Be warm, friendly, and genuinely interested in what the user has to say
-- Encourage open dialogue by asking relevant follow-up questions
-- Show empathy and understanding in your responses
-- Keep responses conversational and natural, like chatting with a friend
-- Feel free to share relevant thoughts or experiences (while staying within AI bounds)
-- Use casual language but remain respectful and helpful
-- Don't be overly formal - it's okay to use common expressions and contractions
-- If the user seems to want to just chat, engage in the conversation naturally
-- If they need help, provide clear and helpful guidance
-- Occasionally (but rarely) use a duck reference if it feels natural, but don't force it
+        Conversation style:
+        - Be warm, friendly, and genuinely interested in what the user has to say
+        - Encourage open dialogue by asking relevant follow-up questions
+        - Show empathy and understanding in your responses
+        - Keep responses conversational and natural, like chatting with a friend
+        - Feel free to share relevant thoughts or experiences (while staying within AI bounds)
+        - Use casual language but remain respectful and helpful
+        - Don't be overly formal - it's okay to use common expressions and contractions
+        - If the user seems to want to just chat, engage in the conversation naturally
+        - If they need help, provide clear and helpful guidance
+        - Occasionally (but rarely) use a duck reference if it feels natural, but don't force it
 - Keep responses concise but friendly"""
-
+        
         full_prompt = f"{system_prompt}\n\n{conversation_history}User: {user_input}\nDucky:"
         
         # Generate response using Gemini with specific configuration
@@ -277,7 +277,7 @@ Conversation style:
             "top_k": 40,
             "max_output_tokens": 1000,
         }
-        
+
         response = model.generate_content(
             full_prompt,
             generation_config=generation_config
@@ -337,8 +337,8 @@ def signup():
         # Hash password and create user
         password_hash = hash_password(password)
         print(f"Creating user with bcrypt hash")
-        
-        # Create new user
+    
+    # Create new user
         user = User(
             username=username,
             password_hash=password_hash
@@ -347,7 +347,7 @@ def signup():
         db.session.commit()
         
         print(f"Signup successful for user {username}")
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -386,7 +386,7 @@ def login():
             return jsonify({'error': 'Invalid username or password'}), 401
         
         print(f"Login successful for user {username}")
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -407,11 +407,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-            return jsonify({
-                'authenticated': True,
+        return jsonify({
+            'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-            })
+        })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
@@ -439,18 +439,23 @@ def generate():
 @app.route('/memories', methods=['GET'])
 @login_required
 def get_memories():
-    user = User.query.filter_by(username=session['username']).first()
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    
-    memories = Memory.query.filter_by(user_id=user.id).order_by(Memory.timestamp.desc()).all()
-    memory_list = [{
-        'user_message': memory.user_message,
-        'ducky_response': memory.ducky_response,
-        'timestamp': memory.timestamp.isoformat()
-    } for memory in memories]
-    
-    return jsonify({'memories': memory_list})
+    try:
+        user = User.query.filter_by(username=session['username']).first()
+        if not user:
+            return jsonify({'memories': []}), 404
+        
+        memories = Memory.query.filter_by(user_id=user.id).order_by(Memory.timestamp.desc()).all()
+        memory_list = [{
+            'user_message': memory.user_message,
+            'ducky_response': memory.ducky_response,
+            'timestamp': memory.timestamp.isoformat()
+        } for memory in memories] if memories else []
+        
+        return jsonify({'memories': memory_list})
+    except Exception as e:
+        print(f"Error fetching memories: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'memories': [], 'error': str(e)}), 500
 
 @app.route('/auth/update', methods=['POST'])
 @login_required

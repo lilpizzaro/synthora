@@ -17,6 +17,9 @@ from datetime import datetime, timedelta
 from sqlalchemy import text
 import google.generativeai as genai
 
+# Define allowed file extensions for avatar uploads
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
 # Load environment variables from secret file first, then regular .env
 try:
     with open('.env.secret') as f:

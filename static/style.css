@@ -192,10 +192,11 @@ body {
     left: 0;
     right: 0;
     z-index: 100;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
     padding: 12px 16px;
+    gap: 16px;
     background-color: var(--background-color);
     border-bottom: 1px solid var(--border-color);
     backdrop-filter: blur(10px);
@@ -204,13 +205,10 @@ body {
 }
 
 .chat-header h1 {
+    justify-self: center;
+    margin: 0;
     display: flex;
     align-items: center;
-    margin: 0;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-color);
-    flex: 1;
     gap: 8px;
 }
 
@@ -364,72 +362,48 @@ body {
 /* Input area enhancements */
 .input-container {
     display: flex;
+    gap: 12px;
     padding: 16px;
+    align-items: center;
     background-color: var(--background-color);
     border-top: 1px solid var(--border-color);
-    position: relative;
-    z-index: 10;
-    box-shadow: 0 -4px 20px var(--bubble-shadow);
 }
 
 .input-wrapper {
-    display: flex;
     flex: 1;
     position: relative;
-    background-color: var(--input-bg);
-    border-radius: 24px;
-    padding: 0;
-    box-shadow: 0 2px 10px var(--input-shadow);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-.input-wrapper:focus-within {
-    box-shadow: 0 4px 15px var(--input-shadow);
-    transform: translateY(-1px);
-}
-
-input {
-    flex: 1;
-    padding: 14px 16px;
-    border: none;
+#sendButton {
+    width: 40px;
+    height: 40px;
+    padding: 8px;
     border-radius: 20px;
-    font-size: 16px;
-    background: transparent;
-    color: var(--text-color);
-    outline: none;
-}
-
-button {
+    min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px;
-    background: transparent;
-    color: white;
-    border: none;
-    border-radius: 18px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    margin-left: 12px;
-    width: 40px;
-    height: 40px;
 }
 
-button img {
+#sendButton img {
     width: 24px;
     height: 24px;
     object-fit: contain;
 }
 
-button:hover {
-    transform: translateY(-1px);
-    opacity: 0.8;
+/* Action buttons */
+.action-button {
+    padding: 8px;
+    min-width: 40px;
+    background: transparent;
+    color: var(--text-color);
+    box-shadow: none;
 }
 
-button:active {
-    transform: translateY(1px);
+.action-button:hover {
+    background-color: var(--menu-item-hover);
+    transform: none;
+    box-shadow: none;
 }
 
 /* Light theme button shadows */
@@ -914,21 +888,21 @@ body.force-dark button:hover {
 /* Menu Button */
 .menu-button {
     background: transparent;
-    border: none;
     color: var(--text-color);
-    font-size: 24px;
-    cursor: pointer;
     padding: 8px;
-    margin: 0;
+    min-width: 40px;
+    min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    border-radius: 8px;
+    font-size: 24px;
+    box-shadow: none;
+    margin-right: 8px;
 }
 
 .menu-button:hover {
-    background: var(--menu-item-hover);
+    background-color: var(--menu-item-hover);
+    transform: none;
 }
 
 .menu-button:focus {
@@ -942,14 +916,17 @@ body.force-dark button:hover {
     left: -300px;
     width: 300px;
     height: 100vh;
-    background: var(--menu-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-right: 1px solid var(--menu-border);
+    background-color: var(--menu-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: var(--menu-shadow);
+    border-right: 1px solid var(--menu-border);
+    z-index: 1000;
     transition: left 0.3s ease;
-    z-index: 1001;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 0;
 }
 
 .slide-menu.active {
@@ -977,25 +954,23 @@ body.force-dark button:hover {
 }
 
 /* Menu items */
-.menu-item {
+.menu-items {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: var(--text-color);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
+    flex-direction: column;
+    padding: 0 16px;
+    gap: 4px;
+}
+
+.menu-item {
     width: 100%;
     text-align: left;
-    transition: all 0.2s ease;
-    margin: 0;
-    box-sizing: border-box;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
 }
 
 .menu-item:hover {
-    background: var(--menu-item-hover);
+    background-color: var(--menu-item-hover);
 }
 
 .menu-item:focus {
@@ -1003,41 +978,36 @@ body.force-dark button:hover {
 }
 
 .menu-item span {
-    font-size: 20px;
-    opacity: 0.8;
+    margin-right: 12px;
+    font-size: 18px;
 }
 
 /* Account section at bottom of menu */
 .menu-account {
+    margin-top: auto;
     padding: 16px;
     border-top: 1px solid var(--menu-border);
-    background: var(--menu-bg);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.menu-account:hover {
-    background: var(--menu-item-hover);
 }
 
 .account-preview {
+    padding: 12px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
 .account-avatar {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid var(--border-color);
 }
 
 .account-username {
     color: var(--text-color);
-    font-weight: 500;
     font-size: 16px;
+    font-weight: 500;
 }
 
 /* Account modal fixes */
@@ -1166,7 +1136,7 @@ body.force-dark button:hover {
 
 .account-form input {
     width: 100%;
-        padding: 12px;
+    padding: 12px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     background: var(--input-background);
@@ -1188,7 +1158,7 @@ body.force-dark button:hover {
 
 .cancel-button {
     flex: 1;
-        padding: 12px;
+    padding: 12px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
     background: transparent;
@@ -1204,7 +1174,7 @@ body.force-dark button:hover {
 
 .save-button {
     flex: 1;
-        padding: 12px;
+    padding: 12px;
     border: none;
     border-radius: 8px;
     background: var(--primary-color);
@@ -1631,19 +1601,24 @@ body.force-dark {
 }
 
 .auth-button {
-    background: var(--premium-gradient);
-    color: white;
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    width: 100%;
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    min-height: 48px;
+}
+
+.auth-button .button-text {
+    flex: 1;
+    text-align: center;
+}
+
+.auth-button .button-icon {
+    font-size: 20px;
 }
 
 .auth-button:hover {
@@ -1653,15 +1628,6 @@ body.force-dark {
 
 .auth-button:active {
     transform: translateY(0);
-}
-
-.button-icon {
-    font-size: 20px;
-    transition: transform 0.3s ease;
-}
-
-.auth-button:hover .button-icon {
-    transform: translateX(4px);
 }
 
 .auth-error {
@@ -1862,14 +1828,17 @@ body.force-dark .form-group input {
     left: -300px;
     width: 300px;
     height: 100vh;
-    background: var(--menu-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-right: 1px solid var(--menu-border);
+    background-color: var(--menu-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: var(--menu-shadow);
+    border-right: 1px solid var(--menu-border);
+    z-index: 1000;
     transition: left 0.3s ease;
-    z-index: 1001;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px 0;
 }
 
 .slide-menu.active {
@@ -1877,25 +1846,23 @@ body.force-dark .form-group input {
 }
 
 /* Menu items */
-.menu-item {
+.menu-items {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    color: var(--text-color);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
+    flex-direction: column;
+    padding: 0 16px;
+    gap: 4px;
+}
+
+.menu-item {
     width: 100%;
     text-align: left;
-    transition: all 0.2s ease;
-    margin: 0;
-    box-sizing: border-box;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
 }
 
 .menu-item:hover {
-    background: var(--menu-item-hover);
+    background-color: var(--menu-item-hover);
 }
 
 .menu-item:focus {
@@ -1903,8 +1870,8 @@ body.force-dark .form-group input {
 }
 
 .menu-item span {
-    font-size: 20px;
-    opacity: 0.8;
+    margin-right: 12px;
+    font-size: 18px;
 }
 
 /* Theme-specific menu styles */
@@ -2021,101 +1988,49 @@ body.force-dark {
     color: #f44336;
 }
 
-.menu {
-    position: fixed;
-    top: 0;
-    left: -300px;
-    width: 300px;
-    height: 100vh;
-    background-color: #2c3e50;
-    transition: left 0.3s ease;
-    z-index: 1000;
-}
-
-.menu.open {
-    left: 0;
-}
-
-.menu-toggle {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1001;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 10px;
-}
-
-.menu-toggle img {
-    width: 24px;
-    height: 24px;
-}
-
-.menu-content {
-    padding: 20px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.menu-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.menu-button {
+/* Input field styles */
+input {
     width: 100%;
-    text-align: left;
-    padding: 12px 15px;
-    background-color: transparent;
+    padding: 12px 16px;
     border: none;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    border-radius: 20px;
+    font-size: 16px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    outline: none;
+    box-shadow: 0 2px 10px var(--input-shadow);
+    transition: all 0.2s ease;
 }
 
-.menu-button:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+input:focus {
+    box-shadow: 0 4px 15px var(--input-shadow);
+    transform: translateY(-1px);
 }
 
-.account-section {
-    margin-top: auto;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.account-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-#user-info {
-    display: flex;
-    flex-direction: column;
+/* Button base styles */
+button {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    color: white;
-}
-
-#username-display {
-    font-size: 1.1em;
-    margin: 5px 0;
-}
-
-.auth-button {
-    width: 100%;
-    padding: 10px 15px;
-    background-color: rgba(255, 255, 255, 0.1);
+    justify-content: center;
+    padding: 8px 16px;
     border: none;
-    color: white;
+    border-radius: 8px;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    min-height: 40px;
+    line-height: 1.2;
 }
 
-.auth-button:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+button:active {
+    transform: translateY(0);
 } 

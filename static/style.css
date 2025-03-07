@@ -2019,4 +2019,103 @@ body.force-dark {
 
 #resetError.error {
     color: #f44336;
+}
+
+.menu {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background-color: #2c3e50;
+    transition: left 0.3s ease;
+    z-index: 1000;
+}
+
+.menu.open {
+    left: 0;
+}
+
+.menu-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.menu-toggle img {
+    width: 24px;
+    height: 24px;
+}
+
+.menu-content {
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.menu-button {
+    width: 100%;
+    text-align: left;
+    padding: 12px 15px;
+    background-color: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.account-section {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.account-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: white;
+}
+
+#username-display {
+    font-size: 1.1em;
+    margin: 5px 0;
+}
+
+.auth-button {
+    width: 100%;
+    padding: 10px 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.auth-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
 } 

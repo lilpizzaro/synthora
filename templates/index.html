@@ -90,43 +90,33 @@
 
     <!-- Main App Content -->
     <div class="container" style="display: none;" id="mainContent">
-        <!-- Slide-out Menu -->
-        <div class="slide-menu-overlay" id="menuOverlay"></div>
-        <div class="slide-menu" id="slideMenu">
-            <div class="menu-items">
-                <button class="menu-item" onclick="showMemories()">
-                    <span>💭</span>
-                    Memories
-                </button>
-                <button class="menu-item" onclick="toggleDarkMode()">
-                    <span>🌓</span>
-                    Theme
-                </button>
-                <button class="menu-item" onclick="clearChat()">
-                    <span>🗑️</span>
-                    Clear Chat
-                </button>
-                <button class="menu-item" onclick="shareChat()">
-                    <span>📤</span>
-                    Share
-                </button>
-                <button class="menu-item" onclick="toggleSound()">
-                    <span>🔊</span>
-                    Sound
-                </button>
-                <button class="menu-item" onclick="toggleNotifications()">
-                    <span>🔔</span>
-                    Notifications
-                </button>
-                <button class="menu-item" onclick="logout()">
-                    <span>🚪</span>
-                    Logout
-                </button>
-            </div>
-            <div class="menu-account" onclick="showAccount()">
-                <div class="account-preview">
-                    <img id="menuAvatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture" class="account-avatar">
-                    <span id="menuUsername" class="account-username">Account</span>
+        <!-- Menu toggle button -->
+        <button class="menu-toggle" onclick="toggleMenu()">
+            <img src="{{ url_for('static', filename='images/menu.png') }}" alt="Menu">
+        </button>
+
+        <!-- Side menu -->
+        <div class="menu" id="menu">
+            <div class="menu-content">
+                <div class="menu-buttons">
+                    <button class="menu-button" onclick="clearChat()">Clear Chat</button>
+                    <button class="menu-button" onclick="viewMemories()">View Memories</button>
+                    <button class="menu-button" onclick="toggleTheme()">Toggle Theme</button>
+                </div>
+                
+                <div class="account-section">
+                    <div class="account-buttons">
+                        <div id="auth-buttons" style="display: none;">
+                            <button class="auth-button" onclick="showLoginForm()">Login</button>
+                            <button class="auth-button" onclick="showSignupForm()">Sign Up</button>
+                        </div>
+                        <div id="user-info" style="display: none;">
+                            <img id="user-avatar" src="" alt="Avatar" style="width: 50px; height: 50px; border-radius: 50%;">
+                            <span id="username-display"></span>
+                            <button class="auth-button" onclick="showAccountSettings()">Account Settings</button>
+                            <button class="auth-button" onclick="logout()">Logout</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -36,8 +36,8 @@ themeToggle?.addEventListener('change', (e) => {
 
 // Menu handling
 function toggleMenu() {
-    slideMenu.classList.toggle('active');
-    menuOverlay.classList.toggle('active');
+    const menu = document.getElementById('menu');
+    menu.classList.toggle('open');
 }
 
 menuButton?.addEventListener('click', toggleMenu);

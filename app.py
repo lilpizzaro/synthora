@@ -224,7 +224,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def generate_ducky_response(user_input, conversation_id=None):
+async def generate_ducky_response(user_input, conversation_id=None):
     try:
         # Create or retrieve conversation history
         if conversation_id is None or conversation_id not in conversations:
@@ -237,44 +237,25 @@ def generate_ducky_response(user_input, conversation_id=None):
         # Check if this is the first message
         is_first_message = len(conversations[conversation_id]) <= 1
         
-        # Build messages array
-        messages = [
-            {
-                "role": "system",
-                "content": """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
-
-                Important knowledge (ONLY share when SPECIFICALLY asked):
-                - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
-                - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
-            }
-        ]
-
-        # Add conversation history if it exists
+        # Format conversation history
+        context = ""
         if not is_first_message:
             # Include last 10 messages at most
             for entry in conversations[conversation_id][-10:-1]:
-                messages.append({
-                    "role": "user" if entry["role"] == "user" else "assistant",
-                    "content": entry["message"]
-                })
+                context += f"{'User' if entry['role'] == 'user' else 'Ducky'}: {entry['message']}\n"
         
-        # Add current user message
-        messages.append({
-            "role": "user",
-            "content": user_input
-        })
+        # Prepare the prompt with Ducky's personality
+        system_context = """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
+
+        Important knowledge (ONLY share when SPECIFICALLY asked):
+        - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
+        - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
         
-        # Make request to the API
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            temperature=0.75,
-            top_p=0.92,
-            max_tokens=1000
-        )
+        full_prompt = f"{system_context}\n\nConversation history:\n{context}\nUser: {user_input}\nDucky:"
         
-        # Parse the response
-        response_text = response.choices[0].message.content.strip()
+        # Get response from ZukiPy
+        response = await zuki_ai.zuki_chat.sendMessage("Launchers", full_prompt)
+        response_text = response.strip()
         
         if not response_text:
             raise ValueError("Empty response from API")
@@ -298,7 +279,7 @@ def generate_ducky_response(user_input, conversation_id=None):
     except Exception as e:
         print("Error in generate_ducky_response:", str(e))
         print("Traceback:", traceback.format_exc())
-        raise
+        return "Quack! Sorry, I'm having trouble thinking right now. Could you try again?", conversation_id
 
 @app.route('/')
 def index():
@@ -417,7 +398,11 @@ def generate():
         if not user_input:
             return jsonify({'error': 'Message is required'}), 400
         
-        response_text, conversation_id = generate_ducky_response(user_input, conversation_id)
+        # Create event loop for async operation
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        response_text, conversation_id = loop.run_until_complete(generate_ducky_response(user_input, conversation_id))
+        loop.close()
         
         return jsonify({
             'response': response_text,

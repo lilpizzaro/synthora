@@ -830,19 +830,20 @@
         async function showMemories() {
             try {
                 const response = await fetch('/memories');
-                const memories = await response.json();
+                const data = await response.json();
+                const memories = data.memories;  // Access the memories array from the response object
                 
                 const memoriesList = document.getElementById('memoriesList');
                 memoriesList.innerHTML = '';
                 
-                if (memories.length === 0) {
+                if (!memories || memories.length === 0) {
                     memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with Ducky to create some.</div>';
                 } else {
                     memories.forEach(memory => {
                         const memoryDiv = document.createElement('div');
                         memoryDiv.className = 'memory-item';
                         
-                        const date = new Date(memory.timestamp * 1000);
+                        const date = new Date(memory.timestamp);  // Remove * 1000 as timestamp is already ISO format
                         const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
                         
                         memoryDiv.innerHTML = `
@@ -860,15 +861,16 @@
                                 </div>
                             </div>
                         `;
-                        
                         memoriesList.appendChild(memoryDiv);
                     });
                 }
                 
                 document.getElementById('memoriesModal').classList.add('show');
-                toggleMenu(); // Close the slide menu
+                document.getElementById('menuOverlay').classList.remove('active');
+                document.getElementById('slideMenu').classList.remove('active');
             } catch (error) {
                 console.error('Failed to load memories:', error);
+                showError('Failed to load memories. Please try again.');
             }
         }
 

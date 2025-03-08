@@ -9,7 +9,7 @@ import bcrypt
 import traceback
 from functools import wraps
 import asyncio
-import zukiPy
+import google.generativeai as genai
 
 # Import all the necessary modules and setup that existed in the original file
 # This includes database configuration, models, etc.
@@ -24,9 +24,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Initialize ZukiPy with API key
-ZUKI_API_KEY = os.environ.get('ZUKI_API_KEY')
-zuki_ai = zukiPy.zukiCall(ZUKI_API_KEY)
+# Setup Gemini AI
+GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel('gemini-pro')
 
 # User model
 class User(db.Model):
@@ -88,19 +89,24 @@ def login_required(f):
     return decorated_function
 
 # AI response generation
-async def generate_ducky_response(user_input, conversation_id=None):
+async def get_ai_response(message, conversation_history=None):
     try:
-        # Format conversation history
-        # Implementation of generate_ducky_response
-
+        # Format conversation history if provided
+        context = ""
+        if conversation_history:
+            for msg in conversation_history:
+                context += f"User: {msg['user_message']}\nDucky: {msg['ducky_response']}\n"
+        
         # Prepare the prompt with Ducky's personality
         system_context = """You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative."""
         
-        # Process with ZukiPy
-        full_prompt = f"{system_context}\n\nUser: {user_input}\nDucky:"
-        response = await zuki_ai.zuki_chat.sendMessage("Launchers", full_prompt)
+        full_prompt = f"{system_context}\n\nConversation history:\n{context}\n\nUser: {message}\nDucky:"
         
-        return response.strip()
+        # Get response from Gemini
+        response = await asyncio.to_thread(model.generate_content, full_prompt)
+        
+        # Clean and return the response
+        return response.text.strip()
     except Exception as e:
         print(f"Error getting AI response: {str(e)}")
         return "Quack! Sorry, I'm having trouble thinking right now. Could you try again?"
@@ -211,7 +217,7 @@ def generate():
         asyncio.set_event_loop(loop)
         
         # Generate response using event loop
-        response = loop.run_until_complete(generate_ducky_response(message, conversation_id))
+        response = loop.run_until_complete(get_ai_response(message, conversation_id))
         loop.close()
         
         return jsonify({

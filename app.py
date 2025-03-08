@@ -32,15 +32,15 @@ except FileNotFoundError:
     pass
 
 # Load regular .env file
-load_dotenv()
+    load_dotenv()
 
 # Define allowed file extensions for uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 # Initialize Gemini AI
-GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY', 'AIzaSyDJC5a7eWgGv5q4HNrMPAZGWVjK1-qGGj4')
+GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY', 'AIzaSyB0MmJjgLLRDCSs89VkUTGRLLCeoP0djEc')
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash-lite')
+model = genai.GenerativeModel('gemini-pro')
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -324,7 +324,7 @@ def signup():
         db.session.commit()
         
         print(f"Signup successful for user {username}")
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -363,7 +363,7 @@ def login():
             return jsonify({'error': 'Invalid username or password'}), 401
         
         print(f"Login successful for user {username}")
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -384,11 +384,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-            return jsonify({
-                'authenticated': True,
+        return jsonify({
+            'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-            })
+        })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
@@ -644,7 +644,7 @@ async def get_ai_response(message, conversation_history=None):
         # Clean and return the response
         cleaned_response = response.text.strip()
         return cleaned_response
-    except Exception as e:
+        except Exception as e:
         print(f"Error getting AI response: {str(e)}")
         return "Quack! Sorry, I'm having trouble thinking right now. Could you try again?"
 

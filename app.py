@@ -15,7 +15,6 @@ import io
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from sqlalchemy import text
-from openai import OpenAI
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import zukiPy
@@ -33,11 +32,11 @@ except FileNotFoundError:
     pass
 
 # Load regular .env file
-    load_dotenv()
+load_dotenv()
 
-# Configure the Gemini API
-gemini_api_key = os.getenv('GEMINI_API_KEY')
-genai.configure(api_key=gemini_api_key)
+# Initialize ZukiPy
+ZUKI_API_KEY = "zu-5d95dfe0c44c676ba495ad6fe723d722"
+zuki_ai = zukiPy.zukiCall(ZUKI_API_KEY)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -636,10 +635,6 @@ def health_check():
         "service": "Ducky AI",
         "timestamp": datetime.utcnow().isoformat()
     }), 200
-
-# Initialize ZukiPy
-ZUKI_API_KEY = "zu-5d95dfe0c44c676ba495ad6fe723d722"
-zuki_ai = zukiPy.zukiCall(ZUKI_API_KEY)
 
 async def get_ai_response(message, conversation_history=None):
     try:

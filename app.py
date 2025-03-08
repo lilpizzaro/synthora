@@ -38,6 +38,12 @@ try:
 except (FileNotFoundError, IOError):
     # Fall back to environment variable if not on Render
     GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+    
+    # TEMPORARY: Hard-coded API key as fallback for local development only
+    # WARNING: REMOVE BEFORE COMMITTING TO PRODUCTION
+    if not GOOGLE_API_KEY:
+        GOOGLE_API_KEY = 'AIzaSyB0MmJjgLLRDCSs89VkUTGRLLCeoP0djEc'
+        print("WARNING: Using temporary hard-coded API key. DO NOT USE IN PRODUCTION.")
 
 if not GOOGLE_API_KEY:
     print("WARNING: No Google API key found. AI functionality will not work.")
@@ -271,6 +277,11 @@ def get_memories():
 @app.route('/ping')
 def ping():
     return jsonify({'status': 'ok'})
+
+# Special route to handle incorrect image paths
+@app.route('/static/data/static/images/<path:filename>')
+def serve_images_compat(filename):
+    return app.send_static_file(f'images/{filename}')
 
 if __name__ == '__main__':
     with app.app_context():

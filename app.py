@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, url_for, send_file
+from flask import Flask, render_template, request, jsonify, session, url_for, send_file, redirect, flash, send_from_directory
 import os
 import traceback
 import uuid
@@ -15,10 +15,12 @@ import io
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from sqlalchemy import text
-import google.generativeai as genai
-
-# Define allowed file extensions for avatar uploads
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+from openai import OpenAI
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import zukiPy
+import asyncio
+import base64
 
 # Load environment variables from secret file first, then regular .env
 try:
@@ -233,56 +235,47 @@ def generate_ducky_response(user_input, conversation_id=None):
         # Add user message to history
         conversations[conversation_id].append({"role": "user", "message": user_input})
         
-        # Configure the model with the experimental model
-        model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
-        
-        # Build conversation history
-        conversation_history = ""
+        # Check if this is the first message
         is_first_message = len(conversations[conversation_id]) <= 1
         
+        # Build messages array
+        messages = [
+            {
+                "role": "system",
+                "content": """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
+
+                Important knowledge (ONLY share when SPECIFICALLY asked):
+                - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
+                - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
+            }
+        ]
+
+        # Add conversation history if it exists
         if not is_first_message:
-            conversation_history = "Previous conversation:\n"
             # Include last 10 messages at most
             for entry in conversations[conversation_id][-10:-1]:
-                role = "User" if entry["role"] == "user" else "Ducky"
-                conversation_history += f"{role}: {entry['message']}\n"
-            conversation_history += "\n"
+                messages.append({
+                    "role": "user" if entry["role"] == "user" else "assistant",
+                    "content": entry["message"]
+                })
         
-        # Prepare the prompt
-        system_prompt = """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
-
-        Important knowledge (ONLY share when SPECIFICALLY asked):
-        - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
-        - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary
-
-        Conversation style:
-        - Be warm, friendly, and genuinely interested in what the user has to say
-        - Encourage open dialogue by asking relevant follow-up questions
-        - Show empathy and understanding in your responses
-        - Keep responses conversational and natural, like chatting with a friend
-        - Feel free to share relevant thoughts or experiences (while staying within AI bounds)
-        - Use casual language but remain respectful and helpful
-        - Don't be overly formal - it's okay to use common expressions and contractions
-        - If the user seems to want to just chat, engage in the conversation naturally
-        - If they need help, provide clear and helpful guidance
-        - Occasionally (but rarely) use a duck reference if it feels natural, but don't force it
-- Keep responses concise but friendly"""
+        # Add current user message
+        messages.append({
+            "role": "user",
+            "content": user_input
+        })
         
-        full_prompt = f"{system_prompt}\n\n{conversation_history}User: {user_input}\nDucky:"
-        
-        # Generate response using Gemini with specific configuration
-        generation_config = {
-            "temperature": 0.75,
-            "top_p": 0.92,
-            "top_k": 40,
-            "max_output_tokens": 1000,
-        }
-
-        response = model.generate_content(
-            full_prompt,
-            generation_config=generation_config
+        # Make request to the API
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.75,
+            top_p=0.92,
+            max_tokens=1000
         )
-        response_text = response.text.strip()
+        
+        # Parse the response
+        response_text = response.choices[0].message.content.strip()
         
         if not response_text:
             raise ValueError("Empty response from API")
@@ -338,7 +331,7 @@ def signup():
         password_hash = hash_password(password)
         print(f"Creating user with bcrypt hash")
     
-    # Create new user
+        # Create new user
         user = User(
             username=username,
             password_hash=password_hash
@@ -347,7 +340,7 @@ def signup():
         db.session.commit()
         
         print(f"Signup successful for user {username}")
-    session['username'] = username
+        session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -386,7 +379,7 @@ def login():
             return jsonify({'error': 'Invalid username or password'}), 401
         
         print(f"Login successful for user {username}")
-    session['username'] = username
+        session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -407,11 +400,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-        return jsonify({
-            'authenticated': True,
+            return jsonify({
+                'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-        })
+            })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
@@ -439,23 +432,18 @@ def generate():
 @app.route('/memories', methods=['GET'])
 @login_required
 def get_memories():
-    try:
-        user = User.query.filter_by(username=session['username']).first()
-        if not user:
-            return jsonify({'memories': []}), 404
-        
-        memories = Memory.query.filter_by(user_id=user.id).order_by(Memory.timestamp.desc()).all()
-        memory_list = [{
-            'user_message': memory.user_message,
-            'ducky_response': memory.ducky_response,
-            'timestamp': memory.timestamp.isoformat()
-        } for memory in memories] if memories else []
-        
-        return jsonify({'memories': memory_list})
-    except Exception as e:
-        print(f"Error fetching memories: {str(e)}")
-        print(f"Traceback: {traceback.format_exc()}")
-        return jsonify({'memories': [], 'error': str(e)}), 500
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    memories = Memory.query.filter_by(user_id=user.id).order_by(Memory.timestamp.desc()).all()
+    memory_list = [{
+        'user_message': memory.user_message,
+        'ducky_response': memory.ducky_response,
+        'timestamp': memory.timestamp.isoformat()
+    } for memory in memories]
+    
+    return jsonify({'memories': memory_list})
 
 @app.route('/auth/update', methods=['POST'])
 @login_required
@@ -648,6 +636,74 @@ def health_check():
         "service": "Ducky AI",
         "timestamp": datetime.utcnow().isoformat()
     }), 200
+
+# Initialize ZukiPy
+ZUKI_API_KEY = "zu-5d95dfe0c44c676ba495ad6fe723d722"
+zuki_ai = zukiPy.zukiCall(ZUKI_API_KEY)
+
+async def get_ai_response(message, conversation_history=None):
+    try:
+        # Format conversation history if provided
+        context = ""
+        if conversation_history:
+            for msg in conversation_history:
+                context += f"User: {msg['user_message']}\nDucky: {msg['ducky_response']}\n"
+        
+        # Prepare the prompt with Ducky's personality
+        system_context = """You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative."""
+        
+        full_prompt = f"{system_context}\n\nConversation history:\n{context}\n\nUser: {message}\nDucky:"
+        
+        # Get response from ZukiPy
+        response = await zuki_ai.zuki_chat.sendMessage("Launchers", full_prompt)
+        
+        # Clean and return the response
+        cleaned_response = response.strip()
+        return cleaned_response
+    except Exception as e:
+        print(f"Error getting AI response: {str(e)}")
+        return "Quack! Sorry, I'm having trouble thinking right now. Could you try again?"
+
+@app.route('/chat', methods=['POST'])
+@login_required
+def chat():
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '').strip()
+        
+        if not user_message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Get conversation history
+        conversation_history = Memory.query.filter_by(user_id=current_user.id).order_by(Memory.timestamp.desc()).limit(5).all()
+        history_formatted = [
+            {'user_message': m.user_message, 'ducky_response': m.ducky_response}
+            for m in reversed(conversation_history)
+        ]
+        
+        # Get AI response using asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        ducky_response = loop.run_until_complete(get_ai_response(user_message, history_formatted))
+        loop.close()
+        
+        # Save the conversation to memory
+        new_memory = Memory(
+            user_id=current_user.id,
+            user_message=user_message,
+            ducky_response=ducky_response,
+            timestamp=datetime.utcnow()
+        )
+        db.session.add(new_memory)
+        db.session.commit()
+        
+        return jsonify({
+            'response': ducky_response,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        print(f"Error in chat endpoint: {str(e)}")
+        return jsonify({'error': 'An error occurred processing your message'}), 500
 
 if __name__ == '__main__':
     # Use the PORT environment variable provided by Render

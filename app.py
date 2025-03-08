@@ -40,7 +40,8 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 # Initialize Friendli AI configuration
 FRIENDLI_TOKEN = "flp_ZPJWONb23IRTFrNmFBpzPfDvDX8m4i7KdjsoNxzK2E62a"
 TEAM_ID = "vjzYipExJNDl"
-FRIENDLI_API_URL = "https://api.friendli.ai/chat/completions"
+FRIENDLI_API_URL = "https://api.friendli.ai/dedicated"
+ENDPOINT_ID = "8v9hsupy1kbh"
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -266,6 +267,7 @@ async def generate_ducky_response(user_input, conversation_id=None):
         }
         
         data = {
+            "endpoint_id": ENDPOINT_ID,
             "messages": [
                 {"role": "system", "content": system_message},
                 *messages,
@@ -670,6 +672,7 @@ async def get_ai_response(message, conversation_history=None):
         }
         
         data = {
+            "endpoint_id": ENDPOINT_ID,
             "messages": [
                 {"role": "system", "content": system_message},
                 *messages,

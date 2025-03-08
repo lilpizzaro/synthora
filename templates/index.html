@@ -125,22 +125,23 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            justify-content: flex-start;
-            padding: 16px;
             width: 100%;
+            padding: 16px;
         }
         
         .menu-item {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
+            justify-content: flex-start;
             width: 100%;
+            text-align: left;
+            padding: 12px 16px;
+            gap: 12px;
             border: none;
             background: transparent;
             cursor: pointer;
-            text-align: left;
-            border-radius: 8px;
             transition: background-color 0.2s ease;
+            border-radius: 8px;
         }
         
         .menu-item:hover {
@@ -151,10 +152,19 @@
             background-color: rgba(255, 255, 255, 0.1);
         }
         
-        .menu-icon {
-            width: 20px;
-            height: 20px;
+        .menu-icon-container {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
             margin-right: 12px;
+        }
+        
+        .menu-icon {
+            width: 24px;
+            height: 24px;
             object-fit: contain;
         }
         
@@ -247,31 +257,45 @@
         <div class="slide-menu" id="slideMenu">
             <div class="menu-items">
                 <button class="menu-item" onclick="showMemories()">
-                    <img src="{{ url_for('static', filename='data/static/images/mem.icon.png') }}" alt="Memories" class="menu-icon">
+                    <div class="menu-icon-container">
+                        <img src="{{ url_for('static', filename='images/mem.icon.png') }}" alt="Memories" class="menu-icon">
+                    </div>
                     Memories
                 </button>
                 <button class="menu-item" onclick="toggleDarkMode()">
-                    <img src="{{ url_for('static', filename='data/static/images/theme.icon.png') }}" alt="Theme" class="menu-icon">
+                    <div class="menu-icon-container">
+                        <img src="{{ url_for('static', filename='images/theme.icon.png') }}" alt="Theme" class="menu-icon">
+                    </div>
                     Theme
                 </button>
                 <button class="menu-item" onclick="clearChat()">
-                    <img src="{{ url_for('static', filename='data/static/images/del-chat.icon.png') }}" alt="Clear Chat" class="menu-icon">
+                    <div class="menu-icon-container">
+                        <img src="{{ url_for('static', filename='images/del-chat.icon.png') }}" alt="Clear Chat" class="menu-icon">
+                    </div>
                     Clear Chat
                 </button>
                 <button class="menu-item" onclick="shareChat()">
-                    <img src="{{ url_for('static', filename='data/static/images/share-chat.png') }}" alt="Share" class="menu-icon">
+                    <div class="menu-icon-container">
+                        <img src="{{ url_for('static', filename='images/share-chat.png') }}" alt="Share" class="menu-icon">
+                    </div>
                     Share
                 </button>
                 <button class="menu-item" onclick="toggleSound()">
-                    <img src="{{ url_for('static', filename='data/static/images/notif.icon.png') }}" alt="Sound" class="menu-icon">
+                    <div class="menu-icon-container">
+                        <img src="{{ url_for('static', filename='images/notif.icon.png') }}" alt="Sound" class="menu-icon">
+                    </div>
                     Sound
                 </button>
                 <button class="menu-item" onclick="toggleNotifications()">
-                    <img src="{{ url_for('static', filename='data/static/images/notif.icon.png') }}" alt="Notifications" class="menu-icon">
+                    <div class="menu-icon-container">
+                        <img src="{{ url_for('static', filename='images/notif.icon.png') }}" alt="Notifications" class="menu-icon">
+                    </div>
                     Notifications
                 </button>
                 <button class="menu-item" onclick="logout()">
-                    <img src="{{ url_for('static', filename='data/static/images/logout.icon.png') }}" alt="Logout" class="menu-icon">
+                    <div class="menu-icon-container">
+                        <img src="{{ url_for('static', filename='images/logout.icon.png') }}" alt="Logout" class="menu-icon">
+                    </div>
                     Logout
                 </button>
             </div>

@@ -41,9 +41,6 @@
                     <span class="button-text">Login</span>
                     <span class="button-icon">→</span>
                 </button>
-                <div class="auth-links">
-                    <a href="#" onclick="showResetPasswordModal(event)">Forgot Password?</a>
-                </div>
             </form>
             
             <!-- Signup Form -->
@@ -213,46 +210,6 @@
                         <button type="submit" class="save-button">Save Changes</button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Password Reset Modal -->
-    <div class="modal" id="resetPasswordModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Reset Password</h2>
-                <button class="close-button" onclick="hideResetPasswordModal()" aria-label="Close">✕</button>
-            </div>
-            <div class="modal-body">
-                <!-- Request Reset Form -->
-                <form id="requestResetForm" class="auth-form" onsubmit="handleRequestReset(event)">
-                    <div class="form-group">
-                        <div class="input-icon">📧</div>
-                        <input type="email" id="resetEmail" placeholder="Enter your email" required>
-                    </div>
-                    <button type="submit" class="auth-button">
-                        <span class="button-text">Send Reset Link</span>
-                        <span class="button-icon">→</span>
-                    </button>
-                </form>
-
-                <!-- Reset Password Form (hidden by default) -->
-                <form id="resetPasswordForm" class="auth-form" style="display: none;" onsubmit="handleResetPassword(event)">
-                    <div class="form-group">
-                        <div class="input-icon">🔒</div>
-                        <input type="password" id="newResetPassword" placeholder="New Password" required>
-                    </div>
-                    <div class="form-group">
-                        <div class="input-icon">🔒</div>
-                        <input type="password" id="confirmResetPassword" placeholder="Confirm Password" required>
-                    </div>
-                    <button type="submit" class="auth-button">
-                        <span class="button-text">Reset Password</span>
-                        <span class="button-icon">→</span>
-                    </button>
-                </form>
-                <div id="resetError" class="auth-error"></div>
             </div>
         </div>
     </div>
@@ -873,37 +830,45 @@
         async function showMemories() {
             try {
                 const response = await fetch('/memories');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch memories');
-                }
-                const data = await response.json();
-                const memories = data.memories || [];
-                const memoriesContainer = document.getElementById('memories-container');
-                memoriesContainer.innerHTML = '';
-
+                const memories = await response.json();
+                
+                const memoriesList = document.getElementById('memoriesList');
+                memoriesList.innerHTML = '';
+                
                 if (memories.length === 0) {
-                    memoriesContainer.innerHTML = '<p class="no-memories">No memories yet! Start chatting with Ducky to create some.</p>';
-                    return;
+                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with Ducky to create some.</div>';
+                } else {
+                    memories.forEach(memory => {
+                        const memoryDiv = document.createElement('div');
+                        memoryDiv.className = 'memory-item';
+                        
+                        const date = new Date(memory.timestamp * 1000);
+                        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                        
+                        memoryDiv.innerHTML = `
+                            <div class="memory-header">
+                                <span class="memory-date">${formattedDate}</span>
+                            </div>
+                            <div class="memory-messages">
+                                <div class="memory-user-message">
+                                    <span class="memory-label">You:</span>
+                                    ${escapeHtml(memory.user_message)}
+                                </div>
+                                <div class="memory-ducky-message">
+                                    <span class="memory-label">Ducky:</span>
+                                    ${escapeHtml(memory.ducky_response)}
+                                </div>
+                            </div>
+                        `;
+                        
+                        memoriesList.appendChild(memoryDiv);
+                    });
                 }
-
-                memories.forEach(memory => {
-                    const memoryElement = document.createElement('div');
-                    memoryElement.className = 'memory';
-                    
-                    const timestamp = new Date(memory.timestamp);
-                    const formattedDate = timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
-                    
-                    memoryElement.innerHTML = `
-                        <div class="memory-timestamp">${formattedDate}</div>
-                        <div class="memory-user">You: ${escapeHtml(memory.user_message)}</div>
-                        <div class="memory-ducky">Ducky: ${escapeHtml(memory.ducky_response)}</div>
-                    `;
-                    memoriesContainer.appendChild(memoryElement);
-                });
+                
+                document.getElementById('memoriesModal').classList.add('show');
+                toggleMenu(); // Close the slide menu
             } catch (error) {
-                console.error('Error loading memories:', error);
-                const memoriesContainer = document.getElementById('memories-container');
-                memoriesContainer.innerHTML = '<p class="error">Failed to load memories. Please try again later.</p>';
+                console.error('Failed to load memories:', error);
             }
         }
 
@@ -1006,128 +971,6 @@
                 errorElement.textContent = '';
             }, 3000);
         }
-
-        function showResetPasswordModal(event) {
-            event.preventDefault();
-            document.getElementById('resetPasswordModal').style.display = 'flex';
-            document.getElementById('requestResetForm').style.display = 'flex';
-            document.getElementById('resetPasswordForm').style.display = 'none';
-            document.getElementById('resetError').textContent = '';
-        }
-
-        function hideResetPasswordModal() {
-            document.getElementById('resetPasswordModal').style.display = 'none';
-            document.getElementById('resetError').textContent = '';
-        }
-
-        async function handleRequestReset(event) {
-            event.preventDefault();
-            const email = document.getElementById('resetEmail').value;
-            
-            try {
-                const response = await fetch('/auth/request-reset', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('resetError').textContent = 'Check your email for reset instructions';
-                    document.getElementById('resetError').style.color = '#4CAF50';
-                } else {
-                    document.getElementById('resetError').textContent = data.error;
-                    document.getElementById('resetError').style.color = '#f44336';
-                }
-            } catch (error) {
-                document.getElementById('resetError').textContent = 'Network error. Please try again.';
-                document.getElementById('resetError').style.color = '#f44336';
-            }
-        }
-
-        async function handleResetPassword(event) {
-            event.preventDefault();
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const email = urlParams.get('email');
-            const password = document.getElementById('newResetPassword').value;
-            const confirmPassword = document.getElementById('confirmResetPassword').value;
-            
-            if (password !== confirmPassword) {
-                document.getElementById('resetError').textContent = 'Passwords do not match';
-                document.getElementById('resetError').style.color = '#f44336';
-                return;
-            }
-            
-            try {
-                const response = await fetch('/auth/reset-password', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ token, email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('resetError').textContent = 'Password reset successful. You can now login.';
-                    document.getElementById('resetError').style.color = '#4CAF50';
-                    setTimeout(() => {
-                        hideResetPasswordModal();
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }, 2000);
-                } else {
-                    document.getElementById('resetError').textContent = data.error;
-                    document.getElementById('resetError').style.color = '#f44336';
-                }
-            } catch (error) {
-                document.getElementById('resetError').textContent = 'Network error. Please try again.';
-                document.getElementById('resetError').style.color = '#f44336';
-            }
-        }
-
-        // Check for reset token in URL
-        function checkResetToken() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const email = urlParams.get('email');
-            
-            if (token && email) {
-                // Verify token
-                fetch('/auth/verify-reset-token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ token, email })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (response.ok) {
-                        document.getElementById('resetPasswordModal').style.display = 'flex';
-                        document.getElementById('requestResetForm').style.display = 'none';
-                        document.getElementById('resetPasswordForm').style.display = 'flex';
-                    } else {
-                        document.getElementById('resetError').textContent = 'Invalid or expired reset link';
-                        document.getElementById('resetError').style.color = '#f44336';
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('resetError').textContent = 'Network error. Please try again.';
-                    document.getElementById('resetError').style.color = '#f44336';
-                });
-            }
-        }
-
-        // Add to window.onload
-        window.onload = function() {
-            checkAuthStatus();
-            checkResetToken();
-        };
     </script>
 </body>
 </html> 

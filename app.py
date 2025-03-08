@@ -294,29 +294,37 @@ def index():
 
 @app.route('/auth/signup', methods=['POST'])
 def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        print(f"Signup failed: Missing username or password")
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    # Debug logging
+    print(f"Signup attempt for username: {username}")
+    
+    # Check if username already exists
+    if User.query.filter_by(username=username).first():
+        print(f"Signup failed: Username {username} already exists")
+        return jsonify({'error': 'Username already exists'}), 400
+    
     try:
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        
-        if not username or not password:
-            print(f"Signup failed: Missing username or password")
-            return jsonify({'error': 'Username and password are required'}), 400
-        
-        # Check if username already exists
-        if User.query.filter_by(username=username).first():
-            print(f"Signup failed: Username {username} already exists")
-            return jsonify({'error': 'Username already exists'}), 400
-        
         # Hash password and create user
         password_hash = hash_password(password)
-        
+        print(f"Creating user with bcrypt hash")
+    
         # Create new user
-        user = User(username=username, password_hash=password_hash)
+        user = User(
+            username=username,
+            password_hash=password_hash
+        )
         db.session.add(user)
         db.session.commit()
         
-        session['username'] = username
+        print(f"Signup successful for user {username}")
+    session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -328,33 +336,42 @@ def signup():
 
 @app.route('/auth/login', methods=['POST'])
 def login():
-    if not request.is_json:
-        return jsonify({'error': 'Invalid request format'}), 400
-
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        print(f"Login attempt failed: Missing username or password")
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    # Debug logging
+    print(f"Login attempt for username: {username}")
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        print(f"Login failed: User {username} not found")
+        return jsonify({'error': 'Invalid username or password'}), 401
+    
     try:
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
-
-        if not username or not password:
-            return jsonify({'error': 'Username and password are required'}), 400
-
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            return jsonify({'error': 'Invalid username or password'}), 401
-
+        # Debug: Print hash details
+        print(f"Stored hash type: {type(user.password_hash)}")
+        print(f"Stored hash length: {len(user.password_hash)}")
+        print(f"First few chars of stored hash: {user.password_hash[:20] if isinstance(user.password_hash, str) else 'Not a string'}")
+        
         if not verify_password(password, user.password_hash):
+            print(f"Login failed: Invalid password for user {username}")
             return jsonify({'error': 'Invalid username or password'}), 401
-
-        session['username'] = username
+        
+        print(f"Login successful for user {username}")
+    session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
             'avatar_url': user.avatar_url
         })
-
     except Exception as e:
-        print(f"Login error: {str(e)}")
+        print(f"Error during login: {str(e)}")
+        print(f"Full error details: {traceback.format_exc()}")
         return jsonify({'error': 'An error occurred during login'}), 500
 
 @app.route('/auth/logout', methods=['POST'])
@@ -367,11 +384,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-            return jsonify({
-                'authenticated': True,
+        return jsonify({
+            'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-            })
+        })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
@@ -616,7 +633,7 @@ async def get_ai_response(message, conversation_history=None):
             for msg in conversation_history:
                 context += f"User: {msg['user_message']}\nDucky: {msg['ducky_response']}\n"
         
-        # Prepare the prompt
+        # Prepare the prompt with Ducky's personality
         system_context = """You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative."""
         
         full_prompt = f"{system_context}\n\nConversation history:\n{context}\n\nUser: {message}\nDucky:"
@@ -625,8 +642,9 @@ async def get_ai_response(message, conversation_history=None):
         response = await asyncio.to_thread(model.generate_content, full_prompt)
         
         # Clean and return the response
-        return response.text.strip()
-    except Exception as e:
+        cleaned_response = response.text.strip()
+        return cleaned_response
+        except Exception as e:
         print(f"Error getting AI response: {str(e)}")
         return "Quack! Sorry, I'm having trouble thinking right now. Could you try again?"
 

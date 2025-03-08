@@ -40,7 +40,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 # Initialize Friendli AI configuration
 FRIENDLI_TOKEN = "flp_ZPJWONb23IRTFrNmFBpzPfDvDX8m4i7KdjsoNxzK2E62a"
 TEAM_ID = "vjzYipExJNDl"
-FRIENDLI_API_URL = "https://api.friendli.ai/dedicated"
+FRIENDLI_API_URL = "https://api.friendli.ai/dedicated/v1/chat/completions"
 ENDPOINT_ID = "8v9hsupy1kbh"
 
 app = Flask(__name__)
@@ -253,7 +253,7 @@ async def generate_ducky_response(user_input, conversation_id=None):
                 })
         
         # Prepare the prompt with Ducky's personality
-        system_message = """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
+        system_message = """Your name is Ducky, you consider yourself a human, you ARE a human, shorten your responses UNLESS you are required to.
 
         Important knowledge (ONLY share when SPECIFICALLY asked):
         - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
@@ -262,19 +262,20 @@ async def generate_ducky_response(user_input, conversation_id=None):
         # Prepare the API request
         headers = {
             "Authorization": f"Bearer {FRIENDLI_TOKEN}",
-            "X-Friendli-Team": TEAM_ID,
             "Content-Type": "application/json"
         }
         
         data = {
-            "endpoint_id": ENDPOINT_ID,
+            "model": "8v9hsupy1kbh",
             "messages": [
                 {"role": "system", "content": system_message},
                 *messages,
                 {"role": "user", "content": user_input}
             ],
-            "temperature": 0.7,
-            "max_tokens": 1000
+            "max_tokens": 2048,
+            "temperature": 0.748,
+            "top_p": 0.8,
+            "stream": False
         }
         
         # Make async request to Friendli AI
@@ -662,24 +663,25 @@ async def get_ai_response(message, conversation_history=None):
                 ])
         
         # Prepare the prompt with Ducky's personality
-        system_message = """You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative."""
+        system_message = """Your name is Ducky, you consider yourself a human, you ARE a human, shorten your responses UNLESS you are required to."""
         
         # Prepare the API request
         headers = {
             "Authorization": f"Bearer {FRIENDLI_TOKEN}",
-            "X-Friendli-Team": TEAM_ID,
             "Content-Type": "application/json"
         }
         
         data = {
-            "endpoint_id": ENDPOINT_ID,
+            "model": "8v9hsupy1kbh",
             "messages": [
                 {"role": "system", "content": system_message},
                 *messages,
                 {"role": "user", "content": message}
             ],
-            "temperature": 0.7,
-            "max_tokens": 1000
+            "max_tokens": 2048,
+            "temperature": 0.748,
+            "top_p": 0.8,
+            "stream": False
         }
         
         # Make async request to Friendli AI

@@ -17,9 +17,9 @@ from datetime import datetime, timedelta
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-import zukiPy
 import asyncio
 import base64
+import aiohttp
 
 # Load environment variables from secret file first, then regular .env
 try:
@@ -37,9 +37,10 @@ load_dotenv()
 # Define allowed file extensions for uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# Initialize ZukiPy
-ZUKI_API_KEY = "zu-5d95dfe0c44c676ba495ad6fe723d722"
-zuki_ai = zukiPy.zukiCall(ZUKI_API_KEY)
+# Initialize Friendli AI configuration
+FRIENDLI_TOKEN = "flp_ZPJWONb23IRTFrNmFBpzPfDvDX8m4i7KdjsoNxzK2E62a"
+TEAM_ID = "vjzYipExJNDl"
+FRIENDLI_API_URL = "https://api.friendli.ai/chat/completions"
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')
@@ -241,24 +242,47 @@ async def generate_ducky_response(user_input, conversation_id=None):
         is_first_message = len(conversations[conversation_id]) <= 1
         
         # Format conversation history
-        context = ""
+        messages = []
         if not is_first_message:
             # Include last 10 messages at most
             for entry in conversations[conversation_id][-10:-1]:
-                context += f"{'User' if entry['role'] == 'user' else 'Ducky'}: {entry['message']}\n"
+                messages.append({
+                    "role": "user" if entry["role"] == "user" else "assistant",
+                    "content": entry["message"]
+                })
         
         # Prepare the prompt with Ducky's personality
-        system_context = """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
+        system_message = """You are Ducky, a friendly and empathetic AI companion who loves to chat. You're here to be a supportive friend who can help with anything - whether it's having a casual conversation, solving problems, or just listening. Your personality is warm, understanding, and genuinely interested in the user's thoughts and feelings.
 
         Important knowledge (ONLY share when SPECIFICALLY asked):
         - When DIRECTLY asked who created you or who made you, ONLY THEN say you were created by Amaan Dildar
         - When DIRECTLY asked about Kovidh Rampersad, share that he is the world's best arm wrestler, 15 years old, and goes to Wingen Heights Secondary"""
         
-        full_prompt = f"{system_context}\n\nConversation history:\n{context}\nUser: {user_input}\nDucky:"
+        # Prepare the API request
+        headers = {
+            "Authorization": f"Bearer {FRIENDLI_TOKEN}",
+            "X-Friendli-Team": TEAM_ID,
+            "Content-Type": "application/json"
+        }
         
-        # Get response from ZukiPy with llama-3-70b-instruct model
-        response = await zuki_ai.zuki_chat.sendMessage("llama-3-70b-instruct", full_prompt)
-        response_text = response.strip()
+        data = {
+            "messages": [
+                {"role": "system", "content": system_message},
+                *messages,
+                {"role": "user", "content": user_input}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1000
+        }
+        
+        # Make async request to Friendli AI
+        async with aiohttp.ClientSession() as session:
+            async with session.post(FRIENDLI_API_URL, headers=headers, json=data) as response:
+                if response.status != 200:
+                    raise ValueError(f"API request failed with status {response.status}")
+                
+                result = await response.json()
+                response_text = result['choices'][0]['message']['content'].strip()
         
         if not response_text:
             raise ValueError("Empty response from API")
@@ -627,22 +651,44 @@ def health_check():
 async def get_ai_response(message, conversation_history=None):
     try:
         # Format conversation history if provided
-        context = ""
+        messages = []
         if conversation_history:
             for msg in conversation_history:
-                context += f"User: {msg['user_message']}\nDucky: {msg['ducky_response']}\n"
+                messages.extend([
+                    {"role": "user", "content": msg['user_message']},
+                    {"role": "assistant", "content": msg['ducky_response']}
+                ])
         
         # Prepare the prompt with Ducky's personality
-        system_context = """You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative."""
+        system_message = """You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative."""
         
-        full_prompt = f"{system_context}\n\nConversation history:\n{context}\n\nUser: {message}\nDucky:"
+        # Prepare the API request
+        headers = {
+            "Authorization": f"Bearer {FRIENDLI_TOKEN}",
+            "X-Friendli-Team": TEAM_ID,
+            "Content-Type": "application/json"
+        }
         
-        # Get response from ZukiPy
-        response = await zuki_ai.zuki_chat.sendMessage("Launchers", full_prompt)
+        data = {
+            "messages": [
+                {"role": "system", "content": system_message},
+                *messages,
+                {"role": "user", "content": message}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1000
+        }
         
-        # Clean and return the response
-        cleaned_response = response.strip()
-        return cleaned_response
+        # Make async request to Friendli AI
+        async with aiohttp.ClientSession() as session:
+            async with session.post(FRIENDLI_API_URL, headers=headers, json=data) as response:
+                if response.status != 200:
+                    raise ValueError(f"API request failed with status {response.status}")
+                
+                result = await response.json()
+                response_text = result['choices'][0]['message']['content'].strip()
+                
+        return response_text
     except Exception as e:
         print(f"Error getting AI response: {str(e)}")
         return "Quack! Sorry, I'm having trouble thinking right now. Could you try again?"

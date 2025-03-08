@@ -480,6 +480,15 @@
     </div>
 
     <script>
+        // Add image error handling
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.menu-icon').forEach(function(img) {
+                img.addEventListener('error', function() {
+                    this.src = "{{ url_for('static', filename='images/logo.png') }}";
+                });
+            });
+        });
+        
         // Add base URL configuration
         const API_BASE_URL = window.location.hostname === 'localhost' ? '' : 'https://duckyai.onrender.com';
         let currentUser = null;

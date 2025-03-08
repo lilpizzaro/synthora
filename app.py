@@ -34,6 +34,9 @@ except FileNotFoundError:
 # Load regular .env file
 load_dotenv()
 
+# Define allowed file extensions for uploads
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
 # Initialize ZukiPy
 ZUKI_API_KEY = "zu-5d95dfe0c44c676ba495ad6fe723d722"
 zuki_ai = zukiPy.zukiCall(ZUKI_API_KEY)

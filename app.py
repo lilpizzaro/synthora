@@ -1,6 +1,6 @@
 # This is a placeholder until we can fix the syntax issue
 
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, make_response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -282,6 +282,20 @@ def ping():
 @app.route('/static/data/static/images/<path:filename>')
 def serve_images_compat(filename):
     return app.send_static_file(f'images/{filename}')
+
+# Handle avatar requests
+@app.route('/auth/avatar/<username>')
+def serve_avatar(username):
+    user = User.query.filter_by(username=username).first()
+    
+    if user and user.avatar_data:
+        # If user has a custom avatar, serve it
+        response = make_response(user.avatar_data)
+        response.headers.set('Content-Type', user.avatar_content_type or 'image/png')
+        return response
+    else:
+        # If user doesn't exist or has no avatar, serve the default avatar
+        return app.send_static_file('images/def_avatar.png')
 
 if __name__ == '__main__':
     with app.app_context():

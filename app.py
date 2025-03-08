@@ -256,8 +256,8 @@ async def generate_ducky_response(user_input, conversation_id=None):
         
         full_prompt = f"{system_context}\n\nConversation history:\n{context}\nUser: {user_input}\nDucky:"
         
-        # Get response from ZukiPy
-        response = await zuki_ai.zuki_chat.sendMessage("Launchers", full_prompt)
+        # Get response from ZukiPy with llama-3-70b-instruct model
+        response = await zuki_ai.zuki_chat.sendMessage("llama-3-70b-instruct", full_prompt)
         response_text = response.strip()
         
         if not response_text:

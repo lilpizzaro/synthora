@@ -40,7 +40,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 # Initialize Gemini AI
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY', 'AIzaSyB0MmJjgLLRDCSs89VkUTGRLLCeoP0djEc')
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-2.0-flash-lite')
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ducky-session-secret-key')

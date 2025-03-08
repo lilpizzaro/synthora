@@ -12,6 +12,91 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .auth-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 24px;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .auth-button .button-text {
+            flex: 1;
+            text-align: center;
+            margin-right: auto;
+        }
+
+        .auth-button .button-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .dark-mode .auth-button {
+            background-color: #0A84FF;
+        }
+
+        .dark-mode .auth-button:hover {
+            background-color: #0056b3;
+        }
+
+        .password-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-container input {
+            width: 100%;
+            padding-right: 40px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            opacity: 0.7;
+        }
+
+        .password-toggle .toggle-icon {
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .dark-mode .password-toggle {
+            color: #999;
+        }
+    </style>
 </head>
 <body>
     <!-- Auth Overlay -->
@@ -35,7 +120,12 @@
                 </div>
                 <div class="form-group">
                     <div class="input-icon">🔒</div>
-                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <div class="password-container">
+                        <input type="password" id="loginPassword" placeholder="Password" required>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)">
+                            <span class="toggle-icon">👁️</span>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Login</span>
@@ -92,31 +182,31 @@
         <div class="slide-menu" id="slideMenu">
             <div class="menu-items">
                 <button class="menu-item" onclick="showMemories()">
-                    <span>💭</span>
+                    <img src="{{ url_for('static', filename='images/mem.icon.png') }}" alt="Memories" class="menu-icon">
                     Memories
                 </button>
                 <button class="menu-item" onclick="toggleDarkMode()">
-                    <span>🌓</span>
+                    <img src="{{ url_for('static', filename='images/theme.icon.png') }}" alt="Theme" class="menu-icon">
                     Theme
                 </button>
                 <button class="menu-item" onclick="clearChat()">
-                    <span>🗑️</span>
+                    <img src="{{ url_for('static', filename='images/del-chat.icon.png') }}" alt="Clear Chat" class="menu-icon">
                     Clear Chat
                 </button>
                 <button class="menu-item" onclick="shareChat()">
-                    <span>📤</span>
+                    <img src="{{ url_for('static', filename='images/share-chat.png') }}" alt="Share" class="menu-icon">
                     Share
                 </button>
                 <button class="menu-item" onclick="toggleSound()">
-                    <span>🔊</span>
+                    <img src="{{ url_for('static', filename='images/notif.icon.png') }}" alt="Sound" class="menu-icon">
                     Sound
                 </button>
                 <button class="menu-item" onclick="toggleNotifications()">
-                    <span>🔔</span>
+                    <img src="{{ url_for('static', filename='images/notif.icon.png') }}" alt="Notifications" class="menu-icon">
                     Notifications
                 </button>
                 <button class="menu-item" onclick="logout()">
-                    <span>🚪</span>
+                    <img src="{{ url_for('static', filename='images/logout.icon.png') }}" alt="Logout" class="menu-icon">
                     Logout
                 </button>
             </div>
@@ -249,15 +339,21 @@
                         background-color: #007AFF;
                         color: white;
                         border: none;
-                        padding: 8px 16px;
-                        border-radius: 20px;
-                        font-size: 14px;
+                        padding: 12px 24px;
+                        border-radius: 12px;
+                        font-size: 16px;
                         cursor: pointer;
-                        transition: background-color 0.3s ease;
+                        transition: all 0.3s ease;
+                        width: 200px;
+                        text-align: center;
+                        font-weight: 500;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                     }
                     
                     .avatar-button:hover {
                         background-color: #0056b3;
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
                     }
                     
                     .dark-mode .avatar-button {
@@ -350,7 +446,9 @@
                         currentUser = data.username;
                         // Update avatar if available, otherwise use default
                         const defaultAvatar = "{{ url_for('static', filename='images/def_avatar.png') }}";
-                        document.getElementById('avatarImage').src = data.avatar_url ? `${data.avatar_url}?t=${new Date().getTime()}` : defaultAvatar;
+                        const avatarUrl = data.avatar_url ? `${data.avatar_url}?t=${new Date().getTime()}` : defaultAvatar;
+                        document.getElementById('avatarImage').src = avatarUrl;
+                        document.getElementById('menuAvatarImage').src = avatarUrl;
                         hideAuthOverlay();
                         startApp();
                     } else {
@@ -976,7 +1074,9 @@
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    // Update both the profile and menu avatars
                     document.getElementById('avatarImage').src = e.target.result;
+                    document.getElementById('menuAvatarImage').src = e.target.result;
                 };
                 reader.readAsDataURL(file);
             }
@@ -1021,11 +1121,17 @@
                     hideAccount();
                     showSuccess('Account updated successfully');
                     
-                    // Update all user avatars in the chat
+                    // Update all user avatars in the chat and menu
                     if (data.avatar_url) {
+                        const newAvatarUrl = `${data.avatar_url}?t=${new Date().getTime()}`;
+                        // Update menu avatar
+                        document.getElementById('menuAvatarImage').src = newAvatarUrl;
+                        // Update profile avatar
+                        document.getElementById('avatarImage').src = newAvatarUrl;
+                        // Update chat avatars
                         const userAvatars = document.querySelectorAll('.user-message .avatar');
                         userAvatars.forEach(avatar => {
-                            avatar.innerHTML = `<img src="${data.avatar_url}?t=${new Date().getTime()}" alt="User Avatar" class="avatar-img">`;
+                            avatar.innerHTML = `<img src="${newAvatarUrl}" alt="User Avatar" class="avatar-img">`;
                         });
                     }
                     
@@ -1052,6 +1158,19 @@
             setTimeout(() => {
                 errorElement.textContent = '';
             }, 3000);
+        }
+
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('.toggle-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '👁️‍🗨️';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
         }
     </script>
 </body>

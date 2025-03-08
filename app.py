@@ -294,23 +294,23 @@ def index():
 
 @app.route('/auth/signup', methods=['POST'])
 def signup():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        print(f"Signup failed: Missing username or password")
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    # Debug logging
+    print(f"Signup attempt for username: {username}")
+    
+    # Check if username already exists
+    if User.query.filter_by(username=username).first():
+        print(f"Signup failed: Username {username} already exists")
+        return jsonify({'error': 'Username already exists'}), 400
+    
     try:
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        
-        if not username or not password:
-            print(f"Signup failed: Missing username or password")
-            return jsonify({'error': 'Username and password are required'}), 400
-        
-        # Debug logging
-        print(f"Signup attempt for username: {username}")
-        
-        # Check if username already exists
-        if User.query.filter_by(username=username).first():
-            print(f"Signup failed: Username {username} already exists")
-            return jsonify({'error': 'Username already exists'}), 400
-        
         # Hash password and create user
         password_hash = hash_password(password)
         print(f"Creating user with bcrypt hash")
@@ -324,7 +324,7 @@ def signup():
         db.session.commit()
         
         print(f"Signup successful for user {username}")
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -336,23 +336,23 @@ def signup():
 
 @app.route('/auth/login', methods=['POST'])
 def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        print(f"Login attempt failed: Missing username or password")
+        return jsonify({'error': 'Username and password are required'}), 400
+    
+    # Debug logging
+    print(f"Login attempt for username: {username}")
+    
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        print(f"Login failed: User {username} not found")
+        return jsonify({'error': 'Invalid username or password'}), 401
+    
     try:
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        
-        if not username or not password:
-            print(f"Login attempt failed: Missing username or password")
-            return jsonify({'error': 'Username and password are required'}), 400
-        
-        # Debug logging
-        print(f"Login attempt for username: {username}")
-        
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            print(f"Login failed: User {username} not found")
-            return jsonify({'error': 'Invalid username or password'}), 401
-        
         # Debug: Print hash details
         print(f"Stored hash type: {type(user.password_hash)}")
         print(f"Stored hash length: {len(user.password_hash)}")
@@ -363,7 +363,7 @@ def login():
             return jsonify({'error': 'Invalid username or password'}), 401
         
         print(f"Login successful for user {username}")
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -384,11 +384,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-            return jsonify({
-                'authenticated': True,
+        return jsonify({
+            'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-            })
+        })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
@@ -644,7 +644,7 @@ async def get_ai_response(message, conversation_history=None):
         # Clean and return the response
         cleaned_response = response.text.strip()
         return cleaned_response
-    except Exception as e:
+        except Exception as e:
         print(f"Error getting AI response: {str(e)}")
         return "Quack! Sorry, I'm having trouble thinking right now. Could you try again?"
 
@@ -693,4 +693,3 @@ if __name__ == '__main__':
     # Use the PORT environment variable provided by Render
     port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port, debug=False) 
-model = genai.GenerativeModel("gemini-2.0-flash-lite")

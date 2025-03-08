@@ -25,11 +25,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Setup Gemini AI
-GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
-# Try to read API key from Render secrets if environment variable is not set
-if not GOOGLE_API_KEY and os.path.exists('/etc/secrets/GOOGLE_API_KEY'):
+try:
+    # First try to get the API key from Render secrets
     with open('/etc/secrets/GOOGLE_API_KEY', 'r') as secret_file:
         GOOGLE_API_KEY = secret_file.read().strip()
+except (FileNotFoundError, IOError):
+    # Fall back to environment variable if not on Render
+    GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+
+if not GOOGLE_API_KEY:
+    print("WARNING: No Google API key found. AI functionality will not work.")
 
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-2.0-flash')

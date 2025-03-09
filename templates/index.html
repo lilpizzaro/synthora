@@ -454,7 +454,7 @@
             <div class="auth-header">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="auth-logo">
                 <h1 class="auth-title">Ducky AI</h1>
-                <p class="auth-subtitle">Your friendly AI duck assistant</p>
+                <p class="auth-subtitle">Your AI assistant</p>
             </div>
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
@@ -470,11 +470,11 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                        <input type="password" id="loginPassword" placeholder="Password" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
-                    </div>
+                </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Login</span>
@@ -491,7 +491,7 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                        <input type="password" id="signupPassword" placeholder="Choose Password" required>
+                    <input type="password" id="signupPassword" placeholder="Choose Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signupPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
@@ -500,11 +500,11 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
-                    </div>
+                </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Create Account</span>
@@ -540,54 +540,54 @@
         <div class="slide-menu-overlay" id="menuOverlay"></div>
         <div class="slide-menu" id="slideMenu">
             <div class="menu-items">
-                <button class="menu-item" onclick="showMemories()">
+            <button class="menu-item" onclick="showMemories()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/mem.icon.png') }}" alt="Memories" class="menu-icon">
                     </div>
-                    Memories
-                </button>
-                <button class="menu-item" onclick="toggleDarkMode()">
+                Memories
+            </button>
+            <button class="menu-item" onclick="toggleDarkMode()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/theme.icon.png') }}" alt="Theme" class="menu-icon">
                     </div>
-                    Theme
-                </button>
+                Theme
+            </button>
                 <button class="menu-item" onclick="showSettings()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/settings.icon.png') }}" alt="Settings" class="menu-icon">
                     </div>
                     Settings
                 </button>
-                <button class="menu-item" onclick="clearChat()">
+            <button class="menu-item" onclick="clearChat()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/del-chat.icon.png') }}" alt="Clear Chat" class="menu-icon">
                     </div>
-                    Clear Chat
-                </button>
-                <button class="menu-item" onclick="shareChat()">
+                Clear Chat
+            </button>
+            <button class="menu-item" onclick="shareChat()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/share-chat.png') }}" alt="Share" class="menu-icon">
                     </div>
-                    Share
-                </button>
-                <button class="menu-item" onclick="toggleSound()">
+                Share
+            </button>
+            <button class="menu-item" onclick="toggleSound()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/notif.icon.png') }}" alt="Sound" class="menu-icon">
                     </div>
-                    Sound
-                </button>
-                <button class="menu-item" onclick="toggleNotifications()">
+                Sound
+            </button>
+            <button class="menu-item" onclick="toggleNotifications()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/notif.icon.png') }}" alt="Notifications" class="menu-icon">
                     </div>
-                    Notifications
-                </button>
-                <button class="menu-item" onclick="logout()">
+                Notifications
+            </button>
+            <button class="menu-item" onclick="logout()">
                     <div class="menu-icon-container">
                         <img src="{{ url_for('static', filename='images/logout.icon.png') }}" alt="Logout" class="menu-icon">
                     </div>
-                    Logout
-                </button>
+                Logout
+            </button>
             </div>
             <div class="menu-account" onclick="showAccount()">
                 <div class="account-preview">
@@ -610,7 +610,7 @@
         </div>
         <div class="input-container">
             <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Message Ducky..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="Message AI..." autocomplete="off">
             </div>
             <button id="sendButton" onclick="sendMessage()">
                 <img src="{{ url_for('static', filename='images/send.png') }}" alt="Send">
@@ -640,18 +640,18 @@
                 <div class="avatar-section">
                     <div class="avatar-container">
                         <div class="avatar-preview">
-                            <img id="avatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture">
+                        <img id="avatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture">
                             <div class="avatar-overlay">
                                 <span class="avatar-edit-icon">
                                     <img src="{{ url_for('static', filename='images/camera.icon.png') }}" alt="Change Picture" class="camera-icon">
                                 </span>
                             </div>
-                        </div>
-                        <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)" aria-label="Upload profile picture">
-                        <button type="button" class="avatar-button" onclick="document.getElementById('avatarUpload').click()">
-                            Change Picture
-                        </button>
                     </div>
+                    <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)" aria-label="Upload profile picture">
+                        <button type="button" class="avatar-button" onclick="document.getElementById('avatarUpload').click()">
+                        Change Picture
+                    </button>
+                </div>
                 </div>
                 <style>
                     .avatar-section {
@@ -798,12 +798,12 @@
                             <span class="slider-value" id="maxTokensValue">500</span>
                         </div>
                         <div class="setting-description">
-                            Maximum number of tokens (words) in Ducky's responses.
+                            Maximum number of tokens (words) in the AI's responses.
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="aiPersonality">Ducky's Personality</label>
+                        <label for="aiPersonality">AI Personality</label>
                         <select id="aiPersonality" name="personality" class="settings-select">
                             <option value="helpful">Helpful & Friendly</option>
                             <option value="formal">Professional & Formal</option>
@@ -811,7 +811,7 @@
                             <option value="concise">Concise & Direct</option>
                         </select>
                         <div class="setting-description">
-                            Determines how Ducky will respond to your questions.
+                            Determines how the AI will respond to your questions.
                         </div>
                     </div>
                     
@@ -1160,9 +1160,9 @@
             // Add initial welcome message from Ducky
             setTimeout(() => {
                 addMessageToChat('ducky', [
-                    'Quack! Hello there!',
-                    'I\'m your friendly AI duck assistant.',
-                    'How can I help you today? 🦆'
+                    'Hello there!',
+                    'I\'m your AI assistant, ready to help with any questions or tasks you might have.',
+                    'What would you like to discuss today?'
                 ]);
             }, 300);
         }
@@ -1231,7 +1231,7 @@
                 
                 if (navigator.share) {
                     await navigator.share({
-                        title: 'Chat with Ducky AI',
+                        title: 'Chat with AI',
                         text: messages
                     });
                 } else {
@@ -1361,7 +1361,7 @@
                 }
             });
         });
-        
+
         // Handle swipe to close menu (update for left side)
         let touchStartX = 0;
         slideMenu.addEventListener('touchstart', (e) => {
@@ -1671,7 +1671,7 @@
                 memoriesList.innerHTML = '';
                 
                 if (!memories || memories.length === 0) {
-                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with Ducky to create some.</div>';
+                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with the AI to create some.</div>';
                 } else {
                     memories.forEach(memory => {
                         const memoryDiv = document.createElement('div');
@@ -1690,7 +1690,7 @@
                                     ${escapeHtml(memory.user_message)}
                                 </div>
                                 <div class="memory-ducky-message">
-                                    <span class="memory-label">Ducky:</span>
+                                    <span class="memory-label">AI:</span>
                                     ${escapeHtml(memory.ducky_response)}
                                 </div>
                             </div>

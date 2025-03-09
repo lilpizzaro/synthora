@@ -92,6 +92,26 @@
         .password-toggle .toggle-icon {
             font-size: 16px;
             line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toggle-icon-img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+        
+        .form-icon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+        }
+        
+        .dark-mode .form-icon,
+        .dark-mode .toggle-icon-img {
+            filter: invert(0.8);
         }
 
         .dark-mode .password-toggle {
@@ -401,6 +421,35 @@
                 opacity: 1;
             }
         }
+
+        .avatar-edit-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .camera-icon {
+            width: 28px;
+            height: 28px;
+            filter: brightness(0) invert(1); /* Make the icon white */
+        }
+
+        /* Splash screen credit styling */
+        .splash-credits {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .credit-name {
+            font-weight: 600;
+        }
+        
+        .credit-age {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -420,15 +469,15 @@
             <!-- Login Form -->
             <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <div class="input-icon">👤</div>
+                    <div class="input-icon"><img src="{{ url_for('static', filename='images/user.icon.png') }}" alt="User" class="form-icon"></div>
                     <input type="text" id="loginUsername" placeholder="Username" required>
                 </div>
                 <div class="form-group">
-                    <div class="input-icon">🔒</div>
+                    <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
                         <input type="password" id="loginPassword" placeholder="Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)">
-                            <span class="toggle-icon">👁️</span>
+                            <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
                     </div>
                 </div>
@@ -441,16 +490,26 @@
             <!-- Signup Form -->
             <form id="signupForm" class="auth-form" style="display: none;" onsubmit="handleSignup(event)">
                 <div class="form-group">
-                    <div class="input-icon">👤</div>
+                    <div class="input-icon"><img src="{{ url_for('static', filename='images/user.icon.png') }}" alt="User" class="form-icon"></div>
                     <input type="text" id="signupUsername" placeholder="Choose Username" required>
                 </div>
                 <div class="form-group">
-                    <div class="input-icon">🔒</div>
-                    <input type="password" id="signupPassword" placeholder="Choose Password" required>
+                    <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
+                    <div class="password-container">
+                        <input type="password" id="signupPassword" placeholder="Choose Password" required>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signupPassword', this)">
+                            <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <div class="input-icon">🔒</div>
-                    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
+                    <div class="password-container">
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">
+                            <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
+                        </button>
+                    </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Create Account</span>
@@ -476,6 +535,7 @@
             <div class="splash-credits">
                 <span>Created by</span>
                 <span class="credit-name">Amaan Dildar</span>
+                <span class="credit-age">at age 15 as a hobby project</span>
             </div>
         </div>
     </div>
@@ -588,7 +648,9 @@
                         <div class="avatar-preview">
                             <img id="avatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture">
                             <div class="avatar-overlay">
-                                <span class="avatar-edit-icon">📸</span>
+                                <span class="avatar-edit-icon">
+                                    <img src="{{ url_for('static', filename='images/camera.icon.png') }}" alt="Change Picture" class="camera-icon">
+                                </span>
                             </div>
                         </div>
                         <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)" aria-label="Upload profile picture">
@@ -989,9 +1051,9 @@
                     chatContainer.innerHTML = '';
                     
                     addMessageToChat('ducky', [
-                        `Welcome back, ${currentUser}! 👋`,
-                        'I\'m your friendly AI duck assistant.',
-                        'How can I help you today? 🦆'
+                        'Hello there!',
+                        'I\'m your AI assistant, ready to help with any questions or tasks you might have.',
+                        'What would you like to discuss today?'
                     ]);
                     
                     // Focus input field
@@ -1735,7 +1797,7 @@
                     const chatContainer = document.getElementById('chatContainer');
                     const firstMessage = chatContainer.querySelector('.ducky-message .text');
                     if (firstMessage) {
-                        firstMessage.innerHTML = `Welcome back, ${username}! 👋<br>I'm your friendly AI duck assistant.<br>How can I help you today? 🦆`;
+                        firstMessage.innerHTML = `Welcome back, ${username}!<br>I'm your AI assistant, ready to help with any questions or tasks you might have.<br>What would you like to discuss today?`;
                     }
                 } else {
                     throw new Error(data.error || 'Failed to update account');
@@ -1762,10 +1824,10 @@
             
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.textContent = '👁️‍🗨️';
+                icon.innerHTML = '<img src="{{ url_for(\'static\', filename=\'images/eye-off.icon.png\') }}" alt="Hide" class="toggle-icon-img">';
             } else {
                 input.type = 'password';
-                icon.textContent = '👁️';
+                icon.innerHTML = '<img src="{{ url_for(\'static\', filename=\'images/eye.icon.png\') }}" alt="Show" class="toggle-icon-img">';
             }
         }
 

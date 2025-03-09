@@ -98,8 +98,16 @@ def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
 def verify_password(plain_password, hashed_password):
-    # Implementation of verify_password
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
+    # Ensure hashed_password is bytes
+    if isinstance(hashed_password, str):
+        hashed_password = hashed_password.encode('utf-8')
+    
+    # Ensure plain_password is properly encoded
+    if isinstance(plain_password, str):
+        plain_password = plain_password.encode('utf-8')
+        
+    # Verify the password
+    return bcrypt.checkpw(plain_password, hashed_password)
 
 # Authentication decorator
 def login_required(f):
@@ -143,29 +151,29 @@ def index():
 @app.route('/auth/signup', methods=['POST'])
 def signup():
     try:
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
         # Validate input
-        if not username or not password:
-            return jsonify({'error': 'Username and password are required'}), 400
-        
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+    
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-            return jsonify({'error': 'Username already exists'}), 400
-        
+        return jsonify({'error': 'Username already exists'}), 400
+    
         # Hash password and create user
         password_hash = hash_password(password)
-        
-        # Create new user
+    
+    # Create new user
         new_user = User(username=username, password_hash=password_hash)
         db.session.add(new_user)
         db.session.commit()
         
         # Set session and return
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -178,14 +186,14 @@ def signup():
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
         # Validate credentials
-        if not username or not password:
-            return jsonify({'error': 'Username and password are required'}), 400
-        
+    if not username or not password:
+        return jsonify({'error': 'Username and password are required'}), 400
+    
         # Check if username exists
         user = User.query.filter_by(username=username).first()
         if not user:
@@ -193,10 +201,10 @@ def login():
         
         # Verify password
         if not verify_password(password, user.password_hash):
-            return jsonify({'error': 'Invalid username or password'}), 401
-        
+        return jsonify({'error': 'Invalid username or password'}), 401
+    
         # Set session and return success
-        session['username'] = username
+    session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -216,11 +224,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-            return jsonify({
-                'authenticated': True,
+        return jsonify({
+            'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-            })
+        })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])

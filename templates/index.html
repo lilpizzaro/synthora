@@ -610,7 +610,7 @@
         </div>
         <div class="input-container">
             <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Message AI..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="Message Ducky..." autocomplete="off">
             </div>
             <button id="sendButton" onclick="sendMessage()">
                 <img src="{{ url_for('static', filename='images/send.png') }}" alt="Send">
@@ -1231,7 +1231,7 @@
                 
                 if (navigator.share) {
                     await navigator.share({
-                        title: 'Chat with AI',
+                        title: 'Chat with Ducky AI',
                         text: messages
                     });
                 } else {
@@ -1671,7 +1671,7 @@
                 memoriesList.innerHTML = '';
                 
                 if (!memories || memories.length === 0) {
-                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with the AI to create some.</div>';
+                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with Ducky to create some.</div>';
                 } else {
                     memories.forEach(memory => {
                         const memoryDiv = document.createElement('div');
@@ -1690,7 +1690,7 @@
                                     ${escapeHtml(memory.user_message)}
                                 </div>
                                 <div class="memory-ducky-message">
-                                    <span class="memory-label">AI:</span>
+                                    <span class="memory-label">Ducky:</span>
                                     ${escapeHtml(memory.ducky_response)}
                                 </div>
                             </div>

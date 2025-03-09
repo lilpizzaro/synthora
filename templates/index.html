@@ -62,11 +62,25 @@
             flex: 1;
             display: flex;
             align-items: center;
+            width: 100%;
         }
 
         .password-container input {
             width: 100%;
             padding-right: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            color: #333;
+        }
+        
+        .password-container input:focus {
+            outline: none;
+        }
+        
+        .dark-mode .password-container input {
+            color: #fff;
         }
 
         .password-toggle {
@@ -135,10 +149,30 @@
             background-color: #f5f5f5;
             border-radius: 12px;
             transition: background-color 0.3s ease;
+            width: calc(100% - 48px);
         }
 
+        .form-group input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            padding: 8px 0;
+            color: #333;
+            width: 100%;
+            height: 40px;
+        }
+        
         .dark-mode .form-group {
             background-color: #1c1c1e;
+        }
+        
+        .dark-mode .form-group input {
+            color: #fff;
+        }
+        
+        .form-group input:focus {
+            outline: none;
         }
 
         .menu-items {
@@ -445,6 +479,23 @@
         .credit-name {
             font-weight: 600;
         }
+
+        /* Account form specific styles */
+        .account-form .form-group {
+            margin: 0 0 16px 0;
+            width: 100%;
+        }
+        
+        .account-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .dark-mode .account-form label {
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -470,11 +521,11 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                    <input type="password" id="loginPassword" placeholder="Password" required>
+                        <input type="password" id="loginPassword" placeholder="Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
-                </div>
+                    </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Login</span>
@@ -491,7 +542,7 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                    <input type="password" id="signupPassword" placeholder="Choose Password" required>
+                        <input type="password" id="signupPassword" placeholder="Choose Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signupPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
@@ -500,11 +551,11 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
-                </div>
+                    </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Create Account</span>

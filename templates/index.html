@@ -62,25 +62,11 @@
             flex: 1;
             display: flex;
             align-items: center;
-            width: 100%;
         }
 
         .password-container input {
             width: 100%;
             padding-right: 40px;
-            height: 40px;
-            border: none;
-            background: transparent;
-            font-size: 15px;
-            color: #333;
-        }
-        
-        .password-container input:focus {
-            outline: none;
-        }
-        
-        .dark-mode .password-container input {
-            color: #fff;
         }
 
         .password-toggle {
@@ -149,30 +135,10 @@
             background-color: #f5f5f5;
             border-radius: 12px;
             transition: background-color 0.3s ease;
-            width: calc(100% - 48px);
         }
 
-        .form-group input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            font-size: 15px;
-            padding: 8px 0;
-            color: #333;
-            width: 100%;
-            height: 40px;
-        }
-        
         .dark-mode .form-group {
             background-color: #1c1c1e;
-        }
-        
-        .dark-mode .form-group input {
-            color: #fff;
-        }
-        
-        .form-group input:focus {
-            outline: none;
         }
 
         .menu-items {
@@ -479,23 +445,6 @@
         .credit-name {
             font-weight: 600;
         }
-
-        /* Account form specific styles */
-        .account-form .form-group {
-            margin: 0 0 16px 0;
-            width: 100%;
-        }
-        
-        .account-form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #333;
-        }
-        
-        .dark-mode .account-form label {
-            color: #fff;
-        }
     </style>
 </head>
 <body>
@@ -505,7 +454,7 @@
             <div class="auth-header">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="auth-logo">
                 <h1 class="auth-title">Ducky AI</h1>
-                <p class="auth-subtitle">Your AI assistant</p>
+                <p class="auth-subtitle">Your friendly AI duck assistant</p>
             </div>
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
@@ -521,11 +470,11 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                        <input type="password" id="loginPassword" placeholder="Password" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
-                    </div>
+                </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Login</span>
@@ -542,7 +491,7 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                        <input type="password" id="signupPassword" placeholder="Choose Password" required>
+                    <input type="password" id="signupPassword" placeholder="Choose Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signupPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
@@ -551,11 +500,11 @@
                 <div class="form-group">
                     <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
                     <div class="password-container">
-                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
                         <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">
                             <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
                         </button>
-                    </div>
+                </div>
                 </div>
                 <button type="submit" class="auth-button">
                     <span class="button-text">Create Account</span>
@@ -849,12 +798,12 @@
                             <span class="slider-value" id="maxTokensValue">500</span>
                         </div>
                         <div class="setting-description">
-                            Maximum number of tokens (words) in the AI's responses.
+                            Maximum number of tokens (words) in Ducky's responses.
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="aiPersonality">AI Personality</label>
+                        <label for="aiPersonality">Ducky's Personality</label>
                         <select id="aiPersonality" name="personality" class="settings-select">
                             <option value="helpful">Helpful & Friendly</option>
                             <option value="formal">Professional & Formal</option>
@@ -862,7 +811,7 @@
                             <option value="concise">Concise & Direct</option>
                         </select>
                         <div class="setting-description">
-                            Determines how the AI will respond to your questions.
+                            Determines how Ducky will respond to your questions.
                         </div>
                     </div>
                     
@@ -876,10 +825,6 @@
     </div>
 
     <script>
-        // Pre-render URLs for use in JavaScript
-        const EYE_ICON_URL = "{{ url_for('static', filename='images/eye.icon.png') }}";
-        const EYE_OFF_ICON_URL = "{{ url_for('static', filename='images/eye-off.icon.png') }}";
-        
         // Force dark mode on if needed - this should happen before any content is rendered
         const forceDarkMode = window.localStorage.getItem('darkMode') === 'true';
         if (forceDarkMode) {
@@ -1211,9 +1156,9 @@
             // Add initial welcome message from Ducky
             setTimeout(() => {
                 addMessageToChat('ducky', [
-                    'Hello there!',
-                    'I\'m your AI assistant, ready to help with any questions or tasks you might have.',
-                    'What would you like to discuss today?'
+                    'Quack! Hello there!',
+                    'I\'m your friendly AI duck assistant.',
+                    'How can I help you today? 🦆'
                 ]);
             }, 300);
         }
@@ -1509,7 +1454,7 @@
                     slider.value = savedValue;
                     valueDisplay.textContent = savedValue;
                     updateSliderBackground(slider);
-                } else {
+            } else {
                     updateSliderBackground(slider); // Initialize with default value
                 }
                 
@@ -1610,18 +1555,23 @@
             
             if (!message) return;
             
-            // Check if the user is asking about who created the AI
-            const creatorQuestions = [
-                "who made you", "who created you", "who built you", "who developed you",
-                "who is your creator", "who's your creator", "who is your developer",
-                "who's your developer", "who programmed you", "who designed you",
-                "who are you made by", "who are you created by", "your creator",
-                "your developer", "your maker", "who made this", "who created this",
-                "who owns you", "who is amaan", "who is amaan dildar"
-            ];
-            
+            // Check if the user is asking specifically about who created the AI
             const lowerMessage = message.toLowerCase();
-            const isCreatorQuestion = creatorQuestions.some(q => lowerMessage.includes(q));
+            
+            // More precise detection of creator questions with word boundaries
+            const isCreatorQuestion = (
+                /\bwho made you\b/.test(lowerMessage) ||
+                /\bwho created you\b/.test(lowerMessage) ||
+                /\bwho built you\b/.test(lowerMessage) ||
+                /\bwho developed you\b/.test(lowerMessage) ||
+                /\bwho is your creator\b/.test(lowerMessage) ||
+                /\bwho's your creator\b/.test(lowerMessage) ||
+                /\bwho programmed you\b/.test(lowerMessage) ||
+                /\bwho is amaan\b/.test(lowerMessage) ||
+                /\bwho is amaan dildar\b/.test(lowerMessage) ||
+                (lowerMessage.includes("creator") && lowerMessage.includes("who")) ||
+                (lowerMessage.includes("made") && lowerMessage.includes("who"))
+            );
             
             // Add user message to chat
             addMessageToChat('user', message);
@@ -1629,16 +1579,8 @@
             // Clear input
             inputField.value = '';
             
-            // If it's a creator question, respond directly without calling the API
-            if (isCreatorQuestion) {
-                setTimeout(() => {
-                    addMessageToChat('ducky', [
-                        "I was created by Amaan Dildar, a 15-year-old IT student who has a hobby for making Artificial Intelligent bots.",
-                        "He developed me as a personal project to explore conversational AI capabilities."
-                    ]);
-                }, 500);
-                return;
-            }
+            // For creator questions, still let the API handle it since we've updated the prompts
+            // to handle this correctly
             
             // Get AI settings from localStorage
             const temperature = parseFloat(localStorage.getItem('temperature') || '0.7');
@@ -1841,28 +1783,44 @@
                     formData.append('new_password', newPassword);
                 }
                 
-                const response = await fetch('/auth/update', {
+                // Construct the full URL for the update endpoint
+                const updateUrl = window.location.hostname === 'localhost' ? '/auth/update' : `${API_BASE_URL}/auth/update`;
+                
+                const response = await fetch(updateUrl, {
                     method: 'POST',
                     body: formData
                 });
                 
+                // Check response status before trying to parse JSON
+                if (!response.ok) {
+                    // Try to get error details from the response
+                    let errorMessage = 'Failed to update account';
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch (parseError) {
+                        // If we can't parse JSON, use the status text
+                        errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
                 const data = await response.json();
-                if (response.ok) {
                     currentUser = username;
                     hideAccount();
                     showSuccess('Account updated successfully');
                     
-                    // Update all user avatars in the chat and menu
+                // Update all user avatars in the chat and menu
                     if (data.avatar_url) {
-                        const newAvatarUrl = `${data.avatar_url}?t=${new Date().getTime()}`;
-                        // Update menu avatar
-                        document.getElementById('menuAvatarImage').src = newAvatarUrl;
-                        // Update profile avatar
-                        document.getElementById('avatarImage').src = newAvatarUrl;
-                        // Update chat avatars
+                    const newAvatarUrl = `${data.avatar_url}?t=${new Date().getTime()}`;
+                    // Update menu avatar
+                    document.getElementById('menuAvatarImage').src = newAvatarUrl;
+                    // Update profile avatar
+                    document.getElementById('avatarImage').src = newAvatarUrl;
+                    // Update chat avatars
                         const userAvatars = document.querySelectorAll('.user-message .avatar');
                         userAvatars.forEach(avatar => {
-                            avatar.innerHTML = `<img src="${newAvatarUrl}" alt="User Avatar" class="avatar-img">`;
+                        avatar.innerHTML = `<img src="${newAvatarUrl}" alt="User Avatar" class="avatar-img">`;
                         });
                     }
                     
@@ -1870,10 +1828,7 @@
                     const chatContainer = document.getElementById('chatContainer');
                     const firstMessage = chatContainer.querySelector('.ducky-message .text');
                     if (firstMessage) {
-                        firstMessage.innerHTML = `Welcome back, ${username}!<br>I'm your AI assistant, ready to help with any questions or tasks you might have.<br>What would you like to discuss today?`;
-                    }
-                } else {
-                    throw new Error(data.error || 'Failed to update account');
+                    firstMessage.innerHTML = `Welcome back, ${username}!<br>I'm your AI assistant, ready to help with any questions or tasks you might have.<br>What would you like to discuss today?`;
                 }
             } catch (error) {
                 console.error('Update account error:', error);
@@ -1897,10 +1852,10 @@
             
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.innerHTML = `<img src="${EYE_OFF_ICON_URL}" alt="Hide" class="toggle-icon-img">`;
+                icon.innerHTML = '<img src="{{ url_for(\'static\', filename=\'images/eye-off.icon.png\') }}" alt="Hide" class="toggle-icon-img">';
             } else {
                 input.type = 'password';
-                icon.innerHTML = `<img src="${EYE_ICON_URL}" alt="Show" class="toggle-icon-img">`;
+                icon.innerHTML = '<img src="{{ url_for(\'static\', filename=\'images/eye.icon.png\') }}" alt="Show" class="toggle-icon-img">';
             }
         }
 

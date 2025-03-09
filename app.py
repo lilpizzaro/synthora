@@ -264,9 +264,62 @@ def auth_status():
             return jsonify({
                 'authenticated': True,
                 'username': user.username,
-                'avatar_url': user.avatar_url
+                'avatar_url': url_for('serve_avatar', username=user.username) if user.avatar_data else None
             })
     return jsonify({'authenticated': False})
+
+@app.route('/auth/update', methods=['POST'])
+@login_required
+def update_account():
+    user = User.query.filter_by(username=session['username']).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    try:
+        # Update username if provided
+        if 'username' in request.form and request.form['username'] != user.username:
+            new_username = request.form['username']
+            # Check if username is already taken
+            existing_user = User.query.filter_by(username=new_username).first()
+            if existing_user and existing_user.id != user.id:
+                return jsonify({'error': 'Username already taken'}), 400
+            user.username = new_username
+        
+        # Update password if provided
+        if 'current_password' in request.form and 'new_password' in request.form:
+            current_password = request.form['current_password']
+            new_password = request.form['new_password']
+            
+            # Verify current password
+            if not verify_password(current_password, user.password_hash):
+                return jsonify({'error': 'Current password is incorrect'}), 400
+            
+            # Update password
+            user.password_hash = hash_password(new_password)
+        
+        # Update avatar if provided
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file and file.filename and allowed_file(file.filename):
+                # Save avatar
+                avatar_url = save_avatar(file, user.username)
+                if avatar_url:
+                    user.avatar_url = avatar_url
+                else:
+                    return jsonify({'error': 'Failed to save avatar'}), 500
+        
+        # Save changes to database
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'username': user.username,
+            'avatar_url': url_for('serve_avatar', username=user.username) if user.avatar_data else None
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating account: {str(e)}")
+        return jsonify({'error': f'Failed to update account: {str(e)}'}), 500
 
 @app.route('/generate', methods=['POST'])
 @login_required

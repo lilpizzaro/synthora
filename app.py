@@ -1,5 +1,3 @@
-# This is a placeholder until we can fix the syntax issue
-
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, make_response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,9 +8,6 @@ import traceback
 from functools import wraps
 import asyncio
 import google.generativeai as genai
-
-# Import all the necessary modules and setup that existed in the original file
-# This includes database configuration, models, etc.
 
 # Define allowed file extensions for uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -151,29 +146,29 @@ def index():
 @app.route('/auth/signup', methods=['POST'])
 def signup():
     try:
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        
         # Validate input
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
-    
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+        
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-        return jsonify({'error': 'Username already exists'}), 400
-    
+            return jsonify({'error': 'Username already exists'}), 400
+        
         # Hash password and create user
         password_hash = hash_password(password)
-    
-    # Create new user
+        
+        # Create new user
         new_user = User(username=username, password_hash=password_hash)
         db.session.add(new_user)
         db.session.commit()
         
         # Set session and return
-    session['username'] = username
+        session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -186,14 +181,14 @@ def signup():
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        
         # Validate credentials
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
-    
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+        
         # Check if username exists
         user = User.query.filter_by(username=username).first()
         if not user:
@@ -201,10 +196,10 @@ def login():
         
         # Verify password
         if not verify_password(password, user.password_hash):
-        return jsonify({'error': 'Invalid username or password'}), 401
-    
+            return jsonify({'error': 'Invalid username or password'}), 401
+        
         # Set session and return success
-    session['username'] = username
+        session['username'] = username
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -224,11 +219,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-        return jsonify({
-            'authenticated': True,
+            return jsonify({
+                'authenticated': True,
                 'username': user.username,
                 'avatar_url': user.avatar_url
-        })
+            })
     return jsonify({'authenticated': False})
 
 @app.route('/generate', methods=['POST'])
@@ -279,9 +274,6 @@ def get_memories():
         print(f"Error retrieving memories: {str(e)}")
         return jsonify({'error': 'Failed to retrieve memories', 'memories': []}), 500
 
-# Additional routes and functions
-# Include all other routes from the original file
-
 @app.route('/ping')
 def ping():
     return jsonify({'status': 'ok'})
@@ -308,4 +300,4 @@ def serve_avatar(username):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=True) 

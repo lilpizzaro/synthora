@@ -1610,6 +1610,36 @@
             
             if (!message) return;
             
+            // Check if the user is asking about who created the AI
+            const creatorQuestions = [
+                "who made you", "who created you", "who built you", "who developed you",
+                "who is your creator", "who's your creator", "who is your developer",
+                "who's your developer", "who programmed you", "who designed you",
+                "who are you made by", "who are you created by", "your creator",
+                "your developer", "your maker", "who made this", "who created this",
+                "who owns you", "who is amaan", "who is amaan dildar"
+            ];
+            
+            const lowerMessage = message.toLowerCase();
+            const isCreatorQuestion = creatorQuestions.some(q => lowerMessage.includes(q));
+            
+            // Add user message to chat
+            addMessageToChat('user', message);
+            
+            // Clear input
+            inputField.value = '';
+            
+            // If it's a creator question, respond directly without calling the API
+            if (isCreatorQuestion) {
+                setTimeout(() => {
+                    addMessageToChat('ducky', [
+                        "I was created by Amaan Dildar, a 15-year-old IT student who has a hobby for making Artificial Intelligent bots.",
+                        "He developed me as a personal project to explore conversational AI capabilities."
+                    ]);
+                }, 500);
+                return;
+            }
+            
             // Get AI settings from localStorage
             const temperature = parseFloat(localStorage.getItem('temperature') || '0.7');
             const maxTokens = parseInt(localStorage.getItem('maxTokens') || '500');
@@ -1617,12 +1647,6 @@
             
             // Debug log
             console.log('Sending message with settings:', { temperature, maxTokens, personality });
-            
-            // Add user message to chat
-            addMessageToChat('user', message);
-            
-            // Clear input
-            inputField.value = '';
             
             // Add typing indicator
             const chatContainer = document.getElementById('chatContainer');

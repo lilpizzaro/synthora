@@ -825,6 +825,10 @@
     </div>
 
     <script>
+        // Pre-render URLs for use in JavaScript
+        const EYE_ICON_URL = "{{ url_for('static', filename='images/eye.icon.png') }}";
+        const EYE_OFF_ICON_URL = "{{ url_for('static', filename='images/eye-off.icon.png') }}";
+        
         // Force dark mode on if needed - this should happen before any content is rendered
         const forceDarkMode = window.localStorage.getItem('darkMode') === 'true';
         if (forceDarkMode) {
@@ -854,6 +858,9 @@
         let pingFailCount = 0;
         const MAX_PING_FAILURES = 3;
         const PING_INTERVAL = 120000; // 2 minutes in milliseconds
+        
+        // Store conversation history for maintaining context
+        let conversationMessages = [];
         
         // Add ping functionality
         function startPingInterval() {
@@ -1019,6 +1026,9 @@
             // Initialize conversation ID
             conversationId = null;
             
+            // Initialize conversation history
+            conversationMessages = [];
+            
             // Start the ping interval
             startPingInterval();
             
@@ -1044,11 +1054,19 @@
                     const chatContainer = document.getElementById('chatContainer');
                     chatContainer.innerHTML = '';
                     
-                    addMessageToChat('ducky', [
+                    const welcomeMessage = [
                         'Hello there!',
                         'I\'m your AI assistant, ready to help with any questions or tasks you might have.',
                         'What would you like to discuss today?'
-                    ]);
+                    ];
+                    
+                    addMessageToChat('ducky', welcomeMessage);
+                    
+                    // Add initial greeting to conversation history
+                    conversationMessages.push({
+                        user_message: "",
+                        ducky_response: welcomeMessage.join(' ')
+                    });
                     
                     // Focus input field
                     document.getElementById('userInput').focus();
@@ -1153,12 +1171,15 @@
             chatContainer.innerHTML = '';
             conversationId = null;
             
+            // Clear conversation history
+            conversationMessages = [];
+            
             // Add initial welcome message from Ducky
             setTimeout(() => {
                 addMessageToChat('ducky', [
-                    'Quack! Hello there!',
-                    'I\'m your friendly AI duck assistant.',
-                    'How can I help you today? 🦆'
+                    'Hello there!',
+                    'I\'m your AI assistant, ready to help with any questions or tasks you might have.',
+                    'What would you like to discuss today?'
                 ]);
             }, 300);
         }
@@ -1454,7 +1475,7 @@
                     slider.value = savedValue;
                     valueDisplay.textContent = savedValue;
                     updateSliderBackground(slider);
-            } else {
+                } else {
                     updateSliderBackground(slider); // Initialize with default value
                 }
                 
@@ -1576,11 +1597,14 @@
             // Add user message to chat
             addMessageToChat('user', message);
             
+            // Store user message in conversation history
+            const userMessage = {
+                user_message: message,
+                ducky_response: '' // This will be filled after we get the response
+            };
+            
             // Clear input
             inputField.value = '';
-            
-            // For creator questions, still let the API handle it since we've updated the prompts
-            // to handle this correctly
             
             // Get AI settings from localStorage
             const temperature = parseFloat(localStorage.getItem('temperature') || '0.7');
@@ -1615,6 +1639,7 @@
                 body: JSON.stringify({
                     message: message,
                     conversation_id: conversationId,
+                    conversation_history: conversationMessages, // Send full conversation history
                     settings: {
                         temperature: temperature,
                         max_tokens: maxTokens,
@@ -1638,6 +1663,15 @@
                 
                 // Add the actual API response
                 addMessageToChat('ducky', data.response);
+                
+                // Complete the user message with the AI's response and add to conversation history
+                userMessage.ducky_response = data.response;
+                conversationMessages.push(userMessage);
+                
+                // Limit conversation history to last 10 messages to avoid token limit issues
+                if (conversationMessages.length > 10) {
+                    conversationMessages = conversationMessages.slice(-10);
+                }
                 
                 // Store conversation ID if provided
                 if (data.conversation_id) {

@@ -116,41 +116,38 @@ def login_required(f):
 # AI response generation
 async def get_ai_response(message, conversation_history=None, settings=None):
     try:
-        # Set default settings if not provided
-        if settings is None:
-            settings = {
-                'temperature': 0.7,
-                'max_tokens': 500,
-                'personality': 'helpful'
-            }
+        # Default settings
+        temperature = 0.7
+        max_tokens = 500
+        personality = 'helpful'
         
-        # Extract settings
-        temperature = settings.get('temperature', 0.7)
-        max_tokens = settings.get('max_tokens', 500)
-        personality = settings.get('personality', 'helpful')
+        # Apply provided settings if any
+        if settings:
+            temperature = float(settings.get('temperature', temperature))
+            max_tokens = int(settings.get('max_tokens', max_tokens))
+            personality = settings.get('personality', personality)
         
-        # Format conversation history if provided
+        # Initialize context
         context = ""
+        
+        # Process conversation history
         if conversation_history:
-            # Check if conversation_history is a dictionary or a string
-            if isinstance(conversation_history, dict):
-                # If it's a dictionary, extract user_message and ducky_response
-                context += f"User: {conversation_history.get('user_message', '')}\nDucky: {conversation_history.get('ducky_response', '')}\n"
-            elif isinstance(conversation_history, list):
-                # If it's a list, iterate through it
+            # If it's a list of messages, format them properly
+            if isinstance(conversation_history, list):
                 for msg in conversation_history:
+                    # If it's a dictionary, extract user_message and ducky_response
                     if isinstance(msg, dict):
-                        context += f"User: {msg.get('user_message', '')}\nDucky: {msg.get('ducky_response', '')}\n"
+                        context += f"User: {msg.get('user_message', '')}\nDucky: {msg.get('ducky_response', '')}\n\n"
             else:
                 # If it's a string (conversation_id), just use it as reference
                 print(f"Using conversation ID: {conversation_history}")
         
         # Select personality prompt based on setting
         personality_prompts = {
-            'helpful': "You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative. ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby.",
-            'formal': "You are Ducky, a professional and formal AI assistant. You provide clear, accurate information in a business-like manner. You avoid using puns or casual language, focusing instead on delivering precise, well-structured answers. Your responses are thorough and technically accurate. ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby.",
-            'enthusiastic': "You are Ducky, an EXTREMELY enthusiastic and playful AI duck! You LOVE to use exclamation marks and duck puns! You're super friendly and energetic in all your responses! You use lots of emojis and speak with great excitement about everything! Quack! ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby!",
-            'concise': "You are Ducky, a direct and concise AI assistant. Keep all responses brief and to the point. Avoid unnecessary details. Provide just the essential information in as few words as possible. ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby."
+            'helpful': "You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative. MAINTAIN CONTEXT from the conversation history when answering follow-up questions - if a user refers to something previously mentioned (like using pronouns 'he', 'she', 'it', 'they', 'this', 'that'), you should understand what they're referring to based on previous messages. ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby.",
+            'formal': "You are Ducky, a professional and formal AI assistant. You provide clear, accurate information in a business-like manner. You avoid using puns or casual language, focusing instead on delivering precise, well-structured answers. Your responses are thorough and technically accurate. MAINTAIN CONTEXT from the conversation history when answering follow-up questions - if a user refers to something previously mentioned (like using pronouns 'he', 'she', 'it', 'they', 'this', 'that'), you should understand what they're referring to based on previous messages. ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby.",
+            'enthusiastic': "You are Ducky, an EXTREMELY enthusiastic and playful AI duck! You LOVE to use exclamation marks and duck puns! You're super friendly and energetic in all your responses! You use lots of emojis and speak with great excitement about everything! Quack! MAINTAIN CONTEXT from the conversation history when answering follow-up questions - if a user refers to something previously mentioned (like using pronouns 'he', 'she', 'it', 'they', 'this', 'that'), you should understand what they're referring to based on previous messages. ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby!",
+            'concise': "You are Ducky, a direct and concise AI assistant. Keep all responses brief and to the point. Avoid unnecessary details. Provide just the essential information in as few words as possible. MAINTAIN CONTEXT from the conversation history when answering follow-up questions - if a user refers to something previously mentioned (like using pronouns 'he', 'she', 'it', 'they', 'this', 'that'), you should understand what they're referring to based on previous messages. ONLY when specifically asked about who created you or who your creator is, mention that you were created by Amaan Dildar, a 15-year-old IT student who makes AI bots as a hobby."
         }
         
         # Get the appropriate system context
@@ -328,16 +325,29 @@ def generate():
         data = request.json
         message = data.get('message')
         conversation_id = data.get('conversation_id')
+        conversation_history = data.get('conversation_history')
         settings = data.get('settings', {})
         
         if not message:
             return jsonify({'error': 'Message is required'}), 400
         
-        # Load existing conversation history if a conversation_id is provided
-        conversation_history = None
-        if conversation_id and not isinstance(conversation_id, str):
-            # If conversation_id is not a string, it might be the actual history
-            conversation_history = conversation_id
+        # Check what type of conversation history we have
+        if not conversation_history:
+            # If no conversation history is provided, check if we have a conversation_id
+            if conversation_id and not isinstance(conversation_id, str):
+                # If conversation_id is not a string, it might be the actual history (for backward compatibility)
+                conversation_history = conversation_id
+        
+        # Ensure conversation_history is well-formatted
+        if conversation_history and isinstance(conversation_history, list):
+            # Filter out any invalid messages
+            conversation_history = [
+                msg for msg in conversation_history 
+                if isinstance(msg, dict) and 'user_message' in msg and 'ducky_response' in msg
+            ]
+            
+            # Log conversation history for debugging
+            print(f"Using conversation history with {len(conversation_history)} messages")
         
         # Create event loop for async operation
         loop = asyncio.new_event_loop()

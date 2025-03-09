@@ -114,21 +114,63 @@ def login_required(f):
     return decorated_function
 
 # AI response generation
-async def get_ai_response(message, conversation_history=None):
+async def get_ai_response(message, conversation_history=None, settings=None):
     try:
+        # Set default settings if not provided
+        if settings is None:
+            settings = {
+                'temperature': 0.7,
+                'max_tokens': 500,
+                'personality': 'helpful'
+            }
+        
+        # Extract settings
+        temperature = settings.get('temperature', 0.7)
+        max_tokens = settings.get('max_tokens', 500)
+        personality = settings.get('personality', 'helpful')
+        
         # Format conversation history if provided
         context = ""
         if conversation_history:
-            for msg in conversation_history:
-                context += f"User: {msg['user_message']}\nDucky: {msg['ducky_response']}\n"
+            # Check if conversation_history is a dictionary or a string
+            if isinstance(conversation_history, dict):
+                # If it's a dictionary, extract user_message and ducky_response
+                context += f"User: {conversation_history.get('user_message', '')}\nDucky: {conversation_history.get('ducky_response', '')}\n"
+            elif isinstance(conversation_history, list):
+                # If it's a list, iterate through it
+                for msg in conversation_history:
+                    if isinstance(msg, dict):
+                        context += f"User: {msg.get('user_message', '')}\nDucky: {msg.get('ducky_response', '')}\n"
+            else:
+                # If it's a string (conversation_id), just use it as reference
+                print(f"Using conversation ID: {conversation_history}")
         
-        # Prepare the prompt with Ducky's personality
-        system_context = """You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative."""
+        # Select personality prompt based on setting
+        personality_prompts = {
+            'helpful': "You are Ducky, a friendly and helpful AI companion. You have a playful personality and love to help people with their problems. You often use duck-related puns and speak in a cheerful manner. You're knowledgeable about programming and technology, but you explain things in simple terms. You keep responses concise but informative.",
+            'formal': "You are Ducky, a professional and formal AI assistant. You provide clear, accurate information in a business-like manner. You avoid using puns or casual language, focusing instead on delivering precise, well-structured answers. Your responses are thorough and technically accurate.",
+            'enthusiastic': "You are Ducky, an EXTREMELY enthusiastic and playful AI duck! You LOVE to use exclamation marks and duck puns! You're super friendly and energetic in all your responses! You use lots of emojis and speak with great excitement about everything! Quack!",
+            'concise': "You are Ducky, a direct and concise AI assistant. Keep all responses brief and to the point. Avoid unnecessary details. Provide just the essential information in as few words as possible."
+        }
         
+        # Get the appropriate system context
+        system_context = personality_prompts.get(personality, personality_prompts['helpful'])
+        
+        # Prepare the full prompt
         full_prompt = f"{system_context}\n\nConversation history:\n{context}\n\nUser: {message}\nDucky:"
         
-        # Get response from Gemini
-        response = await asyncio.to_thread(model.generate_content, full_prompt)
+        # Configure generation parameters
+        generation_config = {
+            'temperature': temperature,
+            'max_output_tokens': max_tokens,
+        }
+        
+        # Get response from Gemini with settings
+        response = await asyncio.to_thread(
+            model.generate_content,
+            full_prompt,
+            generation_config=generation_config
+        )
         
         # Clean and return the response
         return response.text.strip()
@@ -233,21 +275,44 @@ def generate():
         data = request.json
         message = data.get('message')
         conversation_id = data.get('conversation_id')
+        settings = data.get('settings', {})
         
         if not message:
             return jsonify({'error': 'Message is required'}), 400
+        
+        # Load existing conversation history if a conversation_id is provided
+        conversation_history = None
+        if conversation_id and not isinstance(conversation_id, str):
+            # If conversation_id is not a string, it might be the actual history
+            conversation_history = conversation_id
         
         # Create event loop for async operation
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
-        # Generate response using event loop
-        response = loop.run_until_complete(get_ai_response(message, conversation_id))
+        # Generate response using event loop with settings
+        response = loop.run_until_complete(get_ai_response(message, conversation_history, settings))
         loop.close()
+        
+        # Save to memory if user is authenticated
+        try:
+            if 'username' in session:
+                user = User.query.filter_by(username=session['username']).first()
+                if user:
+                    memory = Memory(
+                        user_id=user.id,
+                        user_message=message,
+                        ducky_response=response
+                    )
+                    db.session.add(memory)
+                    db.session.commit()
+        except Exception as e:
+            print(f"Error saving memory: {str(e)}")
+            # Continue even if memory saving fails
         
         return jsonify({
             'response': response,
-            'conversation_id': conversation_id or str(datetime.now().timestamp())
+            'conversation_id': str(datetime.now().timestamp()) if not conversation_id else conversation_id
         })
     except Exception as e:
         print(f"Generate error: {str(e)}")

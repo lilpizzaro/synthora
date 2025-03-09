@@ -1886,10 +1886,10 @@
             
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.innerHTML = '<img src="{{ url_for(\'static\', filename=\'images/eye-off.icon.png\') }}" alt="Hide" class="toggle-icon-img">';
+                icon.innerHTML = `<img src="${EYE_OFF_ICON_URL}" alt="Hide" class="toggle-icon-img">`;
             } else {
                 input.type = 'password';
-                icon.innerHTML = '<img src="{{ url_for(\'static\', filename=\'images/eye.icon.png\') }}" alt="Show" class="toggle-icon-img">';
+                icon.innerHTML = `<img src="${EYE_ICON_URL}" alt="Show" class="toggle-icon-img">`;
             }
         }
 

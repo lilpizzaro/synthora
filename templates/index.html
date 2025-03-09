@@ -769,6 +769,16 @@
     </div>
 
     <script>
+        // Force dark mode on if needed - this should happen before any content is rendered
+        const forceDarkMode = window.localStorage.getItem('darkMode') === 'true';
+        if (forceDarkMode) {
+            document.body.classList.add('dark-mode');
+            document.body.classList.add('force-dark');
+            console.log("Forcing dark mode: ON");
+        } else {
+            console.log("No forced dark mode");
+        }
+    
         // Add image error handling
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.menu-icon').forEach(function(img) {
@@ -1098,14 +1108,29 @@
         }
 
         function toggleDarkMode() {
+            console.log("Toggle dark mode called. Current state:", darkMode);
+            
             // Toggle dark mode state
             darkMode = !darkMode;
             
-            // Update body classes
-            document.body.classList.toggle('dark-mode', darkMode);
+            console.log("New dark mode state:", darkMode);
             
-            // Save preference
+            // Force add/remove classes instead of toggle
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                document.body.classList.add('force-dark');
+                document.body.classList.remove('force-light');
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.remove('force-dark');
+                document.body.classList.add('force-light');
+            }
+            
+            // Save both preferences for compatibility
             localStorage.setItem('darkMode', darkMode);
+            localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+            
+            console.log("Body has dark-mode class:", document.body.classList.contains('dark-mode'));
             
             // Update splash screen theme
             updateSplashScreenTheme(darkMode);
@@ -1198,34 +1223,85 @@
             alert('Notifications toggle coming soon!');
         }
 
-        // Update theme initialization
+        // Initialize and handle dark mode
         window.addEventListener('load', function() {
-            const savedTheme = localStorage.getItem('theme') || 'system';
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const body = document.body;
+            console.log("Initializing dark mode...");
             
-            if (savedTheme === 'dark' || (savedTheme === 'system' && prefersDark)) {
-                body.classList.add('force-dark');
-                body.classList.add('dark-mode');
-                body.classList.remove('force-light');
-                updateSplashScreenTheme(true);
-            } else if (savedTheme === 'light' || (savedTheme === 'system' && !prefersDark)) {
-                body.classList.add('force-light');
-                body.classList.remove('force-dark');
-                body.classList.remove('dark-mode');
-                updateSplashScreenTheme(false);
+            // Check for saved dark mode preference (use either storage mechanism)
+            const savedDarkMode = localStorage.getItem('darkMode');
+            const savedTheme = localStorage.getItem('theme');
+            
+            // Determine initial dark mode state
+            if (savedDarkMode !== null) {
+                // Use stored preference if available
+                darkMode = savedDarkMode === 'true';
+                console.log("Using saved darkMode preference:", darkMode);
+            } else if (savedTheme !== null) {
+                // Fall back to theme preference if available
+                darkMode = savedTheme === 'dark';
+                console.log("Using saved theme preference:", darkMode);
+            } else {
+                // Otherwise use system preference
+                darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                console.log("Using system preference:", darkMode);
+                
+                // Save preferences
+                localStorage.setItem('darkMode', darkMode);
+                localStorage.setItem('theme', darkMode ? 'dark' : 'light');
             }
             
-            // Update all theme button icons
-            const themeButtons = document.querySelectorAll('[onclick="toggleDarkMode()"]');
-            themeButtons.forEach(button => {
-                const themeIcon = button.querySelector('span');
-                if (themeIcon) {
-                    themeIcon.textContent = getThemeIcon(savedTheme);
+            // Apply initial dark mode setting
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                document.body.classList.add('force-dark');
+                document.body.classList.remove('force-light');
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.remove('force-dark');
+                document.body.classList.add('force-light');
+            }
+            
+            console.log("Initial dark mode applied, body has dark-mode class:", 
+                      document.body.classList.contains('dark-mode'));
+            
+            // Initialize slider backgrounds
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            
+            if (temperatureSlider) updateSliderBackground(temperatureSlider);
+            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
+            
+            // Update splash screen theme
+            updateSplashScreenTheme(darkMode);
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                // Only update if user hasn't set a preference
+                if (localStorage.getItem('darkMode') === null && localStorage.getItem('theme') === null) {
+                    console.log("System theme changed:", e.matches ? "dark" : "light");
+                    darkMode = e.matches;
+                    
+                    // Apply dark mode
+                    if (darkMode) {
+                        document.body.classList.add('dark-mode');
+                        document.body.classList.add('force-dark');
+                        document.body.classList.remove('force-light');
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                        document.body.classList.remove('force-dark');
+                        document.body.classList.add('force-light');
+                    }
+                    
+                    // Update UI
+                    updateSplashScreenTheme(darkMode);
+                    
+                    // Update slider backgrounds
+                    if (temperatureSlider) updateSliderBackground(temperatureSlider);
+                    if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
                 }
             });
         });
-
+        
         // Handle swipe to close menu (update for left side)
         let touchStartX = 0;
         slideMenu.addEventListener('touchstart', (e) => {
@@ -1290,284 +1366,6 @@
             
             return messageDiv;
         }
-
-        // Function to update splash screen theme
-        function updateSplashScreenTheme(isDarkMode) {
-            const root = document.documentElement;
-            if (isDarkMode) {
-                root.style.setProperty('--splash-background', '#1d1d1f');
-                root.style.setProperty('--splash-text', '#ffffff');
-                root.style.setProperty('--splash-text-rgb', '255, 255, 255');
-            } else {
-                root.style.setProperty('--splash-background', '#ffffff');
-                root.style.setProperty('--splash-text', '#000000');
-                root.style.setProperty('--splash-text-rgb', '0, 0, 0');
-            }
-        }
-
-        async function showMemories() {
-            try {
-                const response = await fetch('/memories');
-                const data = await response.json();
-                const memories = data.memories;  // Access the memories array from the response object
-                
-                const memoriesList = document.getElementById('memoriesList');
-                memoriesList.innerHTML = '';
-                
-                if (!memories || memories.length === 0) {
-                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with Ducky to create some.</div>';
-                } else {
-                    memories.forEach(memory => {
-                        const memoryDiv = document.createElement('div');
-                        memoryDiv.className = 'memory-item';
-                        
-                        const date = new Date(memory.timestamp);  // Remove * 1000 as timestamp is already ISO format
-                        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                        
-                        memoryDiv.innerHTML = `
-                            <div class="memory-header">
-                                <span class="memory-date">${formattedDate}</span>
-                            </div>
-                            <div class="memory-messages">
-                                <div class="memory-user-message">
-                                    <span class="memory-label">You:</span>
-                                    ${escapeHtml(memory.user_message)}
-                                </div>
-                                <div class="memory-ducky-message">
-                                    <span class="memory-label">Ducky:</span>
-                                    ${escapeHtml(memory.ducky_response)}
-                                </div>
-                            </div>
-                        `;
-                        memoriesList.appendChild(memoryDiv);
-                    });
-                }
-                
-                document.getElementById('memoriesModal').classList.add('show');
-                document.getElementById('menuOverlay').classList.remove('active');
-                document.getElementById('slideMenu').classList.remove('active');
-            } catch (error) {
-                console.error('Failed to load memories:', error);
-                showError('Failed to load memories. Please try again.');
-            }
-        }
-
-        function hideMemories() {
-            document.getElementById('memoriesModal').classList.remove('show');
-        }
-
-        function showAccount() {
-            document.getElementById('accountModal').classList.add('show');
-            document.getElementById('menuOverlay').classList.remove('active');
-            document.getElementById('slideMenu').classList.remove('active');
-            
-            // Populate current username
-            document.getElementById('accountUsername').value = currentUser || '';
-        }
-
-        function hideAccount() {
-            document.getElementById('accountModal').classList.remove('show');
-        }
-
-        function handleAvatarChange(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Update both the profile and menu avatars
-                    document.getElementById('avatarImage').src = e.target.result;
-                    document.getElementById('menuAvatarImage').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        async function updateAccount(event) {
-            event.preventDefault();
-            
-            try {
-                const username = document.getElementById('accountUsername').value;
-                const currentPassword = document.getElementById('currentPassword').value;
-                const newPassword = document.getElementById('newPassword').value;
-                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-                
-                if (newPassword && newPassword !== confirmNewPassword) {
-                    showError('New passwords do not match');
-                    return;
-                }
-                
-                const formData = new FormData();
-                const avatarFile = document.getElementById('avatarUpload').files[0];
-                if (avatarFile) {
-                    formData.append('avatar', avatarFile);
-                }
-                
-                formData.append('username', username);
-                if (currentPassword) {
-                    formData.append('current_password', currentPassword);
-                }
-                if (newPassword) {
-                    formData.append('new_password', newPassword);
-                }
-                
-                const response = await fetch('/auth/update', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                if (response.ok) {
-                    currentUser = username;
-                    hideAccount();
-                    showSuccess('Account updated successfully');
-                    
-                    // Update all user avatars in the chat and menu
-                    if (data.avatar_url) {
-                        const newAvatarUrl = `${data.avatar_url}?t=${new Date().getTime()}`;
-                        // Update menu avatar
-                        document.getElementById('menuAvatarImage').src = newAvatarUrl;
-                        // Update profile avatar
-                        document.getElementById('avatarImage').src = newAvatarUrl;
-                        // Update chat avatars
-                        const userAvatars = document.querySelectorAll('.user-message .avatar');
-                        userAvatars.forEach(avatar => {
-                            avatar.innerHTML = `<img src="${newAvatarUrl}" alt="User Avatar" class="avatar-img">`;
-                        });
-                    }
-                    
-                    // Update the welcome message with new username
-                    const chatContainer = document.getElementById('chatContainer');
-                    const firstMessage = chatContainer.querySelector('.ducky-message .text');
-                    if (firstMessage) {
-                        firstMessage.innerHTML = `Welcome back, ${username}! 👋<br>I'm your friendly AI duck assistant.<br>How can I help you today? 🦆`;
-                    }
-                } else {
-                    throw new Error(data.error || 'Failed to update account');
-                }
-            } catch (error) {
-                console.error('Update account error:', error);
-                showError(error.message || 'Failed to update account. Please try again.');
-            }
-        }
-
-        // Add success message function
-        function showSuccess(message) {
-            const errorElement = document.getElementById('authError');
-            errorElement.style.color = '#10a37f';
-            errorElement.textContent = message;
-            setTimeout(() => {
-                errorElement.textContent = '';
-            }, 3000);
-        }
-
-        function togglePasswordVisibility(inputId, button) {
-            const input = document.getElementById(inputId);
-            const icon = button.querySelector('.toggle-icon');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.textContent = '👁️‍🗨️';
-            } else {
-                input.type = 'password';
-                icon.textContent = '👁️';
-            }
-        }
-
-        function showSettings() {
-            document.getElementById('settingsModal').classList.add('show');
-            document.getElementById('menuOverlay').classList.remove('active');
-            document.getElementById('slideMenu').classList.remove('active');
-            
-            // Populate settings
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            const personalitySelect = document.getElementById('aiPersonality');
-            
-            temperatureSlider.value = localStorage.getItem('temperature') || '0.7';
-            maxTokensSlider.value = localStorage.getItem('maxTokens') || '500';
-            personalitySelect.value = localStorage.getItem('personality') || 'helpful';
-        }
-
-        function hideSettings() {
-            document.getElementById('settingsModal').classList.remove('show');
-        }
-
-        function saveSettings(event) {
-            event.preventDefault();
-            
-            const temperature = document.getElementById('aiTemperature').value;
-            const maxTokens = document.getElementById('aiMaxTokens').value;
-            const personality = document.getElementById('aiPersonality').value;
-            
-            // Save to localStorage
-            localStorage.setItem('temperature', temperature);
-            localStorage.setItem('maxTokens', maxTokens);
-            localStorage.setItem('personality', personality);
-            
-            // Update any visual elements
-            const temperatureValue = document.getElementById('temperatureValue');
-            const maxTokensValue = document.getElementById('maxTokensValue');
-            
-            if (temperatureValue) temperatureValue.textContent = temperature;
-            if (maxTokensValue) maxTokensValue.textContent = maxTokens;
-            
-            // Update slider backgrounds
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            
-            if (temperatureSlider) updateSliderBackground(temperatureSlider);
-            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-            
-            // Hide modal and show success message
-            hideSettings();
-            showSuccess('Settings saved successfully');
-            
-            // Optional: If we're in a conversation, we could notify the user that
-            // these settings will apply to their next message
-        }
-
-        // Initialize and handle dark mode
-        window.addEventListener('load', function() {
-            // Check for saved dark mode preference
-            const savedDarkMode = localStorage.getItem('darkMode');
-            
-            // Set initial dark mode state based on saved preference or system preference
-            if (savedDarkMode !== null) {
-                // Use stored preference if available
-                darkMode = savedDarkMode === 'true';
-            } else {
-                // Otherwise use system preference
-                darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                localStorage.setItem('darkMode', darkMode);
-            }
-            
-            // Apply initial dark mode setting
-            document.body.classList.toggle('dark-mode', darkMode);
-            
-            // Initialize slider backgrounds
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            
-            if (temperatureSlider) updateSliderBackground(temperatureSlider);
-            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-            
-            // Update splash screen theme
-            updateSplashScreenTheme(darkMode);
-            
-            // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                // Only update if user hasn't set a preference
-                if (localStorage.getItem('darkMode') === null) {
-                    darkMode = e.matches;
-                    document.body.classList.toggle('dark-mode', darkMode);
-                    updateSplashScreenTheme(darkMode);
-                    
-                    // Update slider backgrounds
-                    if (temperatureSlider) updateSliderBackground(temperatureSlider);
-                    if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-                }
-            });
-        });
 
         // Enhanced slider interaction with improved dragging
         document.addEventListener('DOMContentLoaded', function() {
@@ -1802,6 +1600,241 @@
         window.addEventListener('load', function() {
             document.getElementById('userInput').focus();
         });
+
+        async function showMemories() {
+            try {
+                const response = await fetch('/memories');
+                const data = await response.json();
+                const memories = data.memories;  // Access the memories array from the response object
+                
+                const memoriesList = document.getElementById('memoriesList');
+                memoriesList.innerHTML = '';
+                
+                if (!memories || memories.length === 0) {
+                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with Ducky to create some.</div>';
+                } else {
+                    memories.forEach(memory => {
+                        const memoryDiv = document.createElement('div');
+                        memoryDiv.className = 'memory-item';
+                        
+                        const date = new Date(memory.timestamp);  // Remove * 1000 as timestamp is already ISO format
+                        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                        
+                        memoryDiv.innerHTML = `
+                            <div class="memory-header">
+                                <span class="memory-date">${formattedDate}</span>
+                            </div>
+                            <div class="memory-messages">
+                                <div class="memory-user-message">
+                                    <span class="memory-label">You:</span>
+                                    ${escapeHtml(memory.user_message)}
+                                </div>
+                                <div class="memory-ducky-message">
+                                    <span class="memory-label">Ducky:</span>
+                                    ${escapeHtml(memory.ducky_response)}
+                                </div>
+                            </div>
+                        `;
+                        memoriesList.appendChild(memoryDiv);
+                    });
+                }
+                
+                document.getElementById('memoriesModal').classList.add('show');
+                document.getElementById('menuOverlay').classList.remove('active');
+                document.getElementById('slideMenu').classList.remove('active');
+            } catch (error) {
+                console.error('Failed to load memories:', error);
+                showError('Failed to load memories. Please try again.');
+            }
+        }
+
+        function hideMemories() {
+            document.getElementById('memoriesModal').classList.remove('show');
+        }
+
+        function showAccount() {
+            document.getElementById('accountModal').classList.add('show');
+            document.getElementById('menuOverlay').classList.remove('active');
+            document.getElementById('slideMenu').classList.remove('active');
+            
+            // Populate current username
+            document.getElementById('accountUsername').value = currentUser || '';
+        }
+
+        function hideAccount() {
+            document.getElementById('accountModal').classList.remove('show');
+        }
+
+        function handleAvatarChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Update both the profile and menu avatars
+                    document.getElementById('avatarImage').src = e.target.result;
+                    document.getElementById('menuAvatarImage').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function updateAccount(event) {
+            event.preventDefault();
+            
+            try {
+                const username = document.getElementById('accountUsername').value;
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+                
+                if (newPassword && newPassword !== confirmNewPassword) {
+                    showError('New passwords do not match');
+                    return;
+                }
+                
+                const formData = new FormData();
+                const avatarFile = document.getElementById('avatarUpload').files[0];
+                if (avatarFile) {
+                    formData.append('avatar', avatarFile);
+                }
+                
+                formData.append('username', username);
+                if (currentPassword) {
+                    formData.append('current_password', currentPassword);
+                }
+                if (newPassword) {
+                    formData.append('new_password', newPassword);
+                }
+                
+                const response = await fetch('/auth/update', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    currentUser = username;
+                    hideAccount();
+                    showSuccess('Account updated successfully');
+                    
+                    // Update all user avatars in the chat and menu
+                    if (data.avatar_url) {
+                        const newAvatarUrl = `${data.avatar_url}?t=${new Date().getTime()}`;
+                        // Update menu avatar
+                        document.getElementById('menuAvatarImage').src = newAvatarUrl;
+                        // Update profile avatar
+                        document.getElementById('avatarImage').src = newAvatarUrl;
+                        // Update chat avatars
+                        const userAvatars = document.querySelectorAll('.user-message .avatar');
+                        userAvatars.forEach(avatar => {
+                            avatar.innerHTML = `<img src="${newAvatarUrl}" alt="User Avatar" class="avatar-img">`;
+                        });
+                    }
+                    
+                    // Update the welcome message with new username
+                    const chatContainer = document.getElementById('chatContainer');
+                    const firstMessage = chatContainer.querySelector('.ducky-message .text');
+                    if (firstMessage) {
+                        firstMessage.innerHTML = `Welcome back, ${username}! 👋<br>I'm your friendly AI duck assistant.<br>How can I help you today? 🦆`;
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to update account');
+                }
+            } catch (error) {
+                console.error('Update account error:', error);
+                showError(error.message || 'Failed to update account. Please try again.');
+            }
+        }
+
+        // Add success message function
+        function showSuccess(message) {
+            const errorElement = document.getElementById('authError');
+            errorElement.style.color = '#10a37f';
+            errorElement.textContent = message;
+            setTimeout(() => {
+                errorElement.textContent = '';
+            }, 3000);
+        }
+
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('.toggle-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '👁️‍🗨️';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+
+        function showSettings() {
+            document.getElementById('settingsModal').classList.add('show');
+            document.getElementById('menuOverlay').classList.remove('active');
+            document.getElementById('slideMenu').classList.remove('active');
+            
+            // Populate settings
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            const personalitySelect = document.getElementById('aiPersonality');
+            
+            temperatureSlider.value = localStorage.getItem('temperature') || '0.7';
+            maxTokensSlider.value = localStorage.getItem('maxTokens') || '500';
+            personalitySelect.value = localStorage.getItem('personality') || 'helpful';
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        function saveSettings(event) {
+            event.preventDefault();
+            
+            const temperature = document.getElementById('aiTemperature').value;
+            const maxTokens = document.getElementById('aiMaxTokens').value;
+            const personality = document.getElementById('aiPersonality').value;
+            
+            // Save to localStorage
+            localStorage.setItem('temperature', temperature);
+            localStorage.setItem('maxTokens', maxTokens);
+            localStorage.setItem('personality', personality);
+            
+            // Update any visual elements
+            const temperatureValue = document.getElementById('temperatureValue');
+            const maxTokensValue = document.getElementById('maxTokensValue');
+            
+            if (temperatureValue) temperatureValue.textContent = temperature;
+            if (maxTokensValue) maxTokensValue.textContent = maxTokens;
+            
+            // Update slider backgrounds
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            
+            if (temperatureSlider) updateSliderBackground(temperatureSlider);
+            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
+            
+            // Hide modal and show success message
+            hideSettings();
+            showSuccess('Settings saved successfully');
+            
+            // Optional: If we're in a conversation, we could notify the user that
+            // these settings will apply to their next message
+        }
+
+        // Function to update splash screen theme
+        function updateSplashScreenTheme(isDarkMode) {
+            const root = document.documentElement;
+            if (isDarkMode) {
+                root.style.setProperty('--splash-background', '#1d1d1f');
+                root.style.setProperty('--splash-text', '#ffffff');
+                root.style.setProperty('--splash-text-rgb', '255, 255, 255');
+            } else {
+                root.style.setProperty('--splash-background', '#ffffff');
+                root.style.setProperty('--splash-text', '#000000');
+                root.style.setProperty('--splash-text-rgb', '0, 0, 0');
+            }
+        }
     </script>
 </body>
 </html> 

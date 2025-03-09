@@ -781,7 +781,7 @@
         // Add base URL configuration
         const API_BASE_URL = window.location.hostname === 'localhost' ? '' : 'https://duckyai.onrender.com';
         let currentUser = null;
-        let darkMode = localStorage.getItem('darkMode') === 'true';
+        let darkMode = false; // Initialize dark mode as false by default
         
         let conversationId = null;
         let pingInterval = null;
@@ -1080,188 +1080,6 @@
             `;
         }
 
-        // Update slider values as they change
-        document.addEventListener('DOMContentLoaded', function() {
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const temperatureValue = document.getElementById('temperatureValue');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            const maxTokensValue = document.getElementById('maxTokensValue');
-            
-            if (temperatureSlider && temperatureValue) {
-                temperatureSlider.addEventListener('input', function() {
-                    temperatureValue.textContent = this.value;
-                });
-            }
-            
-            if (maxTokensSlider && maxTokensValue) {
-                maxTokensSlider.addEventListener('input', function() {
-                    maxTokensValue.textContent = this.value;
-                });
-            }
-        });
-        
-        // Enhanced slider interaction
-        document.addEventListener('DOMContentLoaded', function() {
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const temperatureValue = document.getElementById('temperatureValue');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            const maxTokensValue = document.getElementById('maxTokensValue');
-            
-            // Load saved values from localStorage
-            if (localStorage.getItem('temperature')) {
-                temperatureSlider.value = localStorage.getItem('temperature');
-                temperatureValue.textContent = temperatureSlider.value;
-                updateSliderBackground(temperatureSlider);
-            }
-            
-            if (localStorage.getItem('maxTokens')) {
-                maxTokensSlider.value = localStorage.getItem('maxTokens');
-                maxTokensValue.textContent = maxTokensSlider.value;
-                updateSliderBackground(maxTokensSlider);
-            }
-            
-            // Update temperature slider
-            if (temperatureSlider && temperatureValue) {
-                temperatureSlider.addEventListener('input', function() {
-                    temperatureValue.textContent = this.value;
-                    updateSliderBackground(this);
-                });
-            }
-            
-            // Update max tokens slider
-            if (maxTokensSlider && maxTokensValue) {
-                maxTokensSlider.addEventListener('input', function() {
-                    maxTokensValue.textContent = this.value;
-                    updateSliderBackground(this);
-                });
-            }
-            
-            // Function to update slider background gradient
-            function updateSliderBackground(slider) {
-                const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                const activeColor = isDarkMode ? '#0A84FF' : '#007AFF';
-                const inactiveColor = isDarkMode ? '#2c2c2e' : '#e0e0e0';
-                
-                slider.style.background = `linear-gradient(to right, ${activeColor} 0%, ${activeColor} ${value}%, ${inactiveColor} ${value}%, ${inactiveColor} 100%)`;
-            }
-            
-            // Update backgrounds on dark mode toggle
-            window.addEventListener('dark-mode-changed', function() {
-                if (temperatureSlider) updateSliderBackground(temperatureSlider);
-                if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-            });
-        });
-        
-        // Update the sendMessage function to include AI settings
-        function sendMessage() {
-            const inputField = document.getElementById('userInput');
-            const message = inputField.value.trim();
-            
-            if (!message) return;
-            
-            // Get AI settings from localStorage
-            const temperature = parseFloat(localStorage.getItem('temperature') || '0.7');
-            const maxTokens = parseInt(localStorage.getItem('maxTokens') || '500');
-            const personality = localStorage.getItem('personality') || 'helpful';
-            
-            // Debug log
-            console.log('Sending message with settings:', { temperature, maxTokens, personality });
-            
-            // Add user message to chat
-            addMessageToChat('user', message);
-            
-            // Clear input
-            inputField.value = '';
-            
-            // Add typing indicator
-            const chatContainer = document.getElementById('chatContainer');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message ducky-message typing-message';
-            typingDiv.innerHTML = `
-                <div class="avatar">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
-                </div>
-                <div class="text">${createTypingIndicator()}</div>
-            `;
-            chatContainer.appendChild(typingDiv);
-            scrollToBottom();
-            
-            // Set button to loading state
-            setButtonLoading(true);
-            
-            // Call the API for a response with settings
-            fetch('/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: message,
-                    conversation_id: conversationId,
-                    settings: {
-                        temperature: temperature,
-                        max_tokens: maxTokens,
-                        personality: personality
-                    }
-                })
-            })
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('API response received:', data);
-                
-                // Remove typing indicator
-                const typingMessages = document.querySelectorAll('.typing-message');
-                typingMessages.forEach(msg => msg.remove());
-                
-                // Add the actual API response
-                addMessageToChat('ducky', data.response);
-                
-                // Store conversation ID if provided
-                if (data.conversation_id) {
-                    conversationId = data.conversation_id;
-                }
-                
-                // Reset button state
-                setButtonLoading(false);
-            })
-            .catch(error => {
-                console.error('API error:', error);
-                
-                // Remove typing indicator
-                const typingMessages = document.querySelectorAll('.typing-message');
-                typingMessages.forEach(msg => msg.remove());
-                
-                // Show error message
-                addMessageToChat('error', 'Sorry, I\'m having trouble connecting right now. Please try again later.');
-                
-                // Reset button state
-                setButtonLoading(false);
-            });
-            
-            // Focus input field
-            inputField.focus();
-        }
-
-        // Add enter key support
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // Focus input on page load
-        window.addEventListener('load', function() {
-            document.getElementById('userInput').focus();
-        });
-
         // Menu functions
         function clearChat() {
             const chatContainer = document.getElementById('chatContainer');
@@ -1280,20 +1098,34 @@
         }
 
         function toggleDarkMode() {
+            // Toggle dark mode state
             darkMode = !darkMode;
+            
+            // Update body classes
             document.body.classList.toggle('dark-mode', darkMode);
+            
+            // Save preference
             localStorage.setItem('darkMode', darkMode);
             
-            // Update theme icon
-            const themeIcon = document.querySelector('.menu-item:nth-child(2) .menu-icon');
-            if (themeIcon) {
-                themeIcon.style.filter = darkMode ? 'invert(1) brightness(2)' : 'none';
-            }
+            // Update splash screen theme
+            updateSplashScreenTheme(darkMode);
             
             // Dispatch event for other components to react to dark mode change
             window.dispatchEvent(new CustomEvent('dark-mode-changed', {
                 detail: { darkMode: darkMode }
             }));
+            
+            // Close menu after toggling dark mode
+            if (slideMenu.classList.contains('active')) {
+                toggleMenu();
+            }
+            
+            // Manual update of the sliders' background gradients
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            
+            if (temperatureSlider) updateSliderBackground(temperatureSlider);
+            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
         }
 
         // Add helper function for theme icons
@@ -1667,13 +1499,309 @@
             const maxTokens = document.getElementById('aiMaxTokens').value;
             const personality = document.getElementById('aiPersonality').value;
             
+            // Save to localStorage
             localStorage.setItem('temperature', temperature);
             localStorage.setItem('maxTokens', maxTokens);
             localStorage.setItem('personality', personality);
             
+            // Update any visual elements
+            const temperatureValue = document.getElementById('temperatureValue');
+            const maxTokensValue = document.getElementById('maxTokensValue');
+            
+            if (temperatureValue) temperatureValue.textContent = temperature;
+            if (maxTokensValue) maxTokensValue.textContent = maxTokens;
+            
+            // Update slider backgrounds
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            
+            if (temperatureSlider) updateSliderBackground(temperatureSlider);
+            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
+            
+            // Hide modal and show success message
             hideSettings();
             showSuccess('Settings saved successfully');
+            
+            // Optional: If we're in a conversation, we could notify the user that
+            // these settings will apply to their next message
         }
+
+        // Initialize and handle dark mode
+        window.addEventListener('load', function() {
+            // Check for saved dark mode preference
+            const savedDarkMode = localStorage.getItem('darkMode');
+            
+            // Set initial dark mode state based on saved preference or system preference
+            if (savedDarkMode !== null) {
+                // Use stored preference if available
+                darkMode = savedDarkMode === 'true';
+            } else {
+                // Otherwise use system preference
+                darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                localStorage.setItem('darkMode', darkMode);
+            }
+            
+            // Apply initial dark mode setting
+            document.body.classList.toggle('dark-mode', darkMode);
+            
+            // Initialize slider backgrounds
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            
+            if (temperatureSlider) updateSliderBackground(temperatureSlider);
+            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
+            
+            // Update splash screen theme
+            updateSplashScreenTheme(darkMode);
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                // Only update if user hasn't set a preference
+                if (localStorage.getItem('darkMode') === null) {
+                    darkMode = e.matches;
+                    document.body.classList.toggle('dark-mode', darkMode);
+                    updateSplashScreenTheme(darkMode);
+                    
+                    // Update slider backgrounds
+                    if (temperatureSlider) updateSliderBackground(temperatureSlider);
+                    if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
+                }
+            });
+        });
+
+        // Enhanced slider interaction with improved dragging
+        document.addEventListener('DOMContentLoaded', function() {
+            // Define global function for updating slider backgrounds
+            window.updateSliderBackground = function(slider) {
+                if (!slider) return;
+                
+                const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const activeColor = isDarkMode ? '#0A84FF' : '#007AFF';
+                const inactiveColor = isDarkMode ? '#2c2c2e' : '#e0e0e0';
+                
+                slider.style.background = `linear-gradient(to right, ${activeColor} 0%, ${activeColor} ${value}%, ${inactiveColor} ${value}%, ${inactiveColor} 100%)`;
+            };
+            
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const temperatureValue = document.getElementById('temperatureValue');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            const maxTokensValue = document.getElementById('maxTokensValue');
+            
+            // Helper function to setup slider behavior
+            function setupSlider(slider, valueDisplay) {
+                if (!slider || !valueDisplay) return;
+                
+                // Load saved values from localStorage
+                const sliderName = slider.name || slider.id.replace('ai', '').toLowerCase();
+                const savedValue = localStorage.getItem(sliderName);
+                
+                if (savedValue) {
+                    slider.value = savedValue;
+                    valueDisplay.textContent = savedValue;
+                    updateSliderBackground(slider);
+                } else {
+                    updateSliderBackground(slider); // Initialize with default value
+                }
+                
+                // Core slider input event
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value;
+                    updateSliderBackground(this);
+                });
+                
+                // Enhanced mobile support
+                slider.addEventListener('touchstart', function(e) {
+                    // Prevent default to avoid scroll when dragging
+                    e.preventDefault();
+                    
+                    const handleTouch = function(e) {
+                        const touch = e.touches[0];
+                        const sliderRect = slider.getBoundingClientRect();
+                        const newRatio = Math.max(0, Math.min(1, (touch.clientX - sliderRect.left) / sliderRect.width));
+                        
+                        // Calculate the new value based on slider's min, max, and step
+                        const range = parseFloat(slider.max) - parseFloat(slider.min);
+                        let newValue = parseFloat(slider.min) + newRatio * range;
+                        
+                        // Round to respect the step
+                        const step = parseFloat(slider.step) || 1;
+                        newValue = Math.round(newValue / step) * step;
+                        
+                        // Ensure value is within bounds
+                        newValue = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), newValue));
+                        
+                        // Update slider value
+                        slider.value = newValue;
+                        valueDisplay.textContent = slider.value;
+                        updateSliderBackground(slider);
+                    };
+                    
+                    // Handle move events
+                    document.addEventListener('touchmove', handleTouch, { passive: false });
+                    
+                    // Clean up on touch end
+                    document.addEventListener('touchend', function cleanup() {
+                        document.removeEventListener('touchmove', handleTouch);
+                        document.removeEventListener('touchend', cleanup);
+                    });
+                });
+                
+                // Enhanced mouse support for more precise dragging
+                slider.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    
+                    const handleMouseMove = function(e) {
+                        const sliderRect = slider.getBoundingClientRect();
+                        const newRatio = Math.max(0, Math.min(1, (e.clientX - sliderRect.left) / sliderRect.width));
+                        
+                        // Calculate the new value based on slider's min, max, and step
+                        const range = parseFloat(slider.max) - parseFloat(slider.min);
+                        let newValue = parseFloat(slider.min) + newRatio * range;
+                        
+                        // Round to respect the step
+                        const step = parseFloat(slider.step) || 1;
+                        newValue = Math.round(newValue / step) * step;
+                        
+                        // Ensure value is within bounds
+                        newValue = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), newValue));
+                        
+                        // Update slider value
+                        slider.value = newValue;
+                        valueDisplay.textContent = slider.value;
+                        updateSliderBackground(slider);
+                    };
+                    
+                    // Handle move events
+                    document.addEventListener('mousemove', handleMouseMove);
+                    
+                    // Clean up on mouse up
+                    document.addEventListener('mouseup', function cleanup() {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', cleanup);
+                    });
+                });
+            }
+            
+            // Setup both sliders
+            setupSlider(temperatureSlider, temperatureValue);
+            setupSlider(maxTokensSlider, maxTokensValue);
+            
+            // Update backgrounds on dark mode toggle
+            window.addEventListener('dark-mode-changed', function() {
+                updateSliderBackground(temperatureSlider);
+                updateSliderBackground(maxTokensSlider);
+            });
+        });
+        
+        // Update the sendMessage function to include AI settings
+        function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const message = inputField.value.trim();
+            
+            if (!message) return;
+            
+            // Get AI settings from localStorage
+            const temperature = parseFloat(localStorage.getItem('temperature') || '0.7');
+            const maxTokens = parseInt(localStorage.getItem('maxTokens') || '500');
+            const personality = localStorage.getItem('personality') || 'helpful';
+            
+            // Debug log
+            console.log('Sending message with settings:', { temperature, maxTokens, personality });
+            
+            // Add user message to chat
+            addMessageToChat('user', message);
+            
+            // Clear input
+            inputField.value = '';
+            
+            // Add typing indicator
+            const chatContainer = document.getElementById('chatContainer');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ducky-message typing-message';
+            typingDiv.innerHTML = `
+                <div class="avatar">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Ducky AI Logo" class="avatar-img">
+                </div>
+                <div class="text">${createTypingIndicator()}</div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
+            
+            // Set button to loading state
+            setButtonLoading(true);
+            
+            // Call the API for a response with settings
+            fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    conversation_id: conversationId,
+                    settings: {
+                        temperature: temperature,
+                        max_tokens: maxTokens,
+                        personality: personality
+                    }
+                })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('API response received:', data);
+                
+                // Remove typing indicator
+                const typingMessages = document.querySelectorAll('.typing-message');
+                typingMessages.forEach(msg => msg.remove());
+                
+                // Add the actual API response
+                addMessageToChat('ducky', data.response);
+                
+                // Store conversation ID if provided
+                if (data.conversation_id) {
+                    conversationId = data.conversation_id;
+                }
+                
+                // Reset button state
+                setButtonLoading(false);
+            })
+            .catch(error => {
+                console.error('API error:', error);
+                
+                // Remove typing indicator
+                const typingMessages = document.querySelectorAll('.typing-message');
+                typingMessages.forEach(msg => msg.remove());
+                
+                // Show error message
+                addMessageToChat('error', 'Sorry, I\'m having trouble connecting right now. Please try again later.');
+                
+                // Reset button state
+                setButtonLoading(false);
+            });
+            
+            // Focus input field
+            inputField.focus();
+        }
+
+        // Add enter key support
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Focus input on page load
+        window.addEventListener('load', function() {
+            document.getElementById('userInput').focus();
+        });
     </script>
 </body>
 </html> 

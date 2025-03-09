@@ -248,42 +248,87 @@
         }
         
         .settings-form label {
-            font-weight: 500;
-            font-size: 15px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
         }
         
         .slider-container {
             display: flex;
             align-items: center;
             gap: 16px;
+            margin-top: 10px;
         }
         
         .slider-container input[type="range"] {
             flex: 1;
-            height: 6px;
+            height: 8px;
             -webkit-appearance: none;
-            border-radius: 3px;
-            background: #e0e0e0;
+            appearance: none;
+            border-radius: 4px;
+            background: linear-gradient(to right, #007AFF 0%, #007AFF 50%, #e0e0e0 50%, #e0e0e0 100%);
             outline: none;
+            transition: background 0.3s ease;
         }
         
         .dark-mode .slider-container input[type="range"] {
-            background: #2c2c2e;
+            background: linear-gradient(to right, #0A84FF 0%, #0A84FF 50%, #2c2c2e 50%, #2c2c2e 100%);
         }
         
         .slider-container input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
+            appearance: none;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            background: #007AFF;
+            background: #ffffff;
+            border: 2px solid #007AFF;
             cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .dark-mode .slider-container input[type="range"]::-webkit-slider-thumb {
+            background: #2c2c2e;
+            border: 2px solid #0A84FF;
+        }
+        
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 2px solid #007AFF;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .dark-mode .slider-container input[type="range"]::-moz-range-thumb {
+            background: #2c2c2e;
+            border: 2px solid #0A84FF;
         }
         
         .slider-value {
-            min-width: 36px;
+            min-width: 42px;
             text-align: center;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 15px;
+            color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .dark-mode .slider-value {
+            color: #0A84FF;
+            background: rgba(10, 132, 255, 0.2);
         }
         
         .setting-description {
@@ -1055,6 +1100,59 @@
             }
         });
         
+        // Enhanced slider interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            const temperatureSlider = document.getElementById('aiTemperature');
+            const temperatureValue = document.getElementById('temperatureValue');
+            const maxTokensSlider = document.getElementById('aiMaxTokens');
+            const maxTokensValue = document.getElementById('maxTokensValue');
+            
+            // Load saved values from localStorage
+            if (localStorage.getItem('temperature')) {
+                temperatureSlider.value = localStorage.getItem('temperature');
+                temperatureValue.textContent = temperatureSlider.value;
+                updateSliderBackground(temperatureSlider);
+            }
+            
+            if (localStorage.getItem('maxTokens')) {
+                maxTokensSlider.value = localStorage.getItem('maxTokens');
+                maxTokensValue.textContent = maxTokensSlider.value;
+                updateSliderBackground(maxTokensSlider);
+            }
+            
+            // Update temperature slider
+            if (temperatureSlider && temperatureValue) {
+                temperatureSlider.addEventListener('input', function() {
+                    temperatureValue.textContent = this.value;
+                    updateSliderBackground(this);
+                });
+            }
+            
+            // Update max tokens slider
+            if (maxTokensSlider && maxTokensValue) {
+                maxTokensSlider.addEventListener('input', function() {
+                    maxTokensValue.textContent = this.value;
+                    updateSliderBackground(this);
+                });
+            }
+            
+            // Function to update slider background gradient
+            function updateSliderBackground(slider) {
+                const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const activeColor = isDarkMode ? '#0A84FF' : '#007AFF';
+                const inactiveColor = isDarkMode ? '#2c2c2e' : '#e0e0e0';
+                
+                slider.style.background = `linear-gradient(to right, ${activeColor} 0%, ${activeColor} ${value}%, ${inactiveColor} ${value}%, ${inactiveColor} 100%)`;
+            }
+            
+            // Update backgrounds on dark mode toggle
+            window.addEventListener('dark-mode-changed', function() {
+                if (temperatureSlider) updateSliderBackground(temperatureSlider);
+                if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
+            });
+        });
+        
         // Update the sendMessage function to include AI settings
         function sendMessage() {
             const inputField = document.getElementById('userInput');
@@ -1182,23 +1280,20 @@
         }
 
         function toggleDarkMode() {
-            const body = document.body;
-            const isDarkMode = body.classList.contains('dark-mode');
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode', darkMode);
+            localStorage.setItem('darkMode', darkMode);
             
-            if (isDarkMode) {
-                body.classList.remove('dark-mode');
-                body.classList.remove('force-dark');
-                body.classList.add('force-light');
-                localStorage.setItem('theme', 'light');
-            } else {
-                body.classList.add('dark-mode');
-                body.classList.add('force-dark');
-                body.classList.remove('force-light');
-                localStorage.setItem('theme', 'dark');
+            // Update theme icon
+            const themeIcon = document.querySelector('.menu-item:nth-child(2) .menu-icon');
+            if (themeIcon) {
+                themeIcon.style.filter = darkMode ? 'invert(1) brightness(2)' : 'none';
             }
             
-            // Update splash screen colors based on theme
-            updateSplashScreenTheme(!isDarkMode);
+            // Dispatch event for other components to react to dark mode change
+            window.dispatchEvent(new CustomEvent('dark-mode-changed', {
+                detail: { darkMode: darkMode }
+            }));
         }
 
         // Add helper function for theme icons

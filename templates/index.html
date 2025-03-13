@@ -422,6 +422,7 @@
             }
         }
 
+        /* Avatar and Message Styles */
         .avatar-edit-icon {
             display: flex;
             align-items: center;
@@ -431,21 +432,47 @@
         .camera-icon {
             width: 28px;
             height: 28px;
-            filter: brightness(0) invert(1); /* Make the icon white */
+            filter: brightness(0) invert(1);
         }
 
-        /* Splash screen credit styling */
-        .splash-credits {
+        /* Message and Chat Styles */
+        .message {
+            padding: 16px 24px;
+            gap: 20px;
+        }
+
+        .chat-container {
+            padding: 24px 16px;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            min-height: 80px;
+        }
+
+        .chat-header h1 {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 2px;
-        }
-        
-        .credit-name {
-            font-weight: 600;
+            font-size: 24px;
+            margin: 0;
         }
 
+        .chat-header h1 .icon {
+            width: 75px;
+            height: auto;
+            margin-right: 16px;
+        }
+
+        /* Avatar Images */
+        .synthora-message .avatar img,
+        .typing-indicator .avatar img {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            object-fit: contain;
+        }
+
+        /* Splash Screen Styles */
         .splash-screen {
             position: fixed;
             top: 0;
@@ -488,6 +515,18 @@
             object-fit: contain;
         }
 
+        .splash-credits {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .credit-name {
+            font-weight: 600;
+        }
+
+        /* Loading Indicator */
         .loading-indicator {
             display: flex;
             gap: 8px;
@@ -516,6 +555,7 @@
             animation-delay: 0.4s;
         }
 
+        /* Animations */
         @keyframes loading-dot {
             0%, 100% {
                 opacity: 0.3;
@@ -538,6 +578,7 @@
             }
         }
 
+        /* Media Queries */
         @media (max-width: 768px) {
             .splash-icon {
                 width: 160px;
@@ -546,26 +587,6 @@
             .loading-indicator {
                 margin-bottom: 32px;
             }
-        }
-
-        .chat-header h1 .icon {
-            width: 32px;
-            height: auto;
-            margin-right: 12px;
-        }
-
-        .chat-header h1 {
-            display: flex;
-            align-items: center;
-            font-size: 20px;
-            margin: 0;
-        }
-
-        .synthora-message .avatar img {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: contain;
         }
     </style>
 </head>
@@ -1618,7 +1639,7 @@
                     slider.value = savedValue;
                     valueDisplay.textContent = savedValue;
                     updateSliderBackground(slider);
-                } else {
+            } else {
                     updateSliderBackground(slider); // Initialize with default value
                 }
                 

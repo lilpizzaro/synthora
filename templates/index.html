@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>SYNTHORA</title>
+    <title>synthora</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -445,6 +445,108 @@
         .credit-name {
             font-weight: 600;
         }
+
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--splash-background);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .splash-screen.fade-out {
+            opacity: 0;
+        }
+
+        .splash-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 32px;
+            height: 100%;
+            padding: 24px;
+        }
+
+        .splash-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            animation: splash-fade-in 1s ease forwards;
+        }
+
+        .splash-icon {
+            width: 120px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .loading-indicator {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            margin-bottom: 48px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--text-color);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: loading-dot 1.4s infinite ease-in-out;
+        }
+
+        .loading-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes loading-dot {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        @keyframes splash-fade-in {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .splash-icon {
+                width: 100px;
+            }
+            
+            .loading-indicator {
+                margin-bottom: 32px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -452,8 +554,12 @@
     <div class="auth-overlay" id="authOverlay">
         <div class="auth-container">
             <div class="auth-header">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SYNTHORA Logo" class="auth-logo">
-                <h1 class="auth-title">SYNTHORA</h1>
+                <img src="{{ url_for('static', filename='images/logo.lite.png') }}" 
+                     data-light-src="{{ url_for('static', filename='images/logo.lite.png') }}"
+                     data-dark-src="{{ url_for('static', filename='images/logo.dark.png') }}"
+                     alt="synthora Logo" 
+                     class="auth-logo theme-aware-logo">
+                <h1 class="auth-title">synthora</h1>
                 <p class="auth-subtitle">Your friendly AI assistant</p>
             </div>
             <div class="auth-tabs">
@@ -519,17 +625,17 @@
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
         <div class="splash-content">
-            <div class="hello-animation">
-                <span class="hello-text">Hello</span>
-                <span class="hello-cursor"></span>
-            </div>
             <div class="splash-logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SYNTHORA Logo" class="splash-icon">
-                <span class="splash-title">synthora</span>
+                <img src="{{ url_for('static', filename='images/logo.lite.png') }}"
+                     data-light-src="{{ url_for('static', filename='images/logo.lite.png') }}"
+                     data-dark-src="{{ url_for('static', filename='images/logo.dark.png') }}"
+                     alt="synthora Logo" 
+                     class="splash-icon theme-aware-logo">
             </div>
-            <div class="splash-credits">
-                <span>Created by</span>
-                <span class="credit-name">Amaan Dildar</span>
+            <div class="loading-indicator">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
             </div>
         </div>
     </div>
@@ -600,8 +706,12 @@
         <div class="chat-header">
             <button class="menu-button" id="menuButton">☰</button>
             <h1>
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SYNTHORA Logo" class="icon">
-                <span class="title">SYNTHORA</span>
+                <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                     data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                     data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
+                     alt="synthora Logo" 
+                     class="icon theme-aware-logo">
+                <span class="title">synthora</span>
             </h1>
             <div style="width: 40px"></div><!-- Spacer for alignment -->
         </div>
@@ -610,7 +720,7 @@
         </div>
         <div class="input-container">
             <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Message SYNTHORA..." autocomplete="off">
+                <input type="text" id="userInput" placeholder="Message synthora..." autocomplete="off">
             </div>
             <button id="sendButton" onclick="sendMessage()">
                 <img src="{{ url_for('static', filename='images/send.png') }}" alt="Send">
@@ -798,12 +908,12 @@
                             <span class="slider-value" id="maxTokensValue">500</span>
                         </div>
                         <div class="setting-description">
-                            Maximum number of tokens (words) in SYNTHORA's responses.
+                            Maximum number of tokens (words) in synthora's responses.
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="aiPersonality">SYNTHORA's Personality</label>
+                        <label for="aiPersonality">synthora's Personality</label>
                         <select id="aiPersonality" name="personality" class="settings-select">
                             <option value="helpful">Helpful & Friendly</option>
                             <option value="formal">Professional & Formal</option>
@@ -811,7 +921,7 @@
                             <option value="concise">Concise & Direct</option>
                         </select>
                         <div class="setting-description">
-                            Determines how SYNTHORA will respond to your questions.
+                            Determines how synthora will respond to your questions.
                         </div>
                     </div>
                     
@@ -1080,7 +1190,7 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}-message`;
             
-            // Remove any existing typing indicators for SYNTHORA messages
+            // Remove any existing typing indicators for synthora messages
             if (type === 'synthora') {
                 const typingMessages = document.querySelectorAll('.typing-message');
                 typingMessages.forEach(msg => msg.remove());
@@ -1101,7 +1211,7 @@
             } else if (type === 'synthora') {
                 content = `
                     <div class="avatar">
-                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SYNTHORA Logo" class="avatar-img">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="synthora Logo" class="avatar-img">
                     </div>
                     <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
                 `;
@@ -1174,7 +1284,7 @@
             // Clear conversation history
             conversationMessages = [];
             
-            // Add initial welcome message from SYNTHORA
+            // Add initial welcome message from synthora
             setTimeout(() => {
                 addMessageToChat('synthora', [
                     'Hello there!',
@@ -1248,7 +1358,7 @@
                 
                 if (navigator.share) {
                     await navigator.share({
-                        title: 'Chat with SYNTHORA',
+                        title: 'Chat with synthora',
                         text: messages
                     });
                 } else {
@@ -1414,7 +1524,7 @@
             if (isSynthora) {
                 const avatarImg = document.createElement('img');
                 avatarImg.src = "{{ url_for('static', filename='images/logo.png') }}";
-                avatarImg.alt = "SYNTHORA Logo";
+                avatarImg.alt = "synthora Logo";
                 avatarImg.className = "avatar-img";
                 avatarDiv.appendChild(avatarImg);
             }
@@ -1620,7 +1730,7 @@
             typingDiv.className = 'message synthora-message typing-message';
             typingDiv.innerHTML = `
                 <div class="avatar">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SYNTHORA Logo" class="avatar-img">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="synthora Logo" class="avatar-img">
                 </div>
                 <div class="text">${createTypingIndicator()}</div>
             `;
@@ -1722,7 +1832,7 @@
                 memoriesList.innerHTML = '';
                 
                 if (!memories || memories.length === 0) {
-                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with SYNTHORA to create some.</div>';
+                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with synthora to create some.</div>';
                 } else {
                     memories.forEach(memory => {
                         const memoryDiv = document.createElement('div');
@@ -1741,7 +1851,7 @@
                                     ${escapeHtml(memory.user_message)}
                                 </div>
                                 <div class="memory-synthora-message">
-                                    <span class="memory-label">SYNTHORA:</span>
+                                    <span class="memory-label">synthora:</span>
                                     ${escapeHtml(memory.synthora_response)}
                                 </div>
                             </div>
@@ -1959,6 +2069,20 @@
                 root.style.setProperty('--splash-text-rgb', '0, 0, 0');
             }
         }
+
+        // Add this to your existing JavaScript
+        function updateThemeAwareLogos() {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            document.querySelectorAll('.theme-aware-logo').forEach(logo => {
+                logo.src = isDarkMode ? logo.dataset.darkSrc : logo.dataset.lightSrc;
+            });
+        }
+
+        // Call on initial load
+        document.addEventListener('DOMContentLoaded', updateThemeAwareLogos);
+
+        // Call when theme changes
+        window.addEventListener('dark-mode-changed', updateThemeAwareLogos);
     </script>
 </body>
 </html> 

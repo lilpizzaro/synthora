@@ -39,9 +39,73 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Helper functions
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_avatar(file, username):
+    # Implementation of save_avatar
+    pass
+
+def hash_password(password):
+    # Implementation of hash_password
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+def verify_password(plain_password, hashed_password):
+    # Ensure hashed_password is bytes
+    if isinstance(hashed_password, str):
+        hashed_password = hashed_password.encode('utf-8')
+    
+    # Ensure plain_password is properly encoded
+    if isinstance(plain_password, str):
+        plain_password = plain_password.encode('utf-8')
+        
+    # Verify the password
+    return bcrypt.checkpw(plain_password, hashed_password)
+
+# User model
+class User(db.Model):
+    __tablename__ = 'users'  # Explicitly set table name to avoid SQLite/PostgreSQL naming issues
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    avatar_url = db.Column(db.String(200))
+    avatar_data = db.Column(db.LargeBinary)
+    avatar_content_type = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    email = db.Column(db.String(120), unique=True)
+    reset_token = db.Column(db.String(100), unique=True)
+    reset_token_expiry = db.Column(db.DateTime)
+    memories = db.relationship('Memory', backref='user', lazy=True)
+    
+    def generate_reset_token(self):
+        # Implementation of generate_reset_token
+        pass
+        
+    def verify_reset_token(self, token):
+        # Implementation of verify_reset_token
+        pass
+        
+    def clear_reset_token(self):
+        # Implementation of clear_reset_token
+        pass
+
+# Memory model
+class Memory(db.Model):
+    __tablename__ = 'memories'  # Explicitly set table name
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_message = db.Column(db.Text, nullable=False)
+    synthora_response = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
 # Initialize database on startup (ensures tables exist)
 with app.app_context():
     try:
+        # Drop existing tables in development if needed
+        # db.drop_all()  # Uncomment if you need to reset the database structure
+        
+        # Create all tables
         db.create_all()
         print("Database tables created successfully")
         
@@ -80,64 +144,6 @@ if not GOOGLE_API_KEY:
 
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-2.0-flash')
-
-# User model
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    avatar_url = db.Column(db.String(200))
-    avatar_data = db.Column(db.LargeBinary)
-    avatar_content_type = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    email = db.Column(db.String(120), unique=True)
-    reset_token = db.Column(db.String(100), unique=True)
-    reset_token_expiry = db.Column(db.DateTime)
-    memories = db.relationship('Memory', backref='user', lazy=True)
-    
-    def generate_reset_token(self):
-        # Implementation of generate_reset_token
-        pass
-        
-    def verify_reset_token(self, token):
-        # Implementation of verify_reset_token
-        pass
-        
-    def clear_reset_token(self):
-        # Implementation of clear_reset_token
-        pass
-
-# Memory model
-class Memory(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    user_message = db.Column(db.Text, nullable=False)
-    synthora_response = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-# Helper functions
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def save_avatar(file, username):
-    # Implementation of save_avatar
-    pass
-
-def hash_password(password):
-    # Implementation of hash_password
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-def verify_password(plain_password, hashed_password):
-    # Ensure hashed_password is bytes
-    if isinstance(hashed_password, str):
-        hashed_password = hashed_password.encode('utf-8')
-    
-    # Ensure plain_password is properly encoded
-    if isinstance(plain_password, str):
-        plain_password = plain_password.encode('utf-8')
-        
-    # Verify the password
-    return bcrypt.checkpw(plain_password, hashed_password)
 
 # Authentication decorator
 def login_required(f):
@@ -259,6 +265,9 @@ def login():
         username = data.get('username')
         password = data.get('password')
         
+        # Debug log
+        print(f"Attempting login for username: {username}")
+        
         # Validate credentials
         if not username or not password:
             return jsonify({'error': 'Username and password are required'}), 400
@@ -266,14 +275,17 @@ def login():
         # Check if username exists
         user = User.query.filter_by(username=username).first()
         if not user:
+            print(f"Login failed: User {username} not found")
             return jsonify({'error': 'Invalid username or password'}), 401
         
         # Verify password
         if not verify_password(password, user.password_hash):
+            print(f"Login failed: Invalid password for {username}")
             return jsonify({'error': 'Invalid username or password'}), 401
         
         # Set session and return success
         session['username'] = username
+        print(f"Login successful for {username}")
         return jsonify({
             'message': 'Login successful',
             'username': username,
@@ -281,6 +293,7 @@ def login():
         })
     except Exception as e:
         print(f"Login error: {str(e)}")
+        traceback.print_exc()  # Add detailed stack trace
         return jsonify({'error': 'An error occurred during login'}), 500
 
 @app.route('/auth/logout', methods=['POST'])
@@ -460,8 +473,17 @@ def serve_avatar(username):
         # If user doesn't exist or has no avatar, serve the default avatar
         return app.send_static_file('images/def_avatar.png')
 
+# Ensure app restarts properly
 if __name__ == '__main__':
+    print("Starting application in development mode...")
     with app.app_context():
         db.create_all()
-    app.run(debug=True) 
+        print("Database tables verified at startup")
+        # Print number of users in database
+        try:
+            user_count = User.query.count()
+            print(f"Found {user_count} users in database")
+        except Exception as e:
+            print(f"Error checking users: {e}")
+    app.run(debug=True, host='0.0.0.0', port=5000) 
 

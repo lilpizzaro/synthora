@@ -18,10 +18,24 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'development-key')
 
 # Fix database URL for PostgreSQL on Render
 database_url = os.environ.get('DATABASE_URL')
-if database_url and database_url.startswith('postgres://'):
-    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+is_prod = os.environ.get('RENDER', False)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///synthora.db'
+# Database configuration
+if database_url and database_url.startswith('postgres://'):
+    # Fix the PostgreSQL URL for SQLAlchemy
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"Using PostgreSQL database at: {database_url}")
+elif is_prod:
+    # If on Render but no database URL, use a folder that persists
+    db_path = os.path.join('/tmp', 'synthora.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    print(f"Using SQLite database at: {db_path}")
+else:
+    # Local development - use SQLite
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///synthora.db'
+    print("Using local SQLite database")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -30,8 +44,21 @@ with app.app_context():
     try:
         db.create_all()
         print("Database tables created successfully")
+        
+        # Check if any users exist, if not create a default one
+        if User.query.count() == 0:
+            print("No users found, creating default user")
+            default_password_hash = hash_password("SynthoraAdmin2024")
+            default_user = User(
+                username="admin",
+                password_hash=default_password_hash
+            )
+            db.session.add(default_user)
+            db.session.commit()
+            print("Default user 'admin' created successfully")
     except Exception as e:
         print(f"Error creating database tables: {str(e)}")
+        traceback.print_exc()
 
 # Setup Gemini AI
 try:

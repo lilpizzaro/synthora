@@ -483,7 +483,7 @@
         }
 
         .splash-icon {
-            width: 120px;
+            width: 200px;
             height: auto;
             object-fit: contain;
         }
@@ -540,12 +540,32 @@
 
         @media (max-width: 768px) {
             .splash-icon {
-                width: 100px;
+                width: 160px;
             }
             
             .loading-indicator {
                 margin-bottom: 32px;
             }
+        }
+
+        .chat-header h1 .icon {
+            width: 32px;
+            height: auto;
+            margin-right: 12px;
+        }
+
+        .chat-header h1 {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .synthora-message .avatar img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: contain;
         }
     </style>
 </head>
@@ -1211,7 +1231,11 @@
             } else if (type === 'synthora') {
                 content = `
                     <div class="avatar">
-                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="synthora Logo" class="avatar-img">
+                        <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                             data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                             data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
+                             alt="synthora Logo" 
+                             class="avatar-img theme-aware-logo">
                     </div>
                     <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
                 `;
@@ -1267,6 +1291,13 @@
         function createTypingIndicator() {
             return `
                 <div class="typing-indicator">
+                    <div class="avatar">
+                        <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                             data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                             data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
+                             alt="synthora Logo" 
+                             class="avatar-img theme-aware-logo">
+                    </div>
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
                     <div class="typing-dot"></div>
@@ -1523,9 +1554,11 @@
             
             if (isSynthora) {
                 const avatarImg = document.createElement('img');
-                avatarImg.src = "{{ url_for('static', filename='images/logo.png') }}";
+                avatarImg.src = "{{ url_for('static', filename='images/logo.header.lite.png') }}";
+                avatarImg.dataset.lightSrc = "{{ url_for('static', filename='images/logo.header.lite.png') }}";
+                avatarImg.dataset.darkSrc = "{{ url_for('static', filename='images/logo.header.dark.png') }}";
                 avatarImg.alt = "synthora Logo";
-                avatarImg.className = "avatar-img";
+                avatarImg.className = "avatar-img theme-aware-logo";
                 avatarDiv.appendChild(avatarImg);
             }
             
@@ -1730,7 +1763,11 @@
             typingDiv.className = 'message synthora-message typing-message';
             typingDiv.innerHTML = `
                 <div class="avatar">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="synthora Logo" class="avatar-img">
+                    <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                         data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
+                         data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
+                         alt="synthora Logo" 
+                         class="avatar-img theme-aware-logo">
                 </div>
                 <div class="text">${createTypingIndicator()}</div>
             `;

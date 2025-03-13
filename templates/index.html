@@ -446,21 +446,31 @@
         }
 
         .chat-header {
-            padding: 16px 24px;
-            min-height: 80px;
+            padding: 24px 28px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .chat-header h1 {
             display: flex;
             align-items: center;
-            font-size: 24px;
+            font-size: 28px;
             margin: 0;
+            flex: 1;
+            justify-content: center;
         }
 
         .chat-header h1 .icon {
-            width: 100px;
+            width: 120px;
             height: auto;
-            margin-right: 18px;
+            margin-right: 20px;
+        }
+
+        .menu-button {
+            font-size: 24px;
+            padding: 10px 12px;
         }
 
         /* Avatar Images */
@@ -496,23 +506,27 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 32px;
+            gap: 48px;
             height: 100%;
-            padding: 24px;
+            padding: 32px;
+            max-width: 90%;
+            margin: 0 auto;
         }
 
         .splash-logo {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
-            animation: splash-fade-in 1s ease forwards;
+            gap: 24px;
+            animation: splash-fade-in 1.2s ease forwards;
+            transform: scale(1.1);
         }
 
         .splash-icon {
-            width: 350px;
+            width: 400px;
             height: auto;
             object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
         }
 
         .splash-credits {
@@ -529,30 +543,18 @@
         /* Loading Indicator */
         .loading-indicator {
             display: flex;
-            gap: 8px;
+            gap: 12px;
             margin-top: auto;
-            margin-bottom: 48px;
+            margin-bottom: 64px;
         }
 
         .loading-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             background-color: var(--text-color);
             border-radius: 50%;
             opacity: 0.3;
             animation: loading-dot 1.4s infinite ease-in-out;
-        }
-
-        .loading-dot:nth-child(1) {
-            animation-delay: 0s;
-        }
-
-        .loading-dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .loading-dot:nth-child(3) {
-            animation-delay: 0.4s;
         }
 
         /* Animations */
@@ -581,11 +583,45 @@
         /* Media Queries */
         @media (max-width: 768px) {
             .splash-icon {
-                width: 260px;
+                width: 300px;
             }
             
             .loading-indicator {
-                margin-bottom: 32px;
+                margin-bottom: 48px;
+            }
+
+            .chat-header {
+                padding: 18px 22px;
+                min-height: 90px;
+            }
+
+            .chat-header h1 {
+                font-size: 26px;
+            }
+
+            .chat-header h1 .icon {
+                width: 100px;
+                margin-right: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .splash-icon {
+                width: 260px;
+            }
+
+            .chat-header {
+                padding: 16px 20px;
+                min-height: 80px;
+            }
+
+            .chat-header h1 {
+                font-size: 24px;
+            }
+
+            .chat-header h1 .icon {
+                width: 90px;
+                margin-right: 14px;
             }
         }
     </style>

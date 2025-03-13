@@ -31,9 +31,9 @@
     --menu-item-hover: rgba(0, 0, 0, 0.05);
     --menu-border: rgba(0, 0, 0, 0.1);
     --bubble-bg-user: #007AFF;
-    --bubble-bg-ducky: #f0f0f0;
+    --bubble-bg-synthora: #f0f0f0;
     --bubble-text-user: #ffffff;
-    --bubble-text-ducky: #000000;
+    --bubble-text-synthora: #000000;
     --input-text: #000000;
     --input-placeholder: #666666;
     --button-bg: #007AFF;
@@ -69,9 +69,9 @@
         --menu-item-hover: rgba(255, 255, 255, 0.05);
         --menu-border: rgba(255, 255, 255, 0.1);
         --bubble-bg-user: #0A84FF;
-        --bubble-bg-ducky: #1c1c1e;
+        --bubble-bg-synthora: #1c1c1e;
         --bubble-text-user: #ffffff;
-        --bubble-text-ducky: #ffffff;
+        --bubble-text-synthora: #ffffff;
         --input-text: #ffffff;
         --input-placeholder: #8e8e93;
         --button-bg: #0A84FF;
@@ -174,7 +174,7 @@ body {
     }
     
     .user-message .text,
-    .ducky-message .text {
+    .synthora-message .text {
         max-width: 65%;
     }
 }
@@ -283,7 +283,7 @@ body {
     gap: 8px;
 }
 
-.ducky-message {
+.synthora-message {
     justify-content: flex-start;
     width: 100%;
     gap: 8px;
@@ -298,7 +298,7 @@ body {
     box-shadow: 0 2px 8px rgba(16, 163, 127, 0.15);
 }
 
-.ducky-message .text {
+.synthora-message .text {
     background-color: var(--bot-message-bg);
     color: var(--bot-message-text);
     text-align: left;
@@ -342,7 +342,7 @@ body {
     box-shadow: 0 2px 6px rgba(16, 163, 127, 0.2);
 }
 
-.ducky-message .avatar {
+.synthora-message .avatar {
     margin: 0;
     background-color: var(--background-color);
     border: 1px solid var(--border-color);
@@ -543,7 +543,7 @@ body.force-dark button:hover {
         max-width: 75%;
     }
 
-    .ducky-message .text {
+    .synthora-message .text {
         margin-left: 0;
         max-width: 75%;
     }
@@ -1302,7 +1302,7 @@ body.force-dark button:hover {
 }
 
 .memory-user-message,
-.memory-ducky-message {
+.memory-synthora-message {
     padding: 12px;
     border-radius: 8px;
     background: var(--menu-item-hover);
@@ -1493,7 +1493,7 @@ body.force-dark {
     }
     
     .user-message .text,
-    .ducky-message .text {
+    .synthora-message .text {
         max-width: 65%;
     }
     

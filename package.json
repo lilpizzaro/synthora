@@ -1,5 +1,5 @@
 {
-  "name": "ducky-ai",
+  "name": "synthora",
   "version": "1.0.0",
   "description": "A friendly duck chat AI",
   "main": "server.js",

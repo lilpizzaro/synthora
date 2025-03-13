@@ -1,10 +1,10 @@
 import requests
 import json
 
-url = 'https://duckyai.onrender.com/auth/reset-password'
+url = 'https://synthora.onrender.com/auth/reset-password'
 data = {
     'username': 'LilPizza',
-    'password': 'DuckyAI@2024'
+    'password': 'SynthoraAI@2024'
 }
 
 headers = {

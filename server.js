@@ -26,6 +26,13 @@ try {
     // Fall back to environment variable
     apiKey = process.env.GOOGLE_API_KEY;
     console.log('API key loaded from environment variable');
+    
+    // TEMPORARY: Hard-coded API key as fallback for local development only
+    // WARNING: REMOVE BEFORE COMMITTING TO PRODUCTION
+    if (!apiKey) {
+        apiKey = 'AIzaSyB0MmJjgLLRDCSs89VkUTGRLLCeoP0djEc';
+        console.log('WARNING: Using temporary hard-coded API key. DO NOT USE IN PRODUCTION.');
+    }
 }
 
 // Initialize the Generative AI API

@@ -25,6 +25,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url or 'sqlite:///synthora.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Initialize database on startup (ensures tables exist)
+with app.app_context():
+    try:
+        db.create_all()
+        print("Database tables created successfully")
+    except Exception as e:
+        print(f"Error creating database tables: {str(e)}")
+
 # Setup Gemini AI
 try:
     # First try to get the API key from Render secrets

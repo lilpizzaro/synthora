@@ -64,66 +64,39 @@ def save_avatar(file, username):
         return None
     except Exception as e:
         print(f"Error saving avatar: {str(e)}")
-        return None
+    return None
 
 def hash_password(password):
-    # Implementation of hash_password
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-def fix_corrupted_hash(hashed_password):
-    """Fix corrupted password hashes that have escaped backslashes."""
-    if isinstance(hashed_password, str):
-        # Check if the hash is corrupted with escaped backslashes
-        if hashed_password.startswith('b\'\\\\x24'):
-            # Extract the actual hash value from the corrupted string
-            # Pattern: b'\\x243262243132...
-            match = re.search(r'b\'\\\\x24(.+?)\'', hashed_password)
-            if match:
-                # Get the hex part
-                hex_part = match.group(1)
-                # Convert escaped hex to bytes
-                try:
-                    # Replace escaped hex notation with actual bytes
-                    hex_str = hex_part.replace('\\\\x', '')
-                    # Convert hex to bytes
-                    byte_data = bytes.fromhex(hex_str)
-                    return byte_data
-                except Exception as e:
-                    print(f"Error fixing corrupted hash: {str(e)}")
-    
-    # If not corrupted or couldn't fix, return as is
-    return hashed_password
+    """Hash a password using bcrypt."""
+    if isinstance(password, str):
+        password = password.encode('utf-8')
+    return bcrypt.hashpw(password, bcrypt.gensalt())
 
 def verify_password(plain_password, hashed_password):
+    """Verify a password against its hash."""
     try:
-        # Log debugging information
-        print(f"Verifying password: Type of hashed_password = {type(hashed_password)}")
-        
-        # Try to fix corrupted hash if needed
-        hashed_password = fix_corrupted_hash(hashed_password)
-        
-        # Ensure hashed_password is bytes
-        if isinstance(hashed_password, str):
-            hashed_password = hashed_password.encode('utf-8')
-        
-        # Ensure plain_password is properly encoded
+        # Convert string password to bytes if needed
         if isinstance(plain_password, str):
             plain_password = plain_password.encode('utf-8')
             
-        # Check if the hash appears to be valid
-        if not hashed_password.startswith(b'$2a$') and not hashed_password.startswith(b'$2b$'):
-            print(f"Invalid hash format, doesn't start with $2a$ or $2b$: {hashed_password[:20]}")
-            return False
-            
+        # Convert string hash to bytes if needed
+        if isinstance(hashed_password, str):
+            if hashed_password.startswith('b\'') and '\\x' in hashed_password:
+                # Handle corrupted string format
+                try:
+                    # Remove b' prefix and ' suffix, then decode escaped bytes
+                    clean_hash = hashed_password[2:-1].encode().decode('unicode_escape').encode('latin1')
+                    hashed_password = clean_hash
+                except Exception as e:
+                    print(f"Error cleaning hash: {e}")
+                    return False
+            else:
+                hashed_password = hashed_password.encode('utf-8')
+        
         # Verify the password
         return bcrypt.checkpw(plain_password, hashed_password)
-    except ValueError as e:
-        print(f"Password verification error: {str(e)}")
-        print(f"Hash value (first 20 chars): {str(hashed_password)[:20] if hashed_password else 'None'}")
-        # If there's an error with the hash, authentication fails
-        return False
     except Exception as e:
-        print(f"Unexpected error during password verification: {str(e)}")
+        print(f"Password verification error: {e}")
         return False
 
 # User model
@@ -172,19 +145,19 @@ with app.app_context():
         db.create_all()
         print("Database tables created successfully")
         
-        # Check if any users exist, if not create a default one
+        # Create default admin if no users exist
         if User.query.count() == 0:
-            print("No users found, creating default user")
-            default_password_hash = hash_password("SynthoraAdmin2024")
-            default_user = User(
-                username="admin",
-                password_hash=default_password_hash
+            print("No users found, creating default admin user")
+            admin_password = "SynthoraAdmin2024"
+            admin_user = User(
+                username="LilPizzaRo",
+                password_hash=hash_password(admin_password)
             )
-            db.session.add(default_user)
+            db.session.add(admin_user)
             db.session.commit()
-            print("Default user 'admin' created successfully")
+            print("Default admin user 'LilPizzaRo' created successfully")
     except Exception as e:
-        print(f"Error creating database tables: {str(e)}")
+        print(f"Error during database initialization: {str(e)}")
         traceback.print_exc()
 
 # Setup Gemini AI
@@ -309,14 +282,13 @@ def admin_page():
 @app.route('/auth/signup', methods=['POST'])
 def signup():
     try:
-        # Check if the request has JSON content
+        # Get data from either JSON or form
         if request.is_json:
             data = request.json
             username = data.get('username')
             password = data.get('password')
             confirm_password = data.get('confirm_password')
         else:
-            # Handle form data
             username = request.form.get('username')
             password = request.form.get('password')
             confirm_password = request.form.get('confirm_password')
@@ -325,110 +297,111 @@ def signup():
         if not username or not password:
             if request.is_json:
                 return jsonify({'error': 'Username and password are required'}), 400
-            else:
-                flash('Username and password are required', 'error')
-                return redirect(url_for('signup_page'))
-                
+            flash('Username and password are required', 'error')
+            return redirect(url_for('signup_page'))
+
         # Check if passwords match
         if password != confirm_password:
             if request.is_json:
                 return jsonify({'error': 'Passwords do not match'}), 400
-            else:
-                flash('Passwords do not match', 'error')
-                return redirect(url_for('signup_page'))
+            flash('Passwords do not match', 'error')
+            return redirect(url_for('signup_page'))
 
-        # Check if username already exists
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
+        # Check if username exists
+        if User.query.filter_by(username=username).first():
             if request.is_json:
                 return jsonify({'error': 'Username already exists'}), 400
-            else:
-                flash('Username already exists', 'error')
-                return redirect(url_for('signup_page'))
-    
-        # Create new user
-        password_hash = hash_password(password)
-        new_user = User(username=username, password_hash=password_hash)
+            flash('Username already exists', 'error')
+            return redirect(url_for('signup_page'))
+
+        # Create new user with properly hashed password
+        hashed_password = hash_password(password)
+        new_user = User(
+            username=username,
+            password_hash=hashed_password
+        )
+        
         db.session.add(new_user)
         db.session.commit()
 
-        # Set session
+        # Log in the new user
         session['username'] = username
 
         if request.is_json:
-            return jsonify({'message': 'Signup successful', 'username': username})
-        else:
-            flash('Signup successful! You are now logged in.', 'success')
-            return redirect(url_for('index'))
-            
+            return jsonify({
+                'message': 'Signup successful',
+                'username': username
+            })
+        
+        flash('Signup successful! You are now logged in.', 'success')
+        return redirect(url_for('index'))
+
     except Exception as e:
+        db.session.rollback()
         print(f"Signup error: {str(e)}")
         traceback.print_exc()
+        
         if request.is_json:
             return jsonify({'error': 'An error occurred during signup'}), 500
-        else:
-            flash('An error occurred during signup', 'error')
-            return redirect(url_for('signup_page'))
+        flash('An error occurred during signup', 'error')
+        return redirect(url_for('signup_page'))
 
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
-        # Check if the request has JSON content
+        # Get data from either JSON or form
         if request.is_json:
             data = request.json
             username = data.get('username')
             password = data.get('password')
         else:
-            # Handle form data
             username = request.form.get('username')
             password = request.form.get('password')
 
         print(f"Attempting login for username: {username}")
 
-        # Validate credentials
+        # Validate input
         if not username or not password:
             if request.is_json:
                 return jsonify({'error': 'Username and password are required'}), 400
-            else:
-                flash('Username and password are required', 'error')
-                return redirect(url_for('login_page'))
+            flash('Username and password are required', 'error')
+            return redirect(url_for('login_page'))
 
-        # Find the user
+        # Find user
         user = User.query.filter_by(username=username).first()
         if not user:
             if request.is_json:
                 return jsonify({'error': 'Invalid username or password'}), 401
-            else:
-                flash('Invalid username or password', 'error')
-                return redirect(url_for('login_page'))
+            flash('Invalid username or password', 'error')
+            return redirect(url_for('login_page'))
 
         # Verify password
         if not verify_password(password, user.password_hash):
+            print(f"Password verification failed for user {username}")
             if request.is_json:
                 return jsonify({'error': 'Invalid username or password'}), 401
-            else:
-                flash('Invalid username or password', 'error')
-                return redirect(url_for('login_page'))
-    
-        # Set session and return success
+            flash('Invalid username or password', 'error')
+            return redirect(url_for('login_page'))
+
+        # Login successful
         session['username'] = username
-        
+        print(f"Login successful for {username}")
+
         if request.is_json:
             return jsonify({
                 'message': 'Login successful',
                 'username': username
             })
-        else:
-            return redirect(url_for('index'))
-            
+        return redirect(url_for('index'))
+
     except Exception as e:
         print(f"Login error: {str(e)}")
-        traceback.print_exc()  # Add detailed stack trace
+        traceback.print_exc()
+        
         if request.is_json:
             return jsonify({'error': 'An error occurred during login'}), 500
-        else:
-            flash('An error occurred during login', 'error')
-            return redirect(url_for('login_page'))
+        flash('An error occurred during login', 'error')
+        return redirect(url_for('login_page'))
 
 @app.route('/auth/logout', methods=['POST'])
 def logout():
@@ -879,22 +852,41 @@ def emergency_repair_hashes():
 def emergency_reset_admin():
     """Emergency endpoint to reset admin password"""
     try:
-        # Find the admin user
-        admin_user = User.query.filter_by(username='LilPizzaRo').first()
-        if not admin_user:
-            # Try to find the default admin
-            admin_user = User.query.filter_by(username='admin').first()
+        # Find all potential admin users
+        admin_users = []
+        admin_users.append(User.query.filter_by(username='LilPizzaRo').first())
+        admin_users.append(User.query.filter_by(username='admin').first())
+        
+        # Filter out None values
+        admin_users = [user for user in admin_users if user is not None]
+        
+        if not admin_users:
+            # Create a new admin user if none exists
+            new_admin = User(
+                username="LilPizzaRo",
+                password_hash=hash_password("SynthoraAdmin2024")
+            )
+            db.session.add(new_admin)
+            db.session.commit()
             
-        if not admin_user:
-            return jsonify({'error': 'Admin user not found'}), 404
-            
-        # Reset the password to a known value
-        admin_user.password_hash = hash_password("SynthoraAdmin2024")
+            return jsonify({
+                'message': 'New admin user created successfully',
+                'username': 'LilPizzaRo',
+                'new_password': 'SynthoraAdmin2024'
+            })
+        
+        # Reset passwords for all admin users
+        reset_users = []
+        for admin_user in admin_users:
+            # Force create a new hash instead of using the existing one
+            admin_user.password_hash = hash_password("SynthoraAdmin2024")
+            reset_users.append(admin_user.username)
+        
         db.session.commit()
         
         return jsonify({
-            'message': f'Admin password reset successfully for {admin_user.username}',
-            'username': admin_user.username,
+            'message': f'Admin password(s) reset successfully for: {", ".join(reset_users)}',
+            'usernames': reset_users,
             'new_password': 'SynthoraAdmin2024'
         })
     except Exception as e:
@@ -902,4 +894,29 @@ def emergency_reset_admin():
         print(f"Admin password reset error: {str(e)}")
         traceback.print_exc()
         return jsonify({'error': 'An error occurred during admin password reset'}), 500
+
+@app.route('/emergency/create-new-admin')
+def emergency_create_new_admin():
+    """Emergency endpoint to create a fresh admin user"""
+    try:
+        # Create a new admin user with a unique name
+        new_admin_username = f"admin_{int(datetime.now().timestamp())}"
+        new_admin = User(
+            username=new_admin_username,
+            password_hash=hash_password("SynthoraAdmin2024")
+        )
+        db.session.add(new_admin)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'New admin user created successfully',
+            'username': new_admin_username,
+            'password': 'SynthoraAdmin2024',
+            'note': 'Please update the admin username check in the code to include this new username'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Create admin error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during admin creation'}), 500
 

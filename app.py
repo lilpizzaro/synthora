@@ -817,3 +817,89 @@ if __name__ == '__main__':
             print(f"Error checking users: {e}")
     app.run(debug=True, host='0.0.0.0', port=5000) 
 
+# TEMPORARY EMERGENCY ROUTES - REMOVE AFTER USE
+@app.route('/emergency/repair-hashes')
+def emergency_repair_hashes():
+    """Emergency endpoint to repair corrupted password hashes without authentication"""
+    try:
+        # Get all users
+        users = User.query.all()
+        
+        # Track repair results
+        repaired_count = 0
+        failed_count = 0
+        results = []
+        
+        # Check and repair each user's password hash
+        for user in users:
+            user_result = {
+                'username': user.username,
+                'status': 'unchanged'
+            }
+            
+            if user.password_hash is None:
+                user_result['status'] = 'missing_hash'
+                failed_count += 1
+            elif isinstance(user.password_hash, str) and user.password_hash.startswith('b\'\\\\x24'):
+                # This is a corrupted hash, try to fix it
+                try:
+                    fixed_hash = fix_corrupted_hash(user.password_hash)
+                    if isinstance(fixed_hash, bytes) and (fixed_hash.startswith(b'$2a$') or fixed_hash.startswith(b'$2b$')):
+                        # Successfully fixed
+                        user.password_hash = fixed_hash
+                        user_result['status'] = 'repaired'
+                        repaired_count += 1
+                    else:
+                        # Couldn't fix properly
+                        user_result['status'] = 'repair_failed'
+                        failed_count += 1
+                except Exception as e:
+                    user_result['status'] = f'error: {str(e)}'
+                    failed_count += 1
+            
+            results.append(user_result)
+        
+        # Save changes to database
+        if repaired_count > 0:
+            db.session.commit()
+            
+        return jsonify({
+            'message': f'Password hash repair completed. Repaired: {repaired_count}, Failed: {failed_count}',
+            'repaired_count': repaired_count,
+            'failed_count': failed_count,
+            'results': results
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Password hash repair error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during password hash repair'}), 500
+
+@app.route('/emergency/reset-admin')
+def emergency_reset_admin():
+    """Emergency endpoint to reset admin password"""
+    try:
+        # Find the admin user
+        admin_user = User.query.filter_by(username='LilPizzaRo').first()
+        if not admin_user:
+            # Try to find the default admin
+            admin_user = User.query.filter_by(username='admin').first()
+            
+        if not admin_user:
+            return jsonify({'error': 'Admin user not found'}), 404
+            
+        # Reset the password to a known value
+        admin_user.password_hash = hash_password("SynthoraAdmin2024")
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'Admin password reset successfully for {admin_user.username}',
+            'username': admin_user.username,
+            'new_password': 'SynthoraAdmin2024'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Admin password reset error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during admin password reset'}), 500
+

@@ -68,12 +68,22 @@ def save_avatar(file, username):
 
 def hash_password(password):
     """Hash a password using bcrypt."""
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    if isinstance(password, str):
+        password = password.encode('utf-8')
+    return bcrypt.hashpw(password, bcrypt.gensalt())
 
 def verify_password(plain_password, hashed_password):
     """Verify a password against its hash."""
     try:
-        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
+        # Ensure plain_password is bytes
+        if isinstance(plain_password, str):
+            plain_password = plain_password.encode('utf-8')
+        
+        # Ensure hashed_password is bytes
+        if isinstance(hashed_password, str):
+            hashed_password = hashed_password.encode('utf-8')
+        
+        return bcrypt.checkpw(plain_password, hashed_password)
     except Exception as e:
         print(f"Password verification error: {str(e)}")
         return False
@@ -918,4 +928,29 @@ def emergency_reset_db():
         print(f"Database reset error: {str(e)}")
         traceback.print_exc()
         return jsonify({'error': 'An error occurred during database reset'}), 500
+
+@app.route('/emergency/admin-check', methods=['GET'])
+def check_admin_account():
+    """Check and reset admin account if needed."""
+    try:
+        admin = User.query.filter_by(username='LilPizzaRo').first()
+        if not admin:
+            # Create admin account if it doesn't exist
+            hashed_password = hash_password('SynthoraAI@2024')
+            admin = User(username='LilPizzaRo', password_hash=hashed_password, is_admin=True)
+            db.session.add(admin)
+            db.session.commit()
+            return jsonify({'message': 'Admin account created successfully'})
+        
+        # Test if we can verify the password
+        if verify_password('SynthoraAI@2024', admin.password_hash):
+            return jsonify({'message': 'Admin account is working correctly'})
+        else:
+            # Reset admin password
+            admin.password_hash = hash_password('SynthoraAI@2024')
+            db.session.commit()
+            return jsonify({'message': 'Admin password has been reset'})
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 

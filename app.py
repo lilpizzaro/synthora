@@ -8,6 +8,7 @@ import traceback
 from functools import wraps
 import asyncio
 import google.generativeai as genai
+import re
 
 # Define allowed file extensions for uploads
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -69,10 +70,37 @@ def hash_password(password):
     # Implementation of hash_password
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
+def fix_corrupted_hash(hashed_password):
+    """Fix corrupted password hashes that have escaped backslashes."""
+    if isinstance(hashed_password, str):
+        # Check if the hash is corrupted with escaped backslashes
+        if hashed_password.startswith('b\'\\\\x24'):
+            # Extract the actual hash value from the corrupted string
+            # Pattern: b'\\x243262243132...
+            match = re.search(r'b\'\\\\x24(.+?)\'', hashed_password)
+            if match:
+                # Get the hex part
+                hex_part = match.group(1)
+                # Convert escaped hex to bytes
+                try:
+                    # Replace escaped hex notation with actual bytes
+                    hex_str = hex_part.replace('\\\\x', '')
+                    # Convert hex to bytes
+                    byte_data = bytes.fromhex(hex_str)
+                    return byte_data
+                except Exception as e:
+                    print(f"Error fixing corrupted hash: {str(e)}")
+    
+    # If not corrupted or couldn't fix, return as is
+    return hashed_password
+
 def verify_password(plain_password, hashed_password):
     try:
         # Log debugging information
         print(f"Verifying password: Type of hashed_password = {type(hashed_password)}")
+        
+        # Try to fix corrupted hash if needed
+        hashed_password = fix_corrupted_hash(hashed_password)
         
         # Ensure hashed_password is bytes
         if isinstance(hashed_password, str):
@@ -266,6 +294,16 @@ def login_page():
 @app.route('/auth/signup-page')
 def signup_page():
     return render_template('signup.html')
+
+# Admin page route
+@app.route('/admin')
+@login_required
+def admin_page():
+    # Check if current user is an admin
+    admin_username = session.get('username')
+    if admin_username != 'LilPizzaRo':  # Replace with your admin username
+        return redirect(url_for('index'))
+    return render_template('admin.html')
 
 # Auth routes with fixed indentation
 @app.route('/auth/signup', methods=['POST'])
@@ -665,6 +703,105 @@ def google_login():
     # This is a placeholder for Google OAuth implementation
     # In a real implementation, you would redirect to Google's OAuth endpoint
     return redirect(url_for('login_page'))
+
+# Add a utility route to repair corrupted password hashes
+@app.route('/auth/repair-hashes', methods=['GET'])
+@login_required
+def repair_password_hashes():
+    """Admin endpoint to repair corrupted password hashes"""
+    try:
+        # Check if current user is an admin
+        admin_username = session.get('username')
+        if admin_username != 'LilPizzaRo':  # Replace with your admin username
+            return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
+        
+        # Get all users
+        users = User.query.all()
+        
+        # Track repair results
+        repaired_count = 0
+        failed_count = 0
+        results = []
+        
+        # Check and repair each user's password hash
+        for user in users:
+            user_result = {
+                'username': user.username,
+                'status': 'unchanged'
+            }
+            
+            if user.password_hash is None:
+                user_result['status'] = 'missing_hash'
+                failed_count += 1
+            elif isinstance(user.password_hash, str) and user.password_hash.startswith('b\'\\\\x24'):
+                # This is a corrupted hash, try to fix it
+                try:
+                    fixed_hash = fix_corrupted_hash(user.password_hash)
+                    if isinstance(fixed_hash, bytes) and (fixed_hash.startswith(b'$2a$') or fixed_hash.startswith(b'$2b$')):
+                        # Successfully fixed
+                        user.password_hash = fixed_hash
+                        user_result['status'] = 'repaired'
+                        repaired_count += 1
+                    else:
+                        # Couldn't fix properly
+                        user_result['status'] = 'repair_failed'
+                        failed_count += 1
+                except Exception as e:
+                    user_result['status'] = f'error: {str(e)}'
+                    failed_count += 1
+            
+            results.append(user_result)
+        
+        # Save changes to database
+        if repaired_count > 0:
+            db.session.commit()
+            
+        return jsonify({
+            'message': f'Password hash repair completed. Repaired: {repaired_count}, Failed: {failed_count}',
+            'repaired_count': repaired_count,
+            'failed_count': failed_count,
+            'results': results
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Password hash repair error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during password hash repair'}), 500
+
+# Add a utility route to reset a specific user's password
+@app.route('/auth/reset-user-password/<username>', methods=['POST'])
+@login_required
+def reset_specific_user_password(username):
+    """Admin endpoint to reset a specific user's password"""
+    try:
+        # Check if current user is an admin
+        admin_username = session.get('username')
+        if admin_username != 'LilPizzaRo':  # Replace with your admin username
+            return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
+        
+        # Get the new password from request
+        data = request.json
+        new_password = data.get('new_password')
+        
+        if not new_password:
+            return jsonify({'error': 'New password is required'}), 400
+        
+        # Find the user
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return jsonify({'error': f'User {username} not found'}), 404
+        
+        # Reset the password
+        user.password_hash = hash_password(new_password)
+        db.session.commit()
+        
+        print(f"Password reset for user {username} by admin {admin_username}")
+        return jsonify({'message': f'Password for {username} has been reset successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Password reset error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during password reset'}), 500
 
 # Ensure app restarts properly
 if __name__ == '__main__':

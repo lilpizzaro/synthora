@@ -256,16 +256,16 @@ def signup():
         data = request.json
         username = data.get('username')
         password = data.get('password')
-        
+    
         # Validate input
         if not username or not password:
             return jsonify({'error': 'Username and password are required'}), 400
-        
+    
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             return jsonify({'error': 'Username already exists'}), 400
-        
+    
         # Hash password and create user
         password_hash = hash_password(password)
         
@@ -291,19 +291,19 @@ def login():
         data = request.json
         username = data.get('username')
         password = data.get('password')
-        
+
         print(f"Attempting login for username: {username}")
-        
+
         # Validate credentials
         if not username or not password:
             return jsonify({'error': 'Username and password are required'}), 400
-        
+
         # Check if username exists
         user = User.query.filter_by(username=username).first()
         if not user:
             print(f"Login failed: User {username} not found")
             return jsonify({'error': 'Invalid username or password'}), 401
-        
+
         # Check if password hash is valid - this is the part we're enhancing
         if user.password_hash is None or (isinstance(user.password_hash, bytes) and len(user.password_hash) < 10):
             print(f"Invalid password hash for user {username}, attempting to reset it")
@@ -559,6 +559,71 @@ def reset_user_password():
         print(f"Password reset error: {str(e)}")
         traceback.print_exc()
         return jsonify({'error': 'An error occurred during password reset'}), 500
+
+# Add API chat endpoint to match frontend expectations
+@app.route('/api/chat', methods=['POST'])
+@login_required
+def api_chat():
+    """Chat endpoint that mirrors the functionality of /generate for frontend compatibility"""
+    try:
+        data = request.json
+        message = data.get('message')
+        conversation_id = data.get('conversation_id')
+        conversation_history = data.get('conversation_history')
+        settings = data.get('settings', {})
+        
+        if not message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Check what type of conversation history we have
+        if not conversation_history:
+            # If no conversation history is provided, check if we have a conversation_id
+            if conversation_id and not isinstance(conversation_id, str):
+                # If conversation_id is not a string, it might be the actual history (for backward compatibility)
+                conversation_history = conversation_id
+        
+        # Ensure conversation_history is well-formatted
+        if conversation_history and isinstance(conversation_history, list):
+            # Filter out any invalid messages
+            conversation_history = [
+                msg for msg in conversation_history 
+                if isinstance(msg, dict) and 'user_message' in msg and 'synthora_response' in msg
+            ]
+            
+            # Log conversation history for debugging
+            print(f"Using conversation history with {len(conversation_history)} messages")
+        
+        # Create event loop for async operation
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        # Generate response using event loop with settings
+        response = loop.run_until_complete(get_ai_response(message, conversation_history, settings))
+        loop.close()
+        
+        # Save to memory if user is authenticated
+        try:
+            if 'username' in session:
+                user = User.query.filter_by(username=session['username']).first()
+                if user:
+                    memory = Memory(
+                        user_id=user.id,
+                        user_message=message,
+                        synthora_response=response
+                    )
+                    db.session.add(memory)
+                    db.session.commit()
+        except Exception as e:
+            print(f"Error saving memory: {str(e)}")
+            # Continue even if memory saving fails
+        
+        return jsonify({
+            'response': response,
+            'conversation_id': str(datetime.now().timestamp()) if not conversation_id else conversation_id
+        })
+    except Exception as e:
+        print(f"API chat error: {str(e)}")
+        return jsonify({'error': 'An error occurred processing your message'}), 500
 
 @app.route('/auth/check-password-hashes', methods=['GET'])
 @login_required

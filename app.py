@@ -253,29 +253,29 @@ def signup_page():
 @app.route('/auth/signup', methods=['POST'])
 def signup():
     try:
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        
         # Validate input
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
-    
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+        
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-        return jsonify({'error': 'Username already exists'}), 400
-    
+            return jsonify({'error': 'Username already exists'}), 400
+        
         # Hash password and create user
         password_hash = hash_password(password)
-    
-    # Create new user
+        
+        # Create new user
         new_user = User(username=username, password_hash=password_hash)
         db.session.add(new_user)
         db.session.commit()
         
         # Set session and return
-    session['username'] = username
+        session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -288,21 +288,21 @@ def signup():
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
     
         print(f"Attempting login for username: {username}")
 
         # Validate credentials
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
     
         # Check if username exists
         user = User.query.filter_by(username=username).first()
         if not user:
             print(f"Login failed: User {username} not found")
-        return jsonify({'error': 'Invalid username or password'}), 401
+            return jsonify({'error': 'Invalid username or password'}), 401
     
         # Check if password hash is valid - this is the part we're enhancing
         if user.password_hash is None or (isinstance(user.password_hash, bytes) and len(user.password_hash) < 10):
@@ -318,7 +318,7 @@ def login():
                 
                 # Try verification again with the new hash
                 if verify_password(password, user.password_hash):
-    session['username'] = username
+                    session['username'] = username
                     print(f"Admin recovery successful for {username}")
                     return jsonify({
                         'message': 'Login successful (password reset)',
@@ -359,11 +359,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-        return jsonify({
-            'authenticated': True,
+            return jsonify({
+                'authenticated': True,
                 'username': user.username,
                 'avatar_url': url_for('serve_avatar', username=user.username) if user.avatar_data else None
-        })
+            })
     return jsonify({'authenticated': False})
 
 @app.route('/auth/update', methods=['POST'])
@@ -555,9 +555,9 @@ def reset_user_password():
         
         print(f"Password reset for user {target_username} by admin {admin_username}")
         return jsonify({'message': f'Password for {target_username} has been reset successfully'})
-        except Exception as e:
+    except Exception as e:
         print(f"Password reset error: {str(e)}")
-            traceback.print_exc()
+        traceback.print_exc()
         return jsonify({'error': 'An error occurred during password reset'}), 500
 
 @app.route('/auth/check-password-hashes', methods=['GET'])

@@ -63,7 +63,7 @@ def save_avatar(file, username):
         return None
     except Exception as e:
         print(f"Error saving avatar: {str(e)}")
-        return None
+    return None
 
 def hash_password(password):
     # Implementation of hash_password

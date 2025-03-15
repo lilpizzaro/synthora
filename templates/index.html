@@ -851,48 +851,35 @@
         .slide-menu {
             position: fixed;
             top: 0;
-            left: -100%;  /* Change from -300px to -100% to ensure it's fully hidden */
+            left: -300px;
             width: 300px;
             height: 100vh;
-            background-color: rgba(36, 40, 50, 1);
-            background-image: linear-gradient(139deg, rgba(36, 40, 50, 1) 0%, rgba(36, 40, 50, 1) 0%, rgba(37, 28, 40, 1) 100%);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            background-color: #ffffff;
+            background-image: none;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             z-index: 1001;
-            transition: transform 0.3s ease;  /* Change from left to transform for better performance */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
             padding: 15px;
-            transform: translateX(0);  /* Initial position */
+            transform: translateX(0);
+        }
+
+        .dark-mode .slide-menu {
+            background-color: rgba(36, 40, 50, 1);
+            background-image: linear-gradient(139deg, rgba(36, 40, 50, 1) 0%, rgba(36, 40, 50, 1) 0%, rgba(37, 28, 40, 1) 100%);
         }
 
         .slide-menu.open {
-            left: 0;
-            transform: translateX(100%);  /* Slide in */
-        }
-
-        .slide-menu-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s linear 0.3s;  /* Add delay to visibility */
-            pointer-events: none;  /* Allow clicks to pass through when hidden */
-        }
-
-        .slide-menu-overlay.show {
-            opacity: 1;
-            visibility: visible;
-            transition-delay: 0s;  /* Remove delay when showing */
-            pointer-events: auto;  /* Capture clicks when visible */
+            transform: translateX(300px);
         }
 
         .slide-menu .separator {
-            border-top: 1.5px solid #42434a;
+            border-top: 1.5px solid #e0e0e0;
             margin: 10px 0;
+        }
+
+        .dark-mode .slide-menu .separator {
+            border-top: 1.5px solid #42434a;
         }
 
         .slide-menu .list {
@@ -907,7 +894,7 @@
         .slide-menu .list .element {
             display: flex;
             align-items: center;
-            color: #7e8590;
+            color: #333333;
             gap: 10px;
             transition: all 0.3s ease-out;
             padding: 8px 12px;
@@ -919,25 +906,36 @@
             text-align: left;
         }
 
+        .dark-mode .slide-menu .list .element {
+            color: #7e8590;
+        }
+
         .slide-menu .list .element svg {
             width: 19px;
             height: 19px;
             transition: all 0.3s ease-out;
+            stroke: #333333;
+        }
+
+        .dark-mode .slide-menu .list .element svg {
             stroke: #7e8590;
         }
 
-        .slide-menu .list .element .label {
-            font-weight: 600;
-            margin: 0;
-        }
-
         .slide-menu .list .element:hover {
-            background-color: #5353ff;
+            background-color: #007AFF;
             color: #ffffff;
             transform: translate(1px, -1px);
         }
 
+        .dark-mode .slide-menu .list .element:hover {
+            background-color: #5353ff;
+        }
+
         .slide-menu .list .delete:hover {
+            background-color: #ff3b30;
+        }
+
+        .dark-mode .slide-menu .list .delete:hover {
             background-color: #8e2a2a;
         }
 
@@ -1126,285 +1124,195 @@
         .dark-mode .slider-value {
             background: rgba(146, 255, 119, 0.2);
         }
+
+        .slide-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+            pointer-events: none;
+        }
+
+        .slide-menu-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            transition-delay: 0s;
+            pointer-events: auto;
+        }
+
+        /* Memories Modal Styles */
+        .memories-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .memories-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .memories-content {
+            background-color: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: modal-slide-up 0.3s ease;
+        }
+        
+        .dark-mode .memories-content {
+            background-color: #1c1c1e;
+            color: #fff;
+        }
+        
+        .memories-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .dark-mode .memories-header {
+            border-bottom-color: #2c2c2e;
+        }
+        
+        .memories-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .memories-list {
+            padding: 20px;
+        }
+        
+        .memory-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .dark-mode .memory-item {
+            background-color: #2c2c2e;
+        }
+        
+        .memory-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .memory-header {
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .dark-mode .memory-header {
+            color: #999;
+        }
+        
+        .memory-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .memory-message, .memory-response {
+            line-height: 1.4;
+        }
+        
+        .no-memories {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .dark-mode .no-memories {
+            color: #999;
+        }
+        
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: #ff3b30;
+        }
     </style>
 </head>
 <body>
-    <!-- Splash Screen -->
-    <div class="splash-screen" id="splashScreen">
-        <div class="splash-content">
-            <div class="splash-logo">
-                <img src="{{ url_for('static', filename='images/logo.lite.png') }}"
-                     data-light-src="{{ url_for('static', filename='images/logo.lite.png') }}"
-                     data-dark-src="{{ url_for('static', filename='images/logo.dark.png') }}"
-                     alt="synthora Logo" 
-                     class="splash-icon theme-aware-logo">
-            </div>
-            <div class="loading-indicator">
-                <!-- New Spinner Animation -->
-                <div class="spinner-container">
-                    <div class="spinner">
-                        <div class="spinner">
-                            <div class="spinner">
-                                <div class="spinner">
-                                    <div class="spinner">
-                                        <div class="spinner">
-                                            <div class="spinner"></div>
-                                        </div>
-                                    </div>
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>
+                    <img src="/static/images/synthora_icon.png" alt="Synthora">
+                    synthora
+                </h1>
+                <button class="menu-button">☰</button>
+                            </div>
+            <div class="chat-content">
+                <div class="messages">
+                    <div class="message synthora-message">
+                        <div class="message-content">
+                            <p>Welcome to synthora! How can I help you today?</p>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                                </div>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="userInput" placeholder="Type your message...">
+                    <button id="sendButton">Send</button>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Main App Content -->
-    <div class="container" style="display: none;" id="mainContent">
-        <!-- Slide-out Menu -->
-        <div class="slide-menu-overlay" id="menuOverlay"></div>
         <div class="slide-menu" id="slideMenu">
-            <ul class="list">
-                <li class="element" onclick="showMemories()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path>
-                        <path d="m15 5 4 4"></path>
-                    </svg>
-                    <p class="label">Memories</p>
-                </li>
-                <li class="element" onclick="toggleDarkMode()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4"></circle>
-                        <path d="M12 2v2"></path>
-                        <path d="M12 20v2"></path>
-                        <path d="m4.93 4.93 1.41 1.41"></path>
-                        <path d="m17.66 17.66 1.41 1.41"></path>
-                        <path d="M2 12h2"></path>
-                        <path d="M20 12h2"></path>
-                        <path d="m6.34 17.66-1.41 1.41"></path>
-                        <path d="m19.07 4.93-1.41 1.41"></path>
-                    </svg>
-                    <p class="label">Theme</p>
-                </li>
-            </ul>
-            <div class="separator"></div>
-            <ul class="list">
-                <li class="element" onclick="showSettings()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
-                        <circle r="3" cy="12" cx="12"></circle>
-                    </svg>
-                    <p class="label">Settings</p>
-                </li>
-                <li class="element delete" onclick="clearChat()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 6h18"></path>
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                        <line y2="17" y1="11" x2="10" x1="10"></line>
-                        <line y2="17" y1="11" x2="14" x1="14"></line>
-                    </svg>
-                    <p class="label">Clear Chat</p>
-                </li>
-            </ul>
-            <div class="separator"></div>
-            <ul class="list team-access">
-                <li class="element" onclick="showAccount()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 21a8 8 0 0 0-16 0"></path>
-                        <circle r="5" cy="8" cx="10"></circle>
-                        <path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"></path>
-                    </svg>
-                    <p class="label">Account</p>
-                </li>
-                <li class="element" onclick="logout()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <p class="label">Logout</p>
-                </li>
-            </ul>
-        </div>
-
-        <div class="chat-header">
-            <button class="menu-button" id="menuButton">☰</button>
-            <h1>
-                <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                     data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                     data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
-                     alt="synthora Logo" 
-                     class="icon theme-aware-logo">
-                <span class="title">synthora</span>
-            </h1>
-            <div style="width: 40px"></div><!-- Spacer for alignment -->
-        </div>
-        <div class="chat-container" id="chatContainer">
-            <!-- Chat messages will appear here -->
-        </div>
-        <div class="input-container">
-            <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Message synthora..." autocomplete="off">
-            </div>
-            <button id="sendButton" onclick="sendMessage()">
-                <img src="{{ url_for('static', filename='images/send.png') }}" alt="Send">
-            </button>
-        </div>
-    </div>
-
-    <!-- Add Memories Modal -->
-    <div class="memories-modal" id="memoriesModal">
-        <div class="memories-content">
-            <div class="memories-header">
-                <h2>Your Memories</h2>
-                <button class="close-button" onclick="hideMemories()">✕</button>
-            </div>
-            <div class="memories-list" id="memoriesList"></div>
-        </div>
-    </div>
-
-    <!-- Account Modal -->
-    <div class="account-modal" id="accountModal" onclick="if(event.target === this) hideAccount()">
-        <div class="account-content">
-            <div class="account-header">
-                <h2>Account Settings</h2>
-                <button class="close-button" onclick="hideAccount()" aria-label="Close">✕</button>
-            </div>
-            <div class="account-body">
-                <div class="avatar-section">
-                    <div class="avatar-container">
-                        <div class="avatar-preview">
-                        <img id="avatarImage" src="{{ url_for('static', filename='images/def_avatar.png') }}" alt="Profile Picture">
-                            <div class="avatar-overlay">
-                                <span class="avatar-edit-icon">
-                                    <img src="{{ url_for('static', filename='images/camera.icon.png') }}" alt="Change Picture" class="camera-icon">
-                                </span>
-                            </div>
+            <div class="menu-items">
+                <div class="menu-item">
+                    <div class="menu-icon-container">
+                        <img src="/static/images/synthora_icon.png" alt="Synthora">
                     </div>
-                    <input type="file" id="avatarUpload" class="avatar-upload" accept="image/*" onchange="handleAvatarChange(event)" aria-label="Upload profile picture">
-                        <button type="button" class="avatar-button" onclick="document.getElementById('avatarUpload').click()">
-                        Change Picture
-                    </button>
+                    <span>Home</span>
                 </div>
+                <div class="menu-item">
+                    <div class="menu-icon-container">
+                        <img src="/static/images/memories_icon.png" alt="Memories">
+                    </div>
+                    <span>Memories</span>
                 </div>
-                <style>
-                    .avatar-section {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        margin-bottom: 20px;
-                    }
-                    
-                    .avatar-container {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 10px;
-                    }
-                    
-                    .avatar-preview {
-                        width: 120px;
-                        height: 120px;
-                        border-radius: 50%;
-                        overflow: hidden;
-                        position: relative;
-                        cursor: pointer;
-                        border: 3px solid #007AFF;
-                        transition: all 0.3s ease;
-                    }
-                    
-                    .avatar-preview:hover {
-                        transform: scale(1.05);
-                    }
-                    
-                    .avatar-preview img {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                    }
-                    
-                    .avatar-overlay {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background: rgba(0, 0, 0, 0.5);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        opacity: 0;
-                        transition: opacity 0.3s ease;
-                    }
-                    
-                    .avatar-preview:hover .avatar-overlay {
-                        opacity: 1;
-                    }
-                    
-                    .avatar-edit-icon {
-                        font-size: 24px;
-                        color: white;
-                    }
-                    
-                    .avatar-upload {
-                        display: none;
-                    }
-                    
-                    .avatar-button {
-                        background-color: #007AFF;
-                        color: white;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 12px;
-                        font-size: 16px;
-                        cursor: pointer;
-                        transition: all 0.3s ease;
-                        width: 200px;
-                        text-align: center;
-                        font-weight: 500;
-                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    }
-                    
-                    .avatar-button:hover {
-                        background-color: #0056b3;
-                        transform: translateY(-1px);
-                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-                    }
-                    
-                    .dark-mode .avatar-button {
-                        background-color: #0A84FF;
-                    }
-                    
-                    .dark-mode .avatar-button:hover {
-                        background-color: #0056b3;
-                    }
-                </style>
-                <form class="account-form" onsubmit="updateAccount(event)">
-                    <div class="form-group">
-                        <label for="accountUsername">Username</label>
-                        <input type="text" id="accountUsername" name="username" placeholder="Enter username" required autocomplete="username">
+                <div class="menu-item">
+                    <div class="menu-icon-container">
+                        <img src="/static/images/settings_icon.png" alt="Settings">
                     </div>
-                    <div class="form-group">
-                        <label for="currentPassword">Current Password</label>
-                        <input type="password" id="currentPassword" name="current_password" placeholder="Enter current password" autocomplete="current-password">
+                    <span>Settings</span>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon-container">
+                        <img src="/static/images/account_icon.png" alt="Account">
                     </div>
-                    <div class="form-group">
-                        <label for="newPassword">New Password</label>
-                        <input type="password" id="newPassword" name="new_password" placeholder="Enter new password" autocomplete="new-password">
-                    </div>
-                    <div class="form-group">
-                        <label for="confirmNewPassword">Confirm New Password</label>
-                        <input type="password" id="confirmNewPassword" name="confirm_password" placeholder="Confirm new password" autocomplete="new-password">
-                    </div>
-                    <div class="account-actions">
-                        <button type="button" class="cancel-button" onclick="hideAccount()">Cancel</button>
-                        <button type="submit" class="save-button">Save Changes</button>
-                    </div>
-                </form>
+                    <span>Account</span>
+                </div>
             </div>
         </div>
+        <div class="slide-menu-overlay" id="menuOverlay"></div>
     </div>
 
     <!-- Settings Modal -->
@@ -1509,6 +1417,18 @@
         </div>
     </div>
 
+    <div class="memories-modal" id="memoriesModal">
+        <div class="memories-content">
+            <div class="memories-header">
+                <h2>Your Memories</h2>
+                <button class="close-button" onclick="hideMemories()">✕</button>
+            </div>
+            <div class="memories-list" id="memoriesList">
+                <!-- Memories will be loaded here -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // Add a stub for initializeChat if it's not defined elsewhere
         function initializeChat() {
@@ -1522,8 +1442,8 @@
                 welcomeMessage.innerHTML = `
                     <div class="message-content">
                         <p>Welcome to synthora! How can I help you today?</p>
-                    </div>
-                `;
+                            </div>
+                        `;
                 chatContainer.appendChild(welcomeMessage);
             }
         }
@@ -1807,13 +1727,83 @@
         
         // Stub functions for other menu items to prevent errors
         function showMemories() {
-            alert('Memories feature coming soon!');
+            const memoriesModal = document.getElementById('memoriesModal');
+            const memoriesList = document.getElementById('memoriesList');
+            
+            // Show the modal
+            memoriesModal.classList.add('show');
+            
+            // Fetch memories from the server
+            fetch('/memories')
+                .then(response => response.json())
+                .then(data => {
+                    memoriesList.innerHTML = ''; // Clear existing memories
+                    
+                    if (data.memories && data.memories.length > 0) {
+                        data.memories.forEach(memory => {
+                            const memoryItem = document.createElement('div');
+                            memoryItem.className = 'memory-item';
+                            
+                            // Format the timestamp
+                            const timestamp = new Date(memory.timestamp);
+                            const formattedDate = timestamp.toLocaleDateString();
+                            const formattedTime = timestamp.toLocaleTimeString();
+                            
+                            memoryItem.innerHTML = `
+                                <div class="memory-header">
+                                    <span class="memory-date">${formattedDate} ${formattedTime}</span>
+                                </div>
+                                <div class="memory-content">
+                                    <div class="memory-message">
+                                        <strong>You:</strong> ${memory.user_message}
+                                    </div>
+                                    <div class="memory-response">
+                                        <strong>Synthora:</strong> ${memory.synthora_response}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Add click handler to restore the conversation
+                            memoryItem.addEventListener('click', () => {
+                                // Add the memory messages to the chat
+                                addMessageToChat('user', memory.user_message);
+                                addMessageToChat('synthora', memory.synthora_response);
+                                
+                                // Hide the memories modal
+                                hideMemories();
+                                
+                                // Scroll to the bottom of the chat
+                                const chatContainer = document.getElementById('chatContainer');
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            });
+                            
+                            memoriesList.appendChild(memoryItem);
+                        });
+                    } else {
+                        memoriesList.innerHTML = '<div class="no-memories">No memories found</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching memories:', error);
+                    memoriesList.innerHTML = '<div class="error-message">Error loading memories</div>';
+                });
         }
         
+        function hideMemories() {
+            document.getElementById('memoriesModal').classList.remove('show');
+        }
+
+        // Close memories modal when clicking outside
+        document.getElementById('memoriesModal').addEventListener('click', (event) => {
+            if (event.target === document.getElementById('memoriesModal')) {
+                hideMemories();
+            }
+        });
+
         function showSettings() {
             document.getElementById('settingsModal').classList.add('show');
         }
-        
+
         function hideSettings() {
             document.getElementById('settingsModal').classList.remove('show');
         }

@@ -222,6 +222,16 @@ def index():
     # Implementation of index route
     return render_template('index.html')
 
+# Login page route
+@app.route('/auth/login-page')
+def login_page():
+    return render_template('login.html')
+
+# Signup page route
+@app.route('/auth/signup-page')
+def signup_page():
+    return render_template('signup.html')
+
 # Auth routes with fixed indentation
 @app.route('/auth/signup', methods=['POST'])
 def signup():

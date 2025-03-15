@@ -445,32 +445,32 @@
             padding: 24px 16px;
         }
 
+        /* Header Styles */
         .chat-header {
-            padding: 24px 28px;
-            min-height: 100px;
+            padding: 16px 24px;
+            min-height: 80px;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .chat-header h1 {
             display: flex;
             align-items: center;
-            font-size: 28px;
+            font-size: 24px;
             margin: 0;
             flex: 1;
             justify-content: center;
         }
 
         .chat-header h1 .icon {
-            width: 120px;
+            width: 100px;
             height: auto;
-            margin-right: 20px;
+            margin-right: 18px;
         }
 
         .menu-button {
-            font-size: 24px;
-            padding: 10px 12px;
+            font-size: 20px;
+            padding: 8px 10px;
         }
 
         /* Avatar Images */
@@ -508,8 +508,8 @@
             justify-content: center;
             gap: 48px;
             height: 100%;
-            padding: 32px;
-            max-width: 90%;
+            padding: 40px;
+            max-width: 95%;
             margin: 0 auto;
         }
 
@@ -519,14 +519,14 @@
             align-items: center;
             gap: 24px;
             animation: splash-fade-in 1.2s ease forwards;
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
 
         .splash-icon {
-            width: 400px;
+            width: 550px;
             height: auto;
             object-fit: contain;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.15));
         }
 
         .splash-credits {
@@ -583,44 +583,40 @@
         /* Media Queries */
         @media (max-width: 768px) {
             .splash-icon {
-                width: 300px;
+                width: 400px;
             }
             
-            .loading-indicator {
-                margin-bottom: 48px;
-            }
-
             .chat-header {
-                padding: 18px 22px;
-                min-height: 90px;
+                padding: 14px 20px;
+                min-height: 70px;
             }
 
             .chat-header h1 {
-                font-size: 26px;
+                font-size: 22px;
             }
 
             .chat-header h1 .icon {
-                width: 100px;
+                width: 90px;
                 margin-right: 16px;
             }
         }
 
         @media (max-width: 480px) {
             .splash-icon {
-                width: 260px;
+                width: 320px;
             }
 
             .chat-header {
-                padding: 16px 20px;
-                min-height: 80px;
+                padding: 12px 18px;
+                min-height: 60px;
             }
 
             .chat-header h1 {
-                font-size: 24px;
+                font-size: 20px;
             }
 
             .chat-header h1 .icon {
-                width: 90px;
+                width: 80px;
                 margin-right: 14px;
             }
         }
@@ -2177,6 +2173,26 @@
 
         // Call when theme changes
         window.addEventListener('dark-mode-changed', updateThemeAwareLogos);
+
+        // Check authentication status
+        function checkAuthStatus() {
+            fetch('/auth/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.authenticated) {
+                        // Redirect to login page if not authenticated
+                        window.location.href = '/auth/login-page';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking auth status:', error);
+                });
+        }
+        
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthStatus();
+        });
     </script>
 </body>
 </html> 

@@ -857,7 +857,8 @@
             }
             
             .chat-header {
-                padding: 10px 15px;
+                padding: 14px 20px;
+                min-height: 70px;
             }
 
             .chat-header h1 {
@@ -865,24 +866,8 @@
             }
 
             .chat-header h1 .icon {
-                height: 24px;
-            }
-            
-            .chat-header .title {
-                font-size: 1rem;
-            }
-            
-            .input-container {
-                padding: 10px 15px;
-            }
-            
-            .message-content {
-                padding: 10px 14px;
-                font-size: 14px;
-            }
-            
-            .message {
-                max-width: 90%;
+                width: 90px;
+                margin-right: 16px;
             }
         }
 
@@ -903,30 +888,6 @@
             .chat-header h1 .icon {
                 width: 80px;
                 margin-right: 14px;
-            }
-
-            .chat-container {
-                padding: 15px;
-            }
-            
-            .menu-button {
-                padding: 3px 8px;
-                font-size: 1.3rem;
-            }
-            
-            #userInput {
-                padding: 10px 15px;
-                font-size: 15px;
-            }
-            
-            #sendButton {
-                width: 36px;
-                height: 36px;
-            }
-            
-            #sendButton img {
-                width: 18px;
-                height: 18px;
             }
         }
 
@@ -1113,7 +1074,7 @@
                      data-dark-src="{{ url_for('static', filename='images/logo.dark.png') }}"
                      alt="synthora Logo" 
                      class="splash-icon theme-aware-logo">
-                            </div>
+            </div>
             <div class="loading-indicator">
                 <!-- Bicycle Loader Animation -->
                 <div>
@@ -1150,8 +1111,8 @@
                 <div class="loading-dot" style="display:none"></div>
                 <div class="loading-dot" style="display:none"></div>
                 <div class="loading-dot" style="display:none"></div>
-                                </div>
-                            </div>
+            </div>
+        </div>
     </div>
 
     <!-- Main App Content -->
@@ -1473,7 +1434,7 @@
             
             // ... existing code ...
         });
-        
+
         // Authentication check function
         function checkAuthStatus() {
             fetch('/auth/status')
@@ -1482,7 +1443,7 @@
                     if (!data.authenticated) {
                         // Redirect to login page if not authenticated
                         window.location.href = '/auth/login-page';
-                } else {
+                    } else {
                         // User is authenticated, initialize the app
                         initializeApp(data);
                     }
@@ -1730,11 +1691,11 @@
         function hideSettings() {
             document.getElementById('settingsModal').classList.remove('show');
         }
-        
+
         function showAccount() {
             document.getElementById('accountModal').style.display = 'flex';
         }
-        
+
         function hideAccount() {
             document.getElementById('accountModal').style.display = 'none';
         }

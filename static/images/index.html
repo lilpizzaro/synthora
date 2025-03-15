@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthora - Image Gallery</title>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --primary-color-dark: #0A84FF;
+            --text-color: #333;
+            --text-color-dark: #f0f0f0;
+            --background-color: #f5f5f7;
+            --background-color-dark: #121212;
+            --card-background: #ffffff;
+            --card-background-dark: #1c1c1e;
+            --border-color: #e0e0e0;
+            --border-color-dark: #2c2c2e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background-color: var(--background-color-dark);
+            color: var(--text-color-dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        body.dark-mode header {
+            border-bottom-color: var(--border-color-dark);
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo {
+            height: 40px;
+            width: auto;
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        
+        body.dark-mode .theme-toggle {
+            color: var(--text-color-dark);
+        }
+        
+        .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        body.dark-mode .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .image-card {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        body.dark-mode .image-card {
+            background-color: var(--card-background-dark);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .image-container {
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        body.dark-mode .image-container {
+            background-color: #1a1a1a;
+            border-bottom-color: var(--border-color-dark);
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .image-info {
+            padding: 15px;
+        }
+        
+        .image-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+        
+        .image-size {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        body.dark-mode .image-size {
+            color: #999;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .back-link {
+            color: var(--primary-color-dark);
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            
+            .image-container {
+                height: 120px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 10px;
+            }
+            
+            .image-container {
+                height: 100px;
+            }
+            
+            .image-info {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                <img src="logo.lite.png" alt="Synthora Logo" class="logo" id="logo">
+                Synthora Image Gallery
+            </h1>
+            <button class="theme-toggle" id="themeToggle">🌓</button>
+        </header>
+        
+        <div class="gallery">
+            <div class="image-card">
+                <a href="camera.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="camera.icon.png" alt="Camera Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">camera.icon.png</div>
+                        <div class="image-size">335 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="def_avatar.png" target="_blank">
+                    <div class="image-container">
+                        <img src="def_avatar.png" alt="Default Avatar">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">def_avatar.png</div>
+                        <div class="image-size">4.1 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="del-chat.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="del-chat.icon.png" alt="Delete Chat Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">del-chat.icon.png</div>
+                        <div class="image-size">328 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="eye-off.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="eye-off.icon.png" alt="Eye Off Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">eye-off.icon.png</div>
+                        <div class="image-size">643 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="eye.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="eye.icon.png" alt="Eye Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">eye.icon.png</div>
+                        <div class="image-size">415 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="google-logo.png" target="_blank">
+                    <div class="image-container">
+                        <img src="google-logo.png" alt="Google Logo">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">google-logo.png</div>
+                        <div class="image-size">149.5 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="lock.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="lock.icon.png" alt="Lock Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">lock.icon.png</div>
+                        <div class="image-size">340 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="logo.dark.png" target="_blank">
+                    <div class="image-container">
+                        <img src="logo.dark.png" alt="Logo Dark">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">logo.dark.png</div>
+                        <div class="image-size">39.4 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="logo.header.dark.png" target="_blank">
+                    <div class="image-container">
+                        <img src="logo.header.dark.png" alt="Logo Header Dark">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">logo.header.dark.png</div>
+                        <div class="image-size">173.4 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="logo.header.lite.png" target="_blank">
+                    <div class="image-container">
+                        <img src="logo.header.lite.png" alt="Logo Header Lite">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">logo.header.lite.png</div>
+                        <div class="image-size">172.0 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="logo.lite.png" target="_blank">
+                    <div class="image-container">
+                        <img src="logo.lite.png" alt="Logo Lite">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">logo.lite.png</div>
+                        <div class="image-size">38.3 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="logo.png" target="_blank">
+                    <div class="image-container">
+                        <img src="logo.png" alt="Logo">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">logo.png</div>
+                        <div class="image-size">23.8 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="logout.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="logout.icon.png" alt="Logout Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">logout.icon.png</div>
+                        <div class="image-size">385 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="mem.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="mem.icon.png" alt="Memory Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">mem.icon.png</div>
+                        <div class="image-size">367 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="notif.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="notif.icon.png" alt="Notification Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">notif.icon.png</div>
+                        <div class="image-size">550 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="send.png" target="_blank">
+                    <div class="image-container">
+                        <img src="send.png" alt="Send Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">send.png</div>
+                        <div class="image-size">15.3 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="settings.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="settings.icon.png" alt="Settings Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">settings.icon.png</div>
+                        <div class="image-size">1.0 KB</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="share-chat.png" target="_blank">
+                    <div class="image-container">
+                        <img src="share-chat.png" alt="Share Chat Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">share-chat.png</div>
+                        <div class="image-size">850 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="theme.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="theme.icon.png" alt="Theme Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">theme.icon.png</div>
+                        <div class="image-size">504 bytes</div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="image-card">
+                <a href="user.icon.png" target="_blank">
+                    <div class="image-container">
+                        <img src="user.icon.png" alt="User Icon">
+                    </div>
+                    <div class="image-info">
+                        <div class="image-name">user.icon.png</div>
+                        <div class="image-size">275 bytes</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+    
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        const logo = document.getElementById('logo');
+        
+        // Check if dark mode is enabled in localStorage or system preference
+        if (localStorage.getItem('darkMode') === 'true' || 
+            (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && 
+             localStorage.getItem('darkMode') !== 'false')) {
+            body.classList.add('dark-mode');
+            updateLogo();
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
+            updateLogo();
+        });
+        
+        function updateLogo() {
+            if (body.classList.contains('dark-mode')) {
+                logo.src = 'logo.dark.png';
+            } else {
+                logo.src = 'logo.lite.png';
+            }
+        }
+    </script>
+</body>
+</html> 

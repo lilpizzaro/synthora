@@ -52,16 +52,33 @@ def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
 def verify_password(plain_password, hashed_password):
-    # Ensure hashed_password is bytes
-    if isinstance(hashed_password, str):
-        hashed_password = hashed_password.encode('utf-8')
-    
-    # Ensure plain_password is properly encoded
-    if isinstance(plain_password, str):
-        plain_password = plain_password.encode('utf-8')
+    try:
+        # Log debugging information
+        print(f"Verifying password: Type of hashed_password = {type(hashed_password)}")
         
-    # Verify the password
-    return bcrypt.checkpw(plain_password, hashed_password)
+        # Ensure hashed_password is bytes
+        if isinstance(hashed_password, str):
+            hashed_password = hashed_password.encode('utf-8')
+        
+        # Ensure plain_password is properly encoded
+        if isinstance(plain_password, str):
+            plain_password = plain_password.encode('utf-8')
+            
+        # Check if the hash appears to be valid
+        if not hashed_password.startswith(b'$2a$') and not hashed_password.startswith(b'$2b$'):
+            print(f"Invalid hash format, doesn't start with $2a$ or $2b$: {hashed_password[:20]}")
+            return False
+            
+        # Verify the password
+        return bcrypt.checkpw(plain_password, hashed_password)
+    except ValueError as e:
+        print(f"Password verification error: {str(e)}")
+        print(f"Hash value (first 20 chars): {str(hashed_password)[:20] if hashed_password else 'None'}")
+        # If there's an error with the hash, authentication fails
+        return False
+    except Exception as e:
+        print(f"Unexpected error during password verification: {str(e)}")
+        return False
 
 # User model
 class User(db.Model):
@@ -275,7 +292,6 @@ def login():
         username = data.get('username')
         password = data.get('password')
         
-        # Debug log
         print(f"Attempting login for username: {username}")
         
         # Validate credentials
@@ -288,7 +304,34 @@ def login():
             print(f"Login failed: User {username} not found")
             return jsonify({'error': 'Invalid username or password'}), 401
         
-        # Verify password
+        # Check if password hash is valid - this is the part we're enhancing
+        if user.password_hash is None or (isinstance(user.password_hash, bytes) and len(user.password_hash) < 10):
+            print(f"Invalid password hash for user {username}, attempting to reset it")
+            
+            # Special case: if this is the admin user, allow a recovery
+            if username == "LilPizzaRo":  # Replace with your admin username
+                # Reset admin password to a default
+                print(f"Resetting admin password for {username}")
+                admin_default_password = "SynthoraAI@2024"  # Set to your default admin password
+                user.password_hash = hash_password(admin_default_password)
+                db.session.commit()
+                
+                # Try verification again with the new hash
+                if verify_password(password, user.password_hash):
+                    session['username'] = username
+                    print(f"Admin recovery successful for {username}")
+                    return jsonify({
+                        'message': 'Login successful (password reset)',
+                        'username': username,
+                        'avatar_url': user.avatar_url,
+                        'password_reset': True
+                    })
+                else:
+                    return jsonify({'error': 'Please use the default admin password to login'}), 401
+            else:
+                return jsonify({'error': 'Your password needs to be reset. Please contact an administrator.'}), 401
+        
+        # Regular verification for accounts with valid hashes
         if not verify_password(password, user.password_hash):
             print(f"Login failed: Invalid password for {username}")
             return jsonify({'error': 'Invalid username or password'}), 401
@@ -482,6 +525,96 @@ def serve_avatar(username):
     else:
         # If user doesn't exist or has no avatar, serve the default avatar
         return app.send_static_file('images/def_avatar.png')
+
+@app.route('/auth/reset-password', methods=['POST'])
+@login_required
+def reset_user_password():
+    """Admin endpoint to reset a user's password"""
+    try:
+        # Check if current user is an admin
+        admin_username = session.get('username')
+        if admin_username != 'LilPizzaRo':  # Replace with your admin username
+            return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
+            
+        # Get data from request
+        data = request.json
+        target_username = data.get('username')
+        new_password = data.get('new_password')
+        
+        if not target_username or not new_password:
+            return jsonify({'error': 'Username and new password are required'}), 400
+            
+        # Find the user
+        user = User.query.filter_by(username=target_username).first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+            
+        # Reset the password
+        user.password_hash = hash_password(new_password)
+        db.session.commit()
+        
+        print(f"Password reset for user {target_username} by admin {admin_username}")
+        return jsonify({'message': f'Password for {target_username} has been reset successfully'})
+    except Exception as e:
+        print(f"Password reset error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during password reset'}), 500
+
+@app.route('/auth/check-password-hashes', methods=['GET'])
+@login_required
+def check_password_hashes():
+    """Admin endpoint to check the health of password hashes"""
+    try:
+        # Check if current user is an admin
+        admin_username = session.get('username')
+        if admin_username != 'LilPizzaRo':  # Replace with your admin username
+            return jsonify({'error': 'Unauthorized. Admin access required.'}), 403
+        
+        # Get all users
+        users = User.query.all()
+        
+        # Check each user's password hash
+        results = []
+        for user in users:
+            hash_status = 'valid'
+            hash_info = {}
+            
+            if user.password_hash is None:
+                hash_status = 'missing'
+            elif isinstance(user.password_hash, str):
+                hash_info['type'] = 'string'
+                hash_info['length'] = len(user.password_hash)
+                if not (user.password_hash.startswith('$2a$') or user.password_hash.startswith('$2b$')):
+                    hash_status = 'invalid_format'
+            elif isinstance(user.password_hash, bytes):
+                hash_info['type'] = 'bytes'
+                hash_info['length'] = len(user.password_hash)
+                try:
+                    prefix = user.password_hash[:4].decode('utf-8', 'ignore')
+                    hash_info['prefix'] = prefix
+                    if not (prefix.startswith('$2a$') or prefix.startswith('$2b$')):
+                        hash_status = 'invalid_format'
+                except:
+                    hash_status = 'decode_error'
+            else:
+                hash_info['type'] = str(type(user.password_hash))
+                hash_status = 'unknown_type'
+            
+            results.append({
+                'username': user.username,
+                'hash_status': hash_status,
+                'hash_info': hash_info
+            })
+        
+        return jsonify({
+            'message': 'Password hash check completed',
+            'total_users': len(users),
+            'results': results
+        })
+    except Exception as e:
+        print(f"Password hash check error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during password hash check'}), 500
 
 # Ensure app restarts properly
 if __name__ == '__main__':

@@ -12,6 +12,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Add marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         .auth-button {
             display: flex;
@@ -442,35 +444,82 @@
         }
 
         .chat-container {
-            padding: 24px 16px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+            background-color: #f5f5f7;
+            transition: background-color 0.3s ease;
+        }
+        
+        .dark-mode .chat-container {
+            background-color: #121212;
         }
 
         /* Header Styles */
         .chat-header {
-            padding: 16px 24px;
-            min-height: 80px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
-
+        
+        .dark-mode .chat-header {
+            background-color: #1e1e1e;
+            border-bottom-color: #2c2c2e;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
         .chat-header h1 {
             display: flex;
             align-items: center;
-            font-size: 24px;
+            font-size: 1.2rem;
+            font-weight: 600;
             margin: 0;
-            flex: 1;
-            justify-content: center;
+            color: #151717;
         }
-
+        
+        .dark-mode .chat-header h1 {
+            color: #f0f0f0;
+        }
+        
         .chat-header h1 .icon {
-            width: 100px;
-            height: auto;
-            margin-right: 18px;
+            height: 28px;
+            margin-right: 8px;
         }
-
+        
+        .chat-header .title {
+            font-weight: 600;
+        }
+        
         .menu-button {
-            font-size: 20px;
-            padding: 8px 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #151717;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .menu-button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .dark-mode .menu-button {
+            color: #f0f0f0;
+        }
+        
+        .dark-mode .menu-button:hover {
+            background-color: #2c2c2e;
         }
 
         /* Avatar Images */
@@ -543,11 +592,231 @@
         /* Loading Indicator */
         .loading-indicator {
             display: flex;
-            gap: 12px;
+            justify-content: center;
+            align-items: center;
             margin-top: auto;
             margin-bottom: 64px;
         }
 
+        /* Define colors for bicycle loader */
+        :root {
+            --primary-color-dark: #0A84FF; /* Primary color for dark mode */
+            --trans-dur: 0.3s; /* Transition duration */
+        }
+        
+        /* Bicycle Loader Animation */
+        .loader {
+          display: block;
+          width: 150px;
+          height: auto;
+        }
+
+        .loader_body,
+          .loader_front,
+          .loader_handlebars,
+          .loader_pedals,
+          .loader_pedals-spin,
+          .loader_seat,
+          .loader_spokes,
+          .loader_spokes-spin,
+          .loader_tire {
+          animation: bikeBody 3s ease-in-out infinite;
+          stroke: #007AFF; /* Match the primary blue color */
+          transition: stroke var(--trans-dur);
+        }
+
+        .loader_front {
+          animation-name: bikeFront;
+        }
+
+        .loader_handlebars {
+          animation-name: bikeHandlebars;
+        }
+
+        .loader_pedals {
+          animation-name: bikePedals;
+        }
+
+        .loader_pedals-spin {
+          animation-name: bikePedalsSpin;
+        }
+
+        .loader_seat {
+          animation-name: bikeSeat;
+        }
+
+        .loader_spokes,
+          .loader_tire {
+          stroke: currentColor; /* Uses the text color of parent element */
+        }
+
+        .loader_spokes {
+          animation-name: bikeSpokes;
+        }
+
+        .loader_spokes-spin {
+          animation-name: bikeSpokesSpin;
+        }
+
+        .loader_tire {
+          animation-name: bikeTire;
+        }
+
+        /* Bicycle Animation Keyframes */
+        @keyframes bikeBody {
+          from {
+            stroke-dashoffset: 79;
+          }
+
+          33%,
+            67% {
+            stroke-dashoffset: 0;
+          }
+
+          to {
+            stroke-dashoffset: -79;
+          }
+        }
+
+        @keyframes bikeFront {
+          from {
+            stroke-dashoffset: 19;
+          }
+
+          33%,
+            67% {
+            stroke-dashoffset: 0;
+          }
+
+          to {
+            stroke-dashoffset: -19;
+          }
+        }
+
+        @keyframes bikeHandlebars {
+          from {
+            stroke-dashoffset: 10;
+          }
+
+          33%,
+            67% {
+            stroke-dashoffset: 0;
+          }
+
+          to {
+            stroke-dashoffset: -10;
+          }
+        }
+
+        @keyframes bikePedals {
+          from {
+            animation-timing-function: ease-in;
+            stroke-dashoffset: -25.133;
+          }
+
+          33%,
+            67% {
+            animation-timing-function: ease-out;
+            stroke-dashoffset: -21.991;
+          }
+
+          to {
+            stroke-dashoffset: -25.133;
+          }
+        }
+
+        @keyframes bikePedalsSpin {
+          from {
+            transform: rotate(0.1875turn);
+          }
+
+          to {
+            transform: rotate(3.1875turn);
+          }
+        }
+
+        @keyframes bikeSeat {
+          from {
+            stroke-dashoffset: 5;
+          }
+
+          33%,
+            67% {
+            stroke-dashoffset: 0;
+          }
+
+          to {
+            stroke-dashoffset: -5;
+          }
+        }
+
+        @keyframes bikeSpokes {
+          from {
+            animation-timing-function: ease-in;
+            stroke-dashoffset: -31.416;
+          }
+
+          33%,
+            67% {
+            animation-timing-function: ease-out;
+            stroke-dashoffset: -23.562;
+          }
+
+          to {
+            stroke-dashoffset: -31.416;
+          }
+        }
+
+        @keyframes bikeSpokesSpin {
+          from {
+            transform: rotate(0);
+          }
+
+          to {
+            transform: rotate(3turn);
+          }
+        }
+
+        @keyframes bikeTire {
+          from {
+            animation-timing-function: ease-in;
+            stroke-dashoffset: 56.549;
+            transform: rotate(0);
+          }
+
+          33% {
+            stroke-dashoffset: 0;
+            transform: rotate(0.33turn);
+          }
+
+          67% {
+            animation-timing-function: ease-out;
+            stroke-dashoffset: 0;
+            transform: rotate(0.67turn);
+          }
+
+          to {
+            stroke-dashoffset: -56.549;
+            transform: rotate(1turn);
+          }
+        }
+
+        /* Dark Mode Adjustments for Bicycle Loader */
+        .dark-mode .loader_body,
+        .dark-mode .loader_front,
+        .dark-mode .loader_handlebars,
+        .dark-mode .loader_pedals,
+        .dark-mode .loader_pedals-spin,
+        .dark-mode .loader_seat {
+          stroke: #0A84FF; /* Brighter blue for dark mode */
+        }
+        
+        .dark-mode .loader_spokes,
+        .dark-mode .loader_tire {
+          stroke: currentColor; /* Uses the text color in dark mode */
+        }
+
+        /* Original Loading Dots - Keeping for backward compatibility */
         .loading-dot {
             width: 10px;
             height: 10px;
@@ -555,6 +824,7 @@
             border-radius: 50%;
             opacity: 0.3;
             animation: loading-dot 1.4s infinite ease-in-out;
+            display: none; /* Hide the old loading dots */
         }
 
         /* Animations */
@@ -587,8 +857,7 @@
             }
             
             .chat-header {
-                padding: 14px 20px;
-                min-height: 70px;
+                padding: 10px 15px;
             }
 
             .chat-header h1 {
@@ -596,8 +865,24 @@
             }
 
             .chat-header h1 .icon {
-                width: 90px;
-                margin-right: 16px;
+                height: 24px;
+            }
+            
+            .chat-header .title {
+                font-size: 1rem;
+            }
+            
+            .input-container {
+                padding: 10px 15px;
+            }
+            
+            .message-content {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+            
+            .message {
+                max-width: 90%;
             }
         }
 
@@ -619,82 +904,206 @@
                 width: 80px;
                 margin-right: 14px;
             }
+
+            .chat-container {
+                padding: 15px;
+            }
+            
+            .menu-button {
+                padding: 3px 8px;
+                font-size: 1.3rem;
+            }
+            
+            #userInput {
+                padding: 10px 15px;
+                font-size: 15px;
+            }
+            
+            #sendButton {
+                width: 36px;
+                height: 36px;
+            }
+            
+            #sendButton img {
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        /* Add basic styles for user and AI messages */
+        .user-message {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+        
+        .synthora-message {
+            display: flex;
+            margin-bottom: 16px;
+        }
+        
+        .message-content {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-message .message-content {
+            background-color: #007AFF;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+        
+        .synthora-message .message-content {
+            background-color: #f0f0f0;
+            color: #333;
+            border-radius: 18px 18px 18px 4px;
+            margin-left: 12px;
+        }
+        
+        .dark-mode .synthora-message .message-content {
+            background-color: #1c1c1e;
+            color: #f0f0f0;
+        }
+        
+        .message p {
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        /* Code block styling */
+        .message-content pre {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        .dark-mode .message-content pre {
+            background-color: #1a1a1a;
+        }
+        
+        .message-content code {
+            font-family: 'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .message-content p code {
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .dark-mode .message-content p code {
+            background-color: #1a1a1a;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 5px;
+            padding: 10px 5px;
+        }
+        
+        .typing-dots .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #666;
+            border-radius: 50%;
+            animation: dot-pulse 1.5s infinite ease-in-out;
+        }
+        
+        .typing-dots .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dots .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes dot-pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* Input area styles */
+        .input-container {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: white;
+            border-top: 1px solid #e0e0e0;
+            position: relative;
+            margin-top: auto;
+        }
+        
+        .dark-mode .input-container {
+            background-color: #1c1c1e;
+            border-top-color: #2c2c2e;
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+            background-color: #f5f5f5;
+            border-radius: 20px;
+            padding: 0 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .dark-mode .input-wrapper {
+            background-color: #2c2c2e;
+        }
+        
+        #userInput {
+            width: 100%;
+            border: none;
+            padding: 12px 15px;
+            font-size: 16px;
+            background: transparent;
+            outline: none;
+            color: inherit;
+        }
+        
+        #sendButton {
+            background-color: #007AFF;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #sendButton:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        
+        .dark-mode #sendButton {
+            background-color: #0A84FF;
+        }
+        
+        #sendButton img {
+            width: 18px;
+            height: 18px;
+            filter: brightness(0) invert(1);
         }
     </style>
 </head>
 <body>
-    <!-- Auth Overlay -->
-    <div class="auth-overlay" id="authOverlay">
-        <div class="auth-container">
-            <div class="auth-header">
-                <img src="{{ url_for('static', filename='images/logo.lite.png') }}" 
-                     data-light-src="{{ url_for('static', filename='images/logo.lite.png') }}"
-                     data-dark-src="{{ url_for('static', filename='images/logo.dark.png') }}"
-                     alt="synthora Logo" 
-                     class="auth-logo theme-aware-logo">
-                <h1 class="auth-title">synthora</h1>
-                <p class="auth-subtitle">Your friendly AI assistant</p>
-            </div>
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
-                <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-            </div>
-            
-            <!-- Login Form -->
-            <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <div class="input-icon"><img src="{{ url_for('static', filename='images/user.icon.png') }}" alt="User" class="form-icon"></div>
-                    <input type="text" id="loginUsername" placeholder="Username" required>
-                </div>
-                <div class="form-group">
-                    <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
-                    <div class="password-container">
-                    <input type="password" id="loginPassword" placeholder="Password" required>
-                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('loginPassword', this)">
-                            <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
-                        </button>
-                </div>
-                </div>
-                <button type="submit" class="auth-button">
-                    <span class="button-text">Login</span>
-                    <span class="button-icon">→</span>
-                </button>
-            </form>
-            
-            <!-- Signup Form -->
-            <form id="signupForm" class="auth-form" style="display: none;" onsubmit="handleSignup(event)">
-                <div class="form-group">
-                    <div class="input-icon"><img src="{{ url_for('static', filename='images/user.icon.png') }}" alt="User" class="form-icon"></div>
-                    <input type="text" id="signupUsername" placeholder="Choose Username" required>
-                </div>
-                <div class="form-group">
-                    <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
-                    <div class="password-container">
-                    <input type="password" id="signupPassword" placeholder="Choose Password" required>
-                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signupPassword', this)">
-                            <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div class="input-icon"><img src="{{ url_for('static', filename='images/lock.icon.png') }}" alt="Password" class="form-icon"></div>
-                    <div class="password-container">
-                    <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
-                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">
-                            <span class="toggle-icon"><img src="{{ url_for('static', filename='images/eye.icon.png') }}" alt="Show" class="toggle-icon-img"></span>
-                        </button>
-                </div>
-                </div>
-                <button type="submit" class="auth-button">
-                    <span class="button-text">Create Account</span>
-                    <span class="button-icon">→</span>
-                </button>
-            </form>
-            
-            <div id="authError" class="auth-error"></div>
-        </div>
-    </div>
-
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
         <div class="splash-content">
@@ -704,13 +1113,45 @@
                      data-dark-src="{{ url_for('static', filename='images/logo.dark.png') }}"
                      alt="synthora Logo" 
                      class="splash-icon theme-aware-logo">
-            </div>
+                            </div>
             <div class="loading-indicator">
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-            </div>
-        </div>
+                <!-- Bicycle Loader Animation -->
+                <div>
+                  <svg class="loader" viewBox="0 0 48 30" width="48px" height="30px">
+                  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1">
+                    <g transform="translate(9.5,19)">
+                      <circle class="loader_tire" r="9" stroke-dasharray="56.549 56.549"></circle>
+                      <g class="loader_spokes-spin" stroke-dasharray="31.416 31.416" stroke-dashoffset="-23.562">
+                        <circle class="loader_spokes" r="5"></circle>
+                        <circle class="loader_spokes" r="5" transform="rotate(180,0,0)"></circle>
+                      </g>
+                    </g>
+                    <g transform="translate(24,19)">
+                      <g class="loader_pedals-spin" stroke-dasharray="25.133 25.133" stroke-dashoffset="-21.991" transform="rotate(67.5,0,0)">
+                        <circle class="loader_pedals" r="4"></circle>
+                        <circle class="loader_pedals" r="4" transform="rotate(180,0,0)"></circle>
+                      </g>
+                    </g>
+                    <g transform="translate(38.5,19)">
+                      <circle class="loader_tire" r="9" stroke-dasharray="56.549 56.549"></circle>
+                      <g class="loader_spokes-spin" stroke-dasharray="31.416 31.416" stroke-dashoffset="-23.562">
+                        <circle class="loader_spokes" r="5"></circle>
+                        <circle class="loader_spokes" r="5" transform="rotate(180,0,0)"></circle>
+                      </g>
+                    </g>
+                    <polyline class="loader_seat" points="14 3,18 3" stroke-dasharray="5 5"></polyline>
+                    <polyline class="loader_body" points="16 3,24 19,9.5 19,18 8,34 7,24 19" stroke-dasharray="79 79"></polyline>
+                    <path class="loader_handlebars" d="m30,2h6s1,0,1,1-1,1-1,1" stroke-dasharray="10 10"></path>
+                    <polyline class="loader_front" points="32.5 2,38.5 19" stroke-dasharray="19 19"></polyline>
+                  </g>
+                </svg>
+                                </div>
+                <!-- Keeping old dots but hidden for backward compatibility -->
+                <div class="loading-dot" style="display:none"></div>
+                <div class="loading-dot" style="display:none"></div>
+                <div class="loading-dot" style="display:none"></div>
+                                </div>
+                            </div>
     </div>
 
     <!-- Main App Content -->
@@ -1008,1173 +1449,32 @@
     </div>
 
     <script>
-        // Pre-render URLs for use in JavaScript
-        const EYE_ICON_URL = "{{ url_for('static', filename='images/eye.icon.png') }}";
-        const EYE_OFF_ICON_URL = "{{ url_for('static', filename='images/eye-off.icon.png') }}";
-        
-        // Force dark mode on if needed - this should happen before any content is rendered
-        const forceDarkMode = window.localStorage.getItem('darkMode') === 'true';
-        if (forceDarkMode) {
-            document.body.classList.add('dark-mode');
-            document.body.classList.add('force-dark');
-            console.log("Forcing dark mode: ON");
-        } else {
-            console.log("No forced dark mode");
-        }
-    
-        // Add image error handling
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('.menu-icon').forEach(function(img) {
-                img.addEventListener('error', function() {
-                    this.src = "{{ url_for('static', filename='images/logo.png') }}";
-                });
-            });
-        });
-        
-        // Add base URL configuration
-        const API_BASE_URL = window.location.hostname === 'localhost' ? '' : 'https://synthora.onrender.com';
-        let currentUser = null;
-        let darkMode = false; // Initialize dark mode as false by default
-        
-        let conversationId = null;
-        let pingInterval = null;
-        let pingFailCount = 0;
-        const MAX_PING_FAILURES = 3;
-        const PING_INTERVAL = 120000; // 2 minutes in milliseconds
-        
-        // Store conversation history for maintaining context
-        let conversationMessages = [];
-        
-        // Add ping functionality
-        function startPingInterval() {
-            // Clear any existing interval
-            if (pingInterval) {
-                clearInterval(pingInterval);
+        // Add a stub for initializeChat if it's not defined elsewhere
+        function initializeChat() {
+            console.log("Chat initialized");
+            // Show empty first message
+            const chatContainer = document.getElementById('chatContainer');
+            if (chatContainer && chatContainer.children.length === 0) {
+                // Add welcome message if chat is empty
+                const welcomeMessage = document.createElement('div');
+                welcomeMessage.className = 'message synthora-message';
+                welcomeMessage.innerHTML = `
+                    <div class="message-content">
+                        <p>Welcome to synthora! How can I help you today?</p>
+                    </div>
+                `;
+                chatContainer.appendChild(welcomeMessage);
             }
-            
-            // Reset failure count
-            pingFailCount = 0;
-            
-            // Start new ping interval
-            pingInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/ping');
-                    if (!response.ok) {
-                        throw new Error('Ping failed');
-                    }
-                    // Reset failure count on successful ping
-                    pingFailCount = 0;
-                } catch (error) {
-                    console.error('Ping error:', error);
-                    pingFailCount++;
-                    
-                    if (pingFailCount >= MAX_PING_FAILURES) {
-                        clearInterval(pingInterval);
-                        showError('Lost connection to server. Please refresh the page.');
-                    }
-                }
-            }, PING_INTERVAL);
         }
 
-        // Check authentication status on load
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
             checkAuthStatus();
-        });
-
-        function checkAuthStatus() {
-            fetch('/auth/status')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.authenticated) {
-                        currentUser = data.username;
-                        // Update avatar if available, otherwise use default
-                        const defaultAvatar = "{{ url_for('static', filename='images/def_avatar.png') }}";
-                        const avatarUrl = data.avatar_url ? `${data.avatar_url}?t=${new Date().getTime()}` : defaultAvatar;
-                        document.getElementById('avatarImage').src = avatarUrl;
-                        document.getElementById('menuAvatarImage').src = avatarUrl;
-                        hideAuthOverlay();
-                        startApp();
-                    } else {
-                        showAuthOverlay();
-                    }
-                })
-                .catch(error => {
-                    console.error('Auth status error:', error);
-                    showAuthOverlay();
-                });
-        }
-
-        function showAuthOverlay() {
-            document.getElementById('authOverlay').style.display = 'flex';
-            document.getElementById('splashScreen').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'none';
-        }
-
-        function hideAuthOverlay() {
-            document.getElementById('authOverlay').style.display = 'none';
-        }
-
-        function switchAuthTab(tab) {
-            document.getElementById('loginForm').style.display = tab === 'login' ? 'flex' : 'none';
-            document.getElementById('signupForm').style.display = tab === 'signup' ? 'flex' : 'none';
             
-            // Update active tab
-            document.querySelectorAll('.auth-tab').forEach(button => {
-                button.classList.toggle('active', button.textContent.toLowerCase() === tab);
-            });
-            
-            // Clear error message
-            document.getElementById('authError').textContent = '';
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('authError');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-
-        async function handleLogin(event) {
-            event.preventDefault();
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            try {
-                const response = await fetch('/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    currentUser = data.username;
-                    hideAuthOverlay();
-                    startApp();
-                } else {
-                    showError(data.error || 'Login failed');
-                }
-            } catch (error) {
-                showError('Network error. Please try again.');
-            }
-        }
-
-        async function handleSignup(event) {
-            event.preventDefault();
-            const username = document.getElementById('signupUsername').value;
-            const password = document.getElementById('signupPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            if (password !== confirmPassword) {
-                showError('Passwords do not match');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/auth/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    currentUser = data.username;
-                    hideAuthOverlay();
-                    startApp();
-                } else {
-                    showError(data.error || 'Signup failed');
-                }
-            } catch (error) {
-                showError('Network error. Please try again.');
-            }
-        }
-
-        async function logout() {
-            try {
-                await fetch('/auth/logout', { method: 'POST' });
-                currentUser = null;
-                showAuthOverlay();
-            } catch (error) {
-                console.error('Logout error:', error);
-            }
-        }
-
-        function startApp() {
-            // Initialize conversation ID
-            conversationId = null;
-            
-            // Initialize conversation history
-            conversationMessages = [];
-            
-            // Start the ping interval
-            startPingInterval();
-            
-            // Show main content and hide auth overlay
-            const authOverlay = document.getElementById('authOverlay');
-            const mainContent = document.getElementById('mainContent');
-            const splashScreen = document.getElementById('splashScreen');
-            
-            authOverlay.style.display = 'none';
-            splashScreen.style.display = 'flex';
-            mainContent.style.display = 'none';
-            
-            // Show splash screen animation
-            setTimeout(function() {
-                splashScreen.classList.add('fade-out');
-                
-                setTimeout(function() {
-                    splashScreen.style.display = 'none';
-                    mainContent.style.display = 'flex';
-                    mainContent.classList.add('fade-in');
-                    
-                    // Clear chat and add welcome message
-                    const chatContainer = document.getElementById('chatContainer');
-                    chatContainer.innerHTML = '';
-                    
-                    const welcomeMessage = [
-                        'Hello there!',
-                        'I\'m your AI assistant, ready to help with any questions or tasks you might have.',
-                        'What would you like to discuss today?'
-                    ];
-                    
-                    addMessageToChat('synthora', welcomeMessage);
-                    
-                    // Add initial greeting to conversation history
-                    conversationMessages.push({
-                        user_message: "",
-                        synthora_response: welcomeMessage.join(' ')
-                    });
-                    
-                    // Focus input field
-                    document.getElementById('userInput').focus();
-                }, 800);
-            }, 4500);
-        }
-
-        // Add message to chat
-        function addMessageToChat(type, message) {
-            const chatContainer = document.getElementById('chatContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}-message`;
-            
-            // Remove any existing typing indicators for synthora messages
-            if (type === 'synthora') {
-                const typingMessages = document.querySelectorAll('.typing-message');
-                typingMessages.forEach(msg => msg.remove());
-            }
-            
-            let content = '';
-            
-            if (type === 'user') {
-                // Fetch current avatar URL from the account modal or use default
-                const currentAvatar = document.getElementById('avatarImage').src;
-                const defaultAvatar = "{{ url_for('static', filename='images/def_avatar.png') }}";
-                content = `
-                    <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
-                    <div class="avatar">
-                        <img src="${currentAvatar || defaultAvatar}" alt="User Avatar" class="avatar-img" onerror="this.src='${defaultAvatar}'">
-                    </div>
-                `;
-            } else if (type === 'synthora') {
-                content = `
-                    <div class="avatar">
-                        <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                             data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                             data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
-                             alt="synthora Logo" 
-                             class="avatar-img theme-aware-logo">
-                    </div>
-                    <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
-                `;
-            } else if (type === 'error') {
-                content = `
-                    <div class="avatar">⚠️</div>
-                    <div class="text">${Array.isArray(message) ? message.join('<br>') : escapeHtml(message)}</div>
-                `;
-            }
-            
-            messageDiv.innerHTML = content;
-            chatContainer.appendChild(messageDiv);
-            scrollToBottom();
-        }
-        
-        // Scroll to bottom of chat
-        function scrollToBottom() {
-            const chatContainer = document.getElementById('chatContainer');
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        // Add loading state to button
-        function setButtonLoading(loading) {
-            const button = document.getElementById('sendButton');
-            
-            if (loading) {
-                button.disabled = true;
-                button.classList.add('loading');
-            } else {
-                button.disabled = false;
-                button.classList.remove('loading');
-            }
-        }
-
-        // Escape HTML to prevent XSS
-        function escapeHtml(unsafe) {
-            if (!unsafe) return '';
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        // Add typing animation to messages
-        function addTypingAnimation(text) {
-            // Simpler version that ensures text actually appears
-            return escapeHtml(text);
-        }
-
-        // Create a typing indicator with animated dots
-        function createTypingIndicator() {
-            return `
-                <div class="typing-indicator">
-                    <div class="avatar">
-                        <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                             data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                             data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
-                             alt="synthora Logo" 
-                             class="avatar-img theme-aware-logo">
-                    </div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-            `;
-        }
-
-        // Menu functions
-        function clearChat() {
-            const chatContainer = document.getElementById('chatContainer');
-            // Clear the chat
-            chatContainer.innerHTML = '';
-            conversationId = null;
-            
-            // Clear conversation history
-            conversationMessages = [];
-            
-            // Add initial welcome message from synthora
-            setTimeout(() => {
-                addMessageToChat('synthora', [
-                    'Hello there!',
-                    'I\'m your AI assistant, ready to help with any questions or tasks you might have.',
-                    'What would you like to discuss today?'
-                ]);
-            }, 300);
-        }
-
-        function toggleDarkMode() {
-            console.log("Toggle dark mode called. Current state:", darkMode);
-            
-            // Toggle dark mode state
-            darkMode = !darkMode;
-            
-            console.log("New dark mode state:", darkMode);
-            
-            // Force add/remove classes instead of toggle
-            if (darkMode) {
-                document.body.classList.add('dark-mode');
-                document.body.classList.add('force-dark');
-                document.body.classList.remove('force-light');
-            } else {
-                document.body.classList.remove('dark-mode');
-                document.body.classList.remove('force-dark');
-                document.body.classList.add('force-light');
-            }
-            
-            // Save both preferences for compatibility
-            localStorage.setItem('darkMode', darkMode);
-            localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-            
-            console.log("Body has dark-mode class:", document.body.classList.contains('dark-mode'));
-            
-            // Update splash screen theme
-            updateSplashScreenTheme(darkMode);
-            
-            // Dispatch event for other components to react to dark mode change
-            window.dispatchEvent(new CustomEvent('dark-mode-changed', {
-                detail: { darkMode: darkMode }
-            }));
-            
-            // Close menu after toggling dark mode
-            if (slideMenu.classList.contains('active')) {
-                toggleMenu();
-            }
-            
-            // Manual update of the sliders' background gradients
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            
-            if (temperatureSlider) updateSliderBackground(temperatureSlider);
-            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-        }
-
-        // Add helper function for theme icons
-        function getThemeIcon(theme) {
-            switch (theme) {
-                case 'dark': return '☀️';
-                case 'light': return '🌑';
-                default: return '🌓';
-            }
-        }
-
-        async function shareChat() {
-            try {
-                // Get all message texts
-                const messages = Array.from(document.querySelectorAll('.message .text'))
-                    .map(el => el.textContent.trim())
-                    .join('\n\n');
-                
-                if (navigator.share) {
-                    await navigator.share({
-                        title: 'Chat with synthora',
-                        text: messages
-                    });
-                } else {
-                    // Fallback for browsers that don't support the Web Share API
-                    const textarea = document.createElement('textarea');
-                    textarea.value = messages;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-                    alert('Chat copied to clipboard!');
-                }
-            } catch (error) {
-                console.error('Error sharing:', error);
-            }
-        }
-
-        // Menu handling
-        const menuButton = document.getElementById('menuButton');
-        const slideMenu = document.getElementById('slideMenu');
-        const menuOverlay = document.getElementById('menuOverlay');
-
-        menuButton.addEventListener('click', toggleMenu);
-        menuOverlay.addEventListener('click', toggleMenu);
-
-        function toggleMenu() {
-            slideMenu.classList.toggle('active');
-            menuOverlay.classList.toggle('active');
-            menuButton.textContent = slideMenu.classList.contains('active') ? '✕' : '☰';
-        }
-
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (slideMenu.classList.contains('active') &&
-                !e.target.closest('.slide-menu') &&
-                !e.target.closest('.menu-button')) {
-                toggleMenu();
-            }
-        });
-
-        // New menu functions
-        function toggleSound() {
-            // Implement sound toggle functionality
-            alert('Sound toggle coming soon!');
-        }
-
-        function toggleNotifications() {
-            // Implement notifications toggle functionality
-            alert('Notifications toggle coming soon!');
-        }
-
-        // Initialize and handle dark mode
-        window.addEventListener('load', function() {
-            console.log("Initializing dark mode...");
-            
-            // Check for saved dark mode preference (use either storage mechanism)
-            const savedDarkMode = localStorage.getItem('darkMode');
-            const savedTheme = localStorage.getItem('theme');
-            
-            // Determine initial dark mode state
-            if (savedDarkMode !== null) {
-                // Use stored preference if available
-                darkMode = savedDarkMode === 'true';
-                console.log("Using saved darkMode preference:", darkMode);
-            } else if (savedTheme !== null) {
-                // Fall back to theme preference if available
-                darkMode = savedTheme === 'dark';
-                console.log("Using saved theme preference:", darkMode);
-            } else {
-                // Otherwise use system preference
-                darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                console.log("Using system preference:", darkMode);
-                
-                // Save preferences
-                localStorage.setItem('darkMode', darkMode);
-                localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-            }
-            
-            // Apply initial dark mode setting
-            if (darkMode) {
-                document.body.classList.add('dark-mode');
-                document.body.classList.add('force-dark');
-                document.body.classList.remove('force-light');
-            } else {
-                document.body.classList.remove('dark-mode');
-                document.body.classList.remove('force-dark');
-                document.body.classList.add('force-light');
-            }
-            
-            console.log("Initial dark mode applied, body has dark-mode class:", 
-                      document.body.classList.contains('dark-mode'));
-            
-            // Initialize slider backgrounds
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            
-            if (temperatureSlider) updateSliderBackground(temperatureSlider);
-            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-            
-            // Update splash screen theme
-            updateSplashScreenTheme(darkMode);
-            
-            // Listen for system theme changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                // Only update if user hasn't set a preference
-                if (localStorage.getItem('darkMode') === null && localStorage.getItem('theme') === null) {
-                    console.log("System theme changed:", e.matches ? "dark" : "light");
-                    darkMode = e.matches;
-                    
-                    // Apply dark mode
-                    if (darkMode) {
-                        document.body.classList.add('dark-mode');
-                        document.body.classList.add('force-dark');
-                        document.body.classList.remove('force-light');
-                    } else {
-                        document.body.classList.remove('dark-mode');
-                        document.body.classList.remove('force-dark');
-                        document.body.classList.add('force-light');
-                    }
-                    
-                    // Update UI
-                    updateSplashScreenTheme(darkMode);
-                    
-                    // Update slider backgrounds
-                    if (temperatureSlider) updateSliderBackground(temperatureSlider);
-                    if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-                }
-            });
-        });
-
-        // Handle swipe to close menu (update for left side)
-        let touchStartX = 0;
-        slideMenu.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        });
-
-        slideMenu.addEventListener('touchmove', (e) => {
-            if (!slideMenu.classList.contains('active')) return;
-            
-            const touchX = e.touches[0].clientX;
-            const diff = touchStartX - touchX;
-            
-            if (diff > 30) {
-                toggleMenu();
-            }
-        });
-
-        // Prevent bounce scrolling on iOS
-        document.body.addEventListener('touchmove', (e) => {
-            if (e.target.closest('.chat-container')) return;
-            e.preventDefault();
-        }, { passive: false });
-
-        // Update the message template to use the logo image
-        function createMessageElement(text, isSynthora = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isSynthora ? 'synthora-message' : 'user-message'}`;
-            
-            // Create avatar
-            const avatarDiv = document.createElement('div');
-            avatarDiv.className = 'avatar';
-            
-            if (isSynthora) {
-                const avatarImg = document.createElement('img');
-                avatarImg.src = "{{ url_for('static', filename='images/logo.header.lite.png') }}";
-                avatarImg.dataset.lightSrc = "{{ url_for('static', filename='images/logo.header.lite.png') }}";
-                avatarImg.dataset.darkSrc = "{{ url_for('static', filename='images/logo.header.dark.png') }}";
-                avatarImg.alt = "synthora Logo";
-                avatarImg.className = "avatar-img theme-aware-logo";
-                avatarDiv.appendChild(avatarImg);
-            }
-            
-            // Create text container
-            const textDiv = document.createElement('div');
-            textDiv.className = 'text';
-            
-            if (Array.isArray(text)) {
-                const typingDiv = document.createElement('div');
-                typingDiv.className = 'typing-animation';
-                
-                text.forEach(line => {
-                    const span = document.createElement('span');
-                    span.textContent = line;
-                    typingDiv.appendChild(span);
-                });
-                
-                textDiv.appendChild(typingDiv);
-            } else {
-                textDiv.textContent = text;
-            }
-            
-            messageDiv.appendChild(avatarDiv);
-            messageDiv.appendChild(textDiv);
-            
-            return messageDiv;
-        }
-
-        // Enhanced slider interaction with improved dragging
-        document.addEventListener('DOMContentLoaded', function() {
-            // Define global function for updating slider backgrounds
-            window.updateSliderBackground = function(slider) {
-                if (!slider) return;
-                
-                const value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
-                const isDarkMode = document.body.classList.contains('dark-mode');
-                const activeColor = isDarkMode ? '#0A84FF' : '#007AFF';
-                const inactiveColor = isDarkMode ? '#2c2c2e' : '#e0e0e0';
-                
-                slider.style.background = `linear-gradient(to right, ${activeColor} 0%, ${activeColor} ${value}%, ${inactiveColor} ${value}%, ${inactiveColor} 100%)`;
-            };
-            
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const temperatureValue = document.getElementById('temperatureValue');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            const maxTokensValue = document.getElementById('maxTokensValue');
-            
-            // Helper function to setup slider behavior
-            function setupSlider(slider, valueDisplay) {
-                if (!slider || !valueDisplay) return;
-                
-                // Load saved values from localStorage
-                const sliderName = slider.name || slider.id.replace('ai', '').toLowerCase();
-                const savedValue = localStorage.getItem(sliderName);
-                
-                if (savedValue) {
-                    slider.value = savedValue;
-                    valueDisplay.textContent = savedValue;
-                    updateSliderBackground(slider);
-            } else {
-                    updateSliderBackground(slider); // Initialize with default value
-                }
-                
-                // Core slider input event
-                slider.addEventListener('input', function() {
-                    valueDisplay.textContent = this.value;
-                    updateSliderBackground(this);
-                });
-                
-                // Enhanced mobile support
-                slider.addEventListener('touchstart', function(e) {
-                    // Prevent default to avoid scroll when dragging
-                    e.preventDefault();
-                    
-                    const handleTouch = function(e) {
-                        const touch = e.touches[0];
-                        const sliderRect = slider.getBoundingClientRect();
-                        const newRatio = Math.max(0, Math.min(1, (touch.clientX - sliderRect.left) / sliderRect.width));
-                        
-                        // Calculate the new value based on slider's min, max, and step
-                        const range = parseFloat(slider.max) - parseFloat(slider.min);
-                        let newValue = parseFloat(slider.min) + newRatio * range;
-                        
-                        // Round to respect the step
-                        const step = parseFloat(slider.step) || 1;
-                        newValue = Math.round(newValue / step) * step;
-                        
-                        // Ensure value is within bounds
-                        newValue = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), newValue));
-                        
-                        // Update slider value
-                        slider.value = newValue;
-                        valueDisplay.textContent = slider.value;
-                        updateSliderBackground(slider);
-                    };
-                    
-                    // Handle move events
-                    document.addEventListener('touchmove', handleTouch, { passive: false });
-                    
-                    // Clean up on touch end
-                    document.addEventListener('touchend', function cleanup() {
-                        document.removeEventListener('touchmove', handleTouch);
-                        document.removeEventListener('touchend', cleanup);
-                    });
-                });
-                
-                // Enhanced mouse support for more precise dragging
-                slider.addEventListener('mousedown', function(e) {
-                    e.preventDefault();
-                    
-                    const handleMouseMove = function(e) {
-                        const sliderRect = slider.getBoundingClientRect();
-                        const newRatio = Math.max(0, Math.min(1, (e.clientX - sliderRect.left) / sliderRect.width));
-                        
-                        // Calculate the new value based on slider's min, max, and step
-                        const range = parseFloat(slider.max) - parseFloat(slider.min);
-                        let newValue = parseFloat(slider.min) + newRatio * range;
-                        
-                        // Round to respect the step
-                        const step = parseFloat(slider.step) || 1;
-                        newValue = Math.round(newValue / step) * step;
-                        
-                        // Ensure value is within bounds
-                        newValue = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), newValue));
-                        
-                        // Update slider value
-                        slider.value = newValue;
-                        valueDisplay.textContent = slider.value;
-                        updateSliderBackground(slider);
-                    };
-                    
-                    // Handle move events
-                    document.addEventListener('mousemove', handleMouseMove);
-                    
-                    // Clean up on mouse up
-                    document.addEventListener('mouseup', function cleanup() {
-                        document.removeEventListener('mousemove', handleMouseMove);
-                        document.removeEventListener('mouseup', cleanup);
-                    });
-                });
-            }
-            
-            // Setup both sliders
-            setupSlider(temperatureSlider, temperatureValue);
-            setupSlider(maxTokensSlider, maxTokensValue);
-            
-            // Update backgrounds on dark mode toggle
-            window.addEventListener('dark-mode-changed', function() {
-                updateSliderBackground(temperatureSlider);
-                updateSliderBackground(maxTokensSlider);
-            });
+            // ... existing code ...
         });
         
-        // Update the sendMessage function to include AI settings
-        function sendMessage() {
-            const inputField = document.getElementById('userInput');
-            const message = inputField.value.trim();
-            
-            if (!message) return;
-            
-            // Check if the user is asking specifically about who created the AI
-            const lowerMessage = message.toLowerCase();
-            
-            // More precise detection of creator questions with word boundaries
-            const isCreatorQuestion = (
-                /\bwho made you\b/.test(lowerMessage) ||
-                /\bwho created you\b/.test(lowerMessage) ||
-                /\bwho built you\b/.test(lowerMessage) ||
-                /\bwho developed you\b/.test(lowerMessage) ||
-                /\bwho is your creator\b/.test(lowerMessage) ||
-                /\bwho's your creator\b/.test(lowerMessage) ||
-                /\bwho programmed you\b/.test(lowerMessage) ||
-                /\bwho is amaan\b/.test(lowerMessage) ||
-                /\bwho is amaan dildar\b/.test(lowerMessage) ||
-                (lowerMessage.includes("creator") && lowerMessage.includes("who")) ||
-                (lowerMessage.includes("made") && lowerMessage.includes("who"))
-            );
-            
-            // Add user message to chat
-            addMessageToChat('user', message);
-            
-            // Store user message in conversation history
-            const userMessage = {
-                user_message: message,
-                synthora_response: '' // This will be filled after we get the response
-            };
-            
-            // Clear input
-            inputField.value = '';
-            
-            // Get AI settings from localStorage
-            const temperature = parseFloat(localStorage.getItem('temperature') || '0.7');
-            const maxTokens = parseInt(localStorage.getItem('maxTokens') || '500');
-            const personality = localStorage.getItem('personality') || 'helpful';
-            
-            // Debug log
-            console.log('Sending message with settings:', { temperature, maxTokens, personality });
-            
-            // Add typing indicator
-            const chatContainer = document.getElementById('chatContainer');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message synthora-message typing-message';
-            typingDiv.innerHTML = `
-                <div class="avatar">
-                    <img src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                         data-light-src="{{ url_for('static', filename='images/logo.header.lite.png') }}"
-                         data-dark-src="{{ url_for('static', filename='images/logo.header.dark.png') }}"
-                         alt="synthora Logo" 
-                         class="avatar-img theme-aware-logo">
-                </div>
-                <div class="text">${createTypingIndicator()}</div>
-            `;
-            chatContainer.appendChild(typingDiv);
-            scrollToBottom();
-            
-            // Set button to loading state
-            setButtonLoading(true);
-            
-            // Call the API for a response with settings
-            fetch('/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: message,
-                    conversation_id: conversationId,
-                    conversation_history: conversationMessages, // Send full conversation history
-                    settings: {
-                        temperature: temperature,
-                        max_tokens: maxTokens,
-                        personality: personality
-                    }
-                })
-            })
-            .then(response => {
-                console.log('Response status:', response.status);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('API response received:', data);
-                
-                // Remove typing indicator
-                const typingMessages = document.querySelectorAll('.typing-message');
-                typingMessages.forEach(msg => msg.remove());
-                
-                // Add the actual API response
-                addMessageToChat('synthora', data.response);
-                
-                // Complete the user message with the AI's response and add to conversation history
-                userMessage.synthora_response = data.response;
-                conversationMessages.push(userMessage);
-                
-                // Limit conversation history to last 10 messages to avoid token limit issues
-                if (conversationMessages.length > 10) {
-                    conversationMessages = conversationMessages.slice(-10);
-                }
-                
-                // Store conversation ID if provided
-                if (data.conversation_id) {
-                    conversationId = data.conversation_id;
-                }
-                
-                // Reset button state
-                setButtonLoading(false);
-            })
-            .catch(error => {
-                console.error('API error:', error);
-                
-                // Remove typing indicator
-                const typingMessages = document.querySelectorAll('.typing-message');
-                typingMessages.forEach(msg => msg.remove());
-                
-                // Show error message
-                addMessageToChat('error', 'Sorry, I\'m having trouble connecting right now. Please try again later.');
-                
-                // Reset button state
-                setButtonLoading(false);
-            });
-            
-            // Focus input field
-            inputField.focus();
-        }
-
-        // Add enter key support
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // Focus input on page load
-        window.addEventListener('load', function() {
-            document.getElementById('userInput').focus();
-        });
-
-        async function showMemories() {
-            try {
-                const response = await fetch('/memories');
-                const data = await response.json();
-                const memories = data.memories;  // Access the memories array from the response object
-                
-                const memoriesList = document.getElementById('memoriesList');
-                memoriesList.innerHTML = '';
-                
-                if (!memories || memories.length === 0) {
-                    memoriesList.innerHTML = '<div class="no-memories">No memories yet! Start chatting with synthora to create some.</div>';
-                } else {
-                    memories.forEach(memory => {
-                        const memoryDiv = document.createElement('div');
-                        memoryDiv.className = 'memory-item';
-                        
-                        const date = new Date(memory.timestamp);  // Remove * 1000 as timestamp is already ISO format
-                        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                        
-                        memoryDiv.innerHTML = `
-                            <div class="memory-header">
-                                <span class="memory-date">${formattedDate}</span>
-                            </div>
-                            <div class="memory-messages">
-                                <div class="memory-user-message">
-                                    <span class="memory-label">You:</span>
-                                    ${escapeHtml(memory.user_message)}
-                                </div>
-                                <div class="memory-synthora-message">
-                                    <span class="memory-label">synthora:</span>
-                                    ${escapeHtml(memory.synthora_response)}
-                                </div>
-                            </div>
-                        `;
-                        memoriesList.appendChild(memoryDiv);
-                    });
-                }
-                
-                document.getElementById('memoriesModal').classList.add('show');
-                document.getElementById('menuOverlay').classList.remove('active');
-                document.getElementById('slideMenu').classList.remove('active');
-            } catch (error) {
-                console.error('Failed to load memories:', error);
-                showError('Failed to load memories. Please try again.');
-            }
-        }
-
-        function hideMemories() {
-            document.getElementById('memoriesModal').classList.remove('show');
-        }
-
-        function showAccount() {
-            document.getElementById('accountModal').classList.add('show');
-            document.getElementById('menuOverlay').classList.remove('active');
-            document.getElementById('slideMenu').classList.remove('active');
-            
-            // Populate current username
-            document.getElementById('accountUsername').value = currentUser || '';
-        }
-
-        function hideAccount() {
-            document.getElementById('accountModal').classList.remove('show');
-        }
-
-        function handleAvatarChange(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Update both the profile and menu avatars
-                    document.getElementById('avatarImage').src = e.target.result;
-                    document.getElementById('menuAvatarImage').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        async function updateAccount(event) {
-            event.preventDefault();
-            
-            try {
-                const username = document.getElementById('accountUsername').value;
-                const currentPassword = document.getElementById('currentPassword').value;
-                const newPassword = document.getElementById('newPassword').value;
-                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-                
-                if (newPassword && newPassword !== confirmNewPassword) {
-                    showError('New passwords do not match');
-                    return;
-                }
-                
-                const formData = new FormData();
-                const avatarFile = document.getElementById('avatarUpload').files[0];
-                if (avatarFile) {
-                    formData.append('avatar', avatarFile);
-                }
-                
-                formData.append('username', username);
-                if (currentPassword) {
-                    formData.append('current_password', currentPassword);
-                }
-                if (newPassword) {
-                    formData.append('new_password', newPassword);
-                }
-                
-                // Construct the full URL for the update endpoint
-                const updateUrl = window.location.hostname === 'localhost' ? '/auth/update' : `${API_BASE_URL}/auth/update`;
-                
-                const response = await fetch(updateUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                // Check response status before trying to parse JSON
-                if (!response.ok) {
-                    // Try to get error details from the response
-                    let errorMessage = 'Failed to update account';
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.error || errorMessage;
-                    } catch (parseError) {
-                        // If we can't parse JSON, use the status text
-                        errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
-                    }
-                    throw new Error(errorMessage);
-                }
-                
-                const data = await response.json();
-                    currentUser = username;
-                    hideAccount();
-                    showSuccess('Account updated successfully');
-                    
-                // Update all user avatars in the chat and menu
-                    if (data.avatar_url) {
-                    const newAvatarUrl = `${data.avatar_url}?t=${new Date().getTime()}`;
-                    // Update menu avatar
-                    document.getElementById('menuAvatarImage').src = newAvatarUrl;
-                    // Update profile avatar
-                    document.getElementById('avatarImage').src = newAvatarUrl;
-                    // Update chat avatars
-                        const userAvatars = document.querySelectorAll('.user-message .avatar');
-                        userAvatars.forEach(avatar => {
-                        avatar.innerHTML = `<img src="${newAvatarUrl}" alt="User Avatar" class="avatar-img">`;
-                        });
-                    }
-                    
-                    // Update the welcome message with new username
-                    const chatContainer = document.getElementById('chatContainer');
-                    const firstMessage = chatContainer.querySelector('.synthora-message .text');
-                    if (firstMessage) {
-                    firstMessage.innerHTML = `Welcome back, ${username}!<br>I'm your AI assistant, ready to help with any questions or tasks you might have.<br>What would you like to discuss today?`;
-                }
-            } catch (error) {
-                console.error('Update account error:', error);
-                showError(error.message || 'Failed to update account. Please try again.');
-            }
-        }
-
-        // Add success message function
-        function showSuccess(message) {
-            const errorElement = document.getElementById('authError');
-            errorElement.style.color = '#10a37f';
-            errorElement.textContent = message;
-            setTimeout(() => {
-                errorElement.textContent = '';
-            }, 3000);
-        }
-
-        function togglePasswordVisibility(inputId, button) {
-            const input = document.getElementById(inputId);
-            const icon = button.querySelector('.toggle-icon');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.innerHTML = `<img src="${EYE_OFF_ICON_URL}" alt="Hide" class="toggle-icon-img">`;
-            } else {
-                input.type = 'password';
-                icon.innerHTML = `<img src="${EYE_ICON_URL}" alt="Show" class="toggle-icon-img">`;
-            }
-        }
-
-        function showSettings() {
-            document.getElementById('settingsModal').classList.add('show');
-            document.getElementById('menuOverlay').classList.remove('active');
-            document.getElementById('slideMenu').classList.remove('active');
-            
-            // Populate settings
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            const personalitySelect = document.getElementById('aiPersonality');
-            
-            temperatureSlider.value = localStorage.getItem('temperature') || '0.7';
-            maxTokensSlider.value = localStorage.getItem('maxTokens') || '500';
-            personalitySelect.value = localStorage.getItem('personality') || 'helpful';
-        }
-
-        function hideSettings() {
-            document.getElementById('settingsModal').classList.remove('show');
-        }
-
-        function saveSettings(event) {
-            event.preventDefault();
-            
-            const temperature = document.getElementById('aiTemperature').value;
-            const maxTokens = document.getElementById('aiMaxTokens').value;
-            const personality = document.getElementById('aiPersonality').value;
-            
-            // Save to localStorage
-            localStorage.setItem('temperature', temperature);
-            localStorage.setItem('maxTokens', maxTokens);
-            localStorage.setItem('personality', personality);
-            
-            // Update any visual elements
-            const temperatureValue = document.getElementById('temperatureValue');
-            const maxTokensValue = document.getElementById('maxTokensValue');
-            
-            if (temperatureValue) temperatureValue.textContent = temperature;
-            if (maxTokensValue) maxTokensValue.textContent = maxTokens;
-            
-            // Update slider backgrounds
-            const temperatureSlider = document.getElementById('aiTemperature');
-            const maxTokensSlider = document.getElementById('aiMaxTokens');
-            
-            if (temperatureSlider) updateSliderBackground(temperatureSlider);
-            if (maxTokensSlider) updateSliderBackground(maxTokensSlider);
-            
-            // Hide modal and show success message
-            hideSettings();
-            showSuccess('Settings saved successfully');
-            
-            // Optional: If we're in a conversation, we could notify the user that
-            // these settings will apply to their next message
-        }
-
-        // Function to update splash screen theme
-        function updateSplashScreenTheme(isDarkMode) {
-            const root = document.documentElement;
-            if (isDarkMode) {
-                root.style.setProperty('--splash-background', '#1d1d1f');
-                root.style.setProperty('--splash-text', '#ffffff');
-                root.style.setProperty('--splash-text-rgb', '255, 255, 255');
-            } else {
-                root.style.setProperty('--splash-background', '#ffffff');
-                root.style.setProperty('--splash-text', '#000000');
-                root.style.setProperty('--splash-text-rgb', '0, 0, 0');
-            }
-        }
-
-        // Add this to your existing JavaScript
-        function updateThemeAwareLogos() {
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            document.querySelectorAll('.theme-aware-logo').forEach(logo => {
-                logo.src = isDarkMode ? logo.dataset.darkSrc : logo.dataset.lightSrc;
-            });
-        }
-
-        // Call on initial load
-        document.addEventListener('DOMContentLoaded', updateThemeAwareLogos);
-
-        // Call when theme changes
-        window.addEventListener('dark-mode-changed', updateThemeAwareLogos);
-
-        // Check authentication status
+        // Authentication check function
         function checkAuthStatus() {
             fetch('/auth/status')
                 .then(response => response.json())
@@ -2182,16 +1482,288 @@
                     if (!data.authenticated) {
                         // Redirect to login page if not authenticated
                         window.location.href = '/auth/login-page';
+                } else {
+                        // User is authenticated, initialize the app
+                        initializeApp(data);
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking auth status:', error);
+                    console.error('Error checking authentication status:', error);
+                    // In case of error, redirect to login page
+                    window.location.href = '/auth/login-page';
                 });
         }
+
+        function initializeApp(userData) {
+            try {
+                console.log("Initializing app with user data:", userData);
+                
+                // Set username in the UI
+                document.getElementById('menuUsername').textContent = userData.username;
+                
+                // Also set in account form
+                document.getElementById('accountUsername').value = userData.username;
+                
+                // If user has avatar, set it
+                if (userData.avatar_url) {
+                    document.getElementById('menuAvatarImage').src = userData.avatar_url;
+                    document.getElementById('avatarImage').src = userData.avatar_url;
+                }
+                
+                // Show main content
+                document.getElementById('mainContent').style.display = 'flex';
+                
+                // Remove splash screen after delay
+                setTimeout(() => {
+                    const splashScreen = document.getElementById('splashScreen');
+                    splashScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        splashScreen.style.display = 'none';
+                    }, 500);
+                }, 1500);
+                
+                // Initialize chat UI
+                if (typeof initializeChat === 'function') {
+                    initializeChat();
+                } else {
+                    console.log("Chat initialization function not found, using default behavior");
+                    // Default behavior if initializeChat is not defined
+                }
+            } catch (error) {
+                console.error("Error initializing app:", error);
+                // Fallback behavior - ensure splash screen is removed even if there's an error
+                document.getElementById('splashScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'flex';
+                alert("Error initializing application. Please refresh the page or contact support if the issue persists.");
+            }
+        }
         
-        // Run on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthStatus();
+        // ... existing code ...
+
+        // Menu functionality
+        const menuButton = document.getElementById('menuButton');
+        const slideMenu = document.getElementById('slideMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+        
+        menuButton.addEventListener('click', function() {
+            slideMenu.classList.toggle('open');
+            menuOverlay.classList.toggle('show');
+        });
+        
+        menuOverlay.addEventListener('click', function() {
+            slideMenu.classList.remove('open');
+            menuOverlay.classList.remove('show');
+        });
+        
+        // Dark mode toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            updateThemeAwareLogos();
+        }
+        
+        // Check if dark mode was enabled previously
+        if (localStorage.getItem('darkMode') === 'true' || 
+            (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && 
+             localStorage.getItem('darkMode') !== 'false')) {
+            document.body.classList.add('dark-mode');
+        }
+        
+        // Update theme-aware logos based on current theme
+        function updateThemeAwareLogos() {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const themeAwareLogos = document.querySelectorAll('.theme-aware-logo');
+            
+            themeAwareLogos.forEach(logo => {
+                const lightSrc = logo.getAttribute('data-light-src');
+                const darkSrc = logo.getAttribute('data-dark-src');
+                
+                if (isDarkMode && darkSrc) {
+                    logo.src = darkSrc;
+                } else if (!isDarkMode && lightSrc) {
+                    logo.src = lightSrc;
+                }
+            });
+        }
+        
+        // Call once on load
+        updateThemeAwareLogos();
+        
+        // Logout functionality
+        function logout() {
+            fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = '/auth/login-page';
+            })
+            .catch(error => {
+                console.error('Error logging out:', error);
+                // Force redirection even if the logout API fails
+                window.location.href = '/auth/login-page';
+            });
+        }
+        
+        // Send message function
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            
+            if (message.length === 0) return;
+            
+            // Clear input
+            userInput.value = '';
+            
+            // Add user message to chat
+            addMessageToChat('user', message);
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Call API to get response
+            fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide typing indicator
+                hideTypingIndicator();
+                // Add AI response to chat
+                addMessageToChat('synthora', data.response);
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                // Hide typing indicator
+                hideTypingIndicator();
+                // Show error message
+                addMessageToChat('synthora', 'Sorry, I encountered an error. Please try again.');
+            });
+        }
+        
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const chatContainer = document.getElementById('chatContainer');
+            let typingIndicator = document.querySelector('.typing-indicator');
+            
+            if (!typingIndicator) {
+                typingIndicator = document.createElement('div');
+                typingIndicator.className = 'message synthora-message typing-indicator';
+                typingIndicator.innerHTML = `
+                    <div class="message-content">
+                        <div class="typing-dots">
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                            <span class="typing-dot"></span>
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(typingIndicator);
+            }
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Function to hide typing indicator
+        function hideTypingIndicator() {
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        // Function to add message to chat
+        function addMessageToChat(sender, text) {
+            // Remove typing indicator if it exists
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            if (sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        ${text}
+                    </div>
+                `;
+            } else {
+                // Process markdown if marked library is available
+                let formattedText = text;
+                if (typeof marked !== 'undefined') {
+                    formattedText = marked.parse(text);
+                }
+                
+                messageDiv.innerHTML = `
+                    <div class="message-content">
+                        ${formattedText}
+                    </div>
+                `;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Stub functions for other menu items to prevent errors
+        function showMemories() {
+            alert('Memories feature coming soon!');
+        }
+        
+        function showSettings() {
+            document.getElementById('settingsModal').classList.add('show');
+        }
+        
+        function hideSettings() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+        
+        function showAccount() {
+            document.getElementById('accountModal').style.display = 'flex';
+        }
+        
+        function hideAccount() {
+            document.getElementById('accountModal').style.display = 'none';
+        }
+        
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the chat?')) {
+                document.getElementById('chatContainer').innerHTML = '';
+                initializeChat(); // Add welcome message back
+            }
+        }
+        
+        function shareChat() {
+            alert('Share feature coming soon!');
+        }
+        
+        function toggleSound() {
+            alert('Sound toggle feature coming soon!');
+        }
+        
+        function toggleNotifications() {
+            alert('Notifications feature coming soon!');
+        }
+        
+        // Add event listener for Enter key in the input field
+        document.getElementById('userInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendMessage();
+            }
         });
     </script>
 </body>

@@ -68,35 +68,14 @@ def save_avatar(file, username):
 
 def hash_password(password):
     """Hash a password using bcrypt."""
-    if isinstance(password, str):
-        password = password.encode('utf-8')
-    return bcrypt.hashpw(password, bcrypt.gensalt())
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
 def verify_password(plain_password, hashed_password):
     """Verify a password against its hash."""
     try:
-        # Convert string password to bytes if needed
-        if isinstance(plain_password, str):
-            plain_password = plain_password.encode('utf-8')
-            
-        # Convert string hash to bytes if needed
-        if isinstance(hashed_password, str):
-            if hashed_password.startswith('b\'') and '\\x' in hashed_password:
-                # Handle corrupted string format
-                try:
-                    # Remove b' prefix and ' suffix, then decode escaped bytes
-                    clean_hash = hashed_password[2:-1].encode().decode('unicode_escape').encode('latin1')
-                    hashed_password = clean_hash
-                except Exception as e:
-                    print(f"Error cleaning hash: {e}")
-                    return False
-            else:
-                hashed_password = hashed_password.encode('utf-8')
-        
-        # Verify the password
-        return bcrypt.checkpw(plain_password, hashed_password)
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password)
     except Exception as e:
-        print(f"Password verification error: {e}")
+        print(f"Password verification error: {str(e)}")
         return False
 
 # User model
@@ -282,7 +261,7 @@ def admin_page():
 @app.route('/auth/signup', methods=['POST'])
 def signup():
     try:
-        # Get data from either JSON or form
+        # Get data from request
         if request.is_json:
             data = request.json
             username = data.get('username')
@@ -314,13 +293,9 @@ def signup():
             flash('Username already exists', 'error')
             return redirect(url_for('signup_page'))
 
-        # Create new user with properly hashed password
-        hashed_password = hash_password(password)
-        new_user = User(
-            username=username,
-            password_hash=hashed_password
-        )
-        
+        # Create new user
+        password_hash = hash_password(password)
+        new_user = User(username=username, password_hash=password_hash)
         db.session.add(new_user)
         db.session.commit()
 
@@ -328,11 +303,7 @@ def signup():
         session['username'] = username
 
         if request.is_json:
-            return jsonify({
-                'message': 'Signup successful',
-                'username': username
-            })
-        
+            return jsonify({'message': 'Signup successful', 'username': username})
         flash('Signup successful! You are now logged in.', 'success')
         return redirect(url_for('index'))
 
@@ -340,7 +311,6 @@ def signup():
         db.session.rollback()
         print(f"Signup error: {str(e)}")
         traceback.print_exc()
-        
         if request.is_json:
             return jsonify({'error': 'An error occurred during signup'}), 500
         flash('An error occurred during signup', 'error')
@@ -349,7 +319,7 @@ def signup():
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
-        # Get data from either JSON or form
+        # Get data from request
         if request.is_json:
             data = request.json
             username = data.get('username')
@@ -388,16 +358,12 @@ def login():
         print(f"Login successful for {username}")
 
         if request.is_json:
-            return jsonify({
-                'message': 'Login successful',
-                'username': username
-            })
+            return jsonify({'message': 'Login successful', 'username': username})
         return redirect(url_for('index'))
 
     except Exception as e:
         print(f"Login error: {str(e)}")
         traceback.print_exc()
-        
         if request.is_json:
             return jsonify({'error': 'An error occurred during login'}), 500
         flash('An error occurred during login', 'error')
@@ -919,4 +885,37 @@ def emergency_create_new_admin():
         print(f"Create admin error: {str(e)}")
         traceback.print_exc()
         return jsonify({'error': 'An error occurred during admin creation'}), 500
+
+@app.route('/emergency/reset-db')
+def emergency_reset_db():
+    """Emergency endpoint to reset database and create fresh admin"""
+    try:
+        with app.app_context():
+            # Drop all tables
+            db.drop_all()
+            print("Dropped all tables")
+            
+            # Create all tables
+            db.create_all()
+            print("Created fresh tables")
+            
+            # Create admin user
+            admin_password = "SynthoraAdmin2024"
+            admin_user = User(
+                username="LilPizzaRo",
+                password_hash=hash_password(admin_password)
+            )
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Created fresh admin user")
+            
+            return jsonify({
+                'message': 'Database reset successful',
+                'admin_username': 'LilPizzaRo',
+                'admin_password': admin_password
+            })
+    except Exception as e:
+        print(f"Database reset error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': 'An error occurred during database reset'}), 500
 

@@ -271,29 +271,29 @@ def signup_page():
 @app.route('/auth/signup', methods=['POST'])
 def signup():
     try:
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        
         # Validate input
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
-    
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+        
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-        return jsonify({'error': 'Username already exists'}), 400
-    
+            return jsonify({'error': 'Username already exists'}), 400
+        
         # Hash password and create user
         password_hash = hash_password(password)
         
-    # Create new user
+        # Create new user
         new_user = User(username=username, password_hash=password_hash)
         db.session.add(new_user)
         db.session.commit()
         
         # Set session and return
-    session['username'] = username
+        session['username'] = username
         return jsonify({
             'message': 'Signup successful',
             'username': username
@@ -306,62 +306,15 @@ def signup():
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        
         print(f"Attempting login for username: {username}")
         
         # Validate credentials
-    if not username or not password:
-        return jsonify({'error': 'Username and password are required'}), 400
-    
-        # Check if username exists
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            print(f"Login failed: User {username} not found")
-        return jsonify({'error': 'Invalid username or password'}), 401
-    
-        # Check if password hash is valid
-        if user.password_hash is None or (isinstance(user.password_hash, bytes) and len(user.password_hash) < 10):
-            print(f"Invalid password hash for user {username}, attempting to reset it")
-            
-            # Special case: if this is the admin user, allow a recovery
-            if username == "LilPizzaRo":  # Replace with your admin username
-                # Reset admin password to a default
-                print(f"Resetting admin password for {username}")
-                admin_default_password = "SynthoraAI@2024"  # Set to your default admin password
-                user.password_hash = hash_password(admin_default_password)
-                db.session.commit()
-                
-                # Try verification again with the new hash
-                if verify_password(password, user.password_hash):
-    session['username'] = username
-                    print(f"Admin recovery successful for {username}")
-                    return jsonify({
-                        'message': 'Login successful (password reset)',
-                        'username': username,
-                        'avatar_url': user.avatar_url,
-                        'password_reset': True
-                    })
-                else:
-                    return jsonify({'error': 'Please use the default admin password to login'}), 401
-            else:
-                return jsonify({'error': 'Your password needs to be reset. Please contact an administrator.'}), 401
-        
-        # Regular verification for accounts with valid hashes
-        if not verify_password(password, user.password_hash):
-            print(f"Login failed: Invalid password for {username}")
-            return jsonify({'error': 'Invalid username or password'}), 401
-        
-        # Set session and return success
-        session['username'] = username
-        print(f"Login successful for {username}")
-        return jsonify({
-            'message': 'Login successful',
-            'username': username,
-            'avatar_url': user.avatar_url
-        })
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
     except Exception as e:
         print(f"Login error: {str(e)}")
         traceback.print_exc()  # Add detailed stack trace

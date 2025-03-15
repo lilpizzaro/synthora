@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Login - synthora</title>
+    <title>Sign Up - synthora</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +35,7 @@
             color: #f5f5f7;
         }
 
-        .login-container {
+        .signup-container {
             background-color: #ffffff;
             border-radius: 16px;
             padding: 30px;
@@ -45,7 +45,7 @@
             transition: all 0.3s ease;
         }
 
-        .dark-mode .login-container {
+        .dark-mode .signup-container {
             background-color: #1c1c1e;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
@@ -102,31 +102,37 @@
             border-color: #0A84FF;
         }
 
-        .remember-forgot {
+        .terms {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 8px;
             margin-bottom: 20px;
             font-size: 14px;
         }
 
-        .remember-me {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .terms input {
+            margin-top: 3px;
         }
 
-        .forgot-password {
+        .terms label {
+            color: #151717;
+        }
+
+        .dark-mode .terms label {
+            color: #f5f5f7;
+        }
+
+        .terms a {
             color: #007AFF;
             text-decoration: none;
             transition: color 0.3s ease;
         }
 
-        .dark-mode .forgot-password {
+        .dark-mode .terms a {
             color: #0A84FF;
         }
 
-        .forgot-password:hover {
+        .terms a:hover {
             text-decoration: underline;
         }
 
@@ -158,28 +164,28 @@
             transform: translateY(0);
         }
 
-        .signup-link {
+        .login-link {
             text-align: center;
             font-size: 14px;
             color: #151717;
         }
 
-        .dark-mode .signup-link {
+        .dark-mode .login-link {
             color: #f5f5f7;
         }
 
-        .signup-link a {
+        .login-link a {
             color: #007AFF;
             text-decoration: none;
             font-weight: 500;
             transition: color 0.3s ease;
         }
 
-        .dark-mode .signup-link a {
+        .dark-mode .login-link a {
             color: #0A84FF;
         }
 
-        .signup-link a:hover {
+        .login-link a:hover {
             text-decoration: underline;
         }
 
@@ -195,7 +201,7 @@
         }
 
         @media (max-width: 480px) {
-            .login-container {
+            .signup-container {
                 padding: 25px 20px;
             }
 
@@ -206,7 +212,7 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="signup-container">
         <div class="logo-container">
             <img src="{{ url_for('static', filename='images/logo.lite.png') }}" 
                  data-light-src="{{ url_for('static', filename='images/logo.lite.png') }}"
@@ -215,7 +221,7 @@
                  class="logo theme-aware-logo">
         </div>
         
-        <form id="loginForm" onsubmit="handleLogin(event)">
+        <form id="signupForm" onsubmit="handleSignup(event)">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" class="form-control" required>
@@ -228,20 +234,23 @@
                 <div class="error-message" id="password-error"></div>
             </div>
             
-            <div class="remember-forgot">
-                <div class="remember-me">
-                    <input type="checkbox" id="remember" name="remember">
-                    <label for="remember">Remember me</label>
-                </div>
-                <a href="#" class="forgot-password">Forgot password?</a>
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" id="confirm-password" name="confirm-password" class="form-control" required>
+                <div class="error-message" id="confirm-password-error"></div>
             </div>
             
-            <div class="error-message" id="login-error"></div>
+            <div class="terms">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+            </div>
             
-            <button type="submit" class="btn-primary">Sign In</button>
+            <div class="error-message" id="signup-error"></div>
             
-            <div class="signup-link">
-                Don't have an account? <a href="/auth/signup-page">Sign Up</a>
+            <button type="submit" class="btn-primary">Create Account</button>
+            
+            <div class="login-link">
+                Already have an account? <a href="/auth/login-page">Log In</a>
             </div>
         </form>
     </div>
@@ -271,7 +280,7 @@
             });
         }
 
-        async function handleLogin(event) {
+        async function handleSignup(event) {
             event.preventDefault();
             
             // Clear previous errors
@@ -282,8 +291,10 @@
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const loginButton = document.querySelector('.btn-primary');
-            const loginError = document.getElementById('login-error');
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const terms = document.getElementById('terms').checked;
+            const signupButton = document.querySelector('.btn-primary');
+            const signupError = document.getElementById('signup-error');
             
             // Validate input
             let hasError = false;
@@ -301,14 +312,27 @@
                 hasError = true;
             }
             
+            if (password !== confirmPassword) {
+                const confirmPasswordError = document.getElementById('confirm-password-error');
+                confirmPasswordError.textContent = 'Passwords do not match';
+                confirmPasswordError.classList.add('show');
+                hasError = true;
+            }
+            
+            if (!terms) {
+                signupError.textContent = 'You must agree to the Terms of Service and Privacy Policy';
+                signupError.classList.add('show');
+                hasError = true;
+            }
+            
             if (hasError) return;
             
             // Disable button and show loading state
-            loginButton.disabled = true;
-            loginButton.textContent = 'Signing in...';
+            signupButton.disabled = true;
+            signupButton.textContent = 'Creating account...';
             
             try {
-                const response = await fetch('/auth/login', {
+                const response = await fetch('/auth/signup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -325,21 +349,21 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Redirect to main page on successful login
+                    // Redirect to main page on successful signup
                     window.location.href = '/';
                 } else {
                     // Show error message
-                    loginError.textContent = data.error || 'Login failed. Please try again.';
-                    loginError.classList.add('show');
+                    signupError.textContent = data.error || 'Signup failed. Please try again.';
+                    signupError.classList.add('show');
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                loginError.textContent = 'An error occurred. Please try again.';
-                loginError.classList.add('show');
+                console.error('Signup error:', error);
+                signupError.textContent = 'An error occurred. Please try again.';
+                signupError.classList.add('show');
             } finally {
                 // Reset button state
-                loginButton.disabled = false;
-                loginButton.textContent = 'Sign In';
+                signupButton.disabled = false;
+                signupButton.textContent = 'Create Account';
             }
         }
     </script>

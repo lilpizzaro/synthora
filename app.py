@@ -46,7 +46,7 @@ def allowed_file(filename):
 def save_avatar(file, username):
     """Save the uploaded avatar file for the user."""
     try:
-    if file and allowed_file(file.filename):
+        if file and allowed_file(file.filename):
             # Create avatars directory if it doesn't exist
             avatar_dir = os.path.join('static', 'avatars')
             os.makedirs(avatar_dir, exist_ok=True)
@@ -61,9 +61,9 @@ def save_avatar(file, username):
             # Return the URL path to the avatar
             return os.path.join('avatars', filename)
         return None
-        except Exception as e:
-            print(f"Error saving avatar: {str(e)}")
-    return None
+    except Exception as e:
+        print(f"Error saving avatar: {str(e)}")
+        return None
 
 def hash_password(password):
     # Implementation of hash_password
@@ -330,11 +330,11 @@ def auth_status():
     if 'username' in session:
         user = User.query.filter_by(username=session['username']).first()
         if user:
-        return jsonify({
-            'authenticated': True,
+            return jsonify({
+                'authenticated': True,
                 'username': user.username,
                 'avatar_url': url_for('serve_avatar', username=user.username) if user.avatar_data else None
-        })
+            })
     return jsonify({'authenticated': False})
 
 @app.route('/auth/update', methods=['POST'])

@@ -209,6 +209,41 @@
                 width: 140px;
             }
         }
+
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toggle-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toggle-icon-img {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+        }
+        
+        .dark-mode .toggle-icon-img {
+            filter: invert(1);
+        }
     </style>
 </head>
 <body>
@@ -229,14 +264,25 @@
             </div>
             
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="form-control" required>
-                <div class="error-message" id="password-error"></div>
+                <div class="password-container">
+                    <input type="password" id="password" name="password" placeholder="Password" required>
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password')">
+                        <span class="toggle-icon">
+                            <img src="/static/images/eye.icon.png" alt="Show Password" class="toggle-icon-img">
+                        </span>
+                    </button>
+                </div>
             </div>
             
             <div class="form-group">
-                <label for="confirm-password">Confirm Password</label>
-                <input type="password" id="confirm-password" name="confirm-password" class="form-control" required>
+                <div class="password-container">
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirm_password')">
+                        <span class="toggle-icon">
+                            <img src="/static/images/eye.icon.png" alt="Show Password" class="toggle-icon-img">
+                        </span>
+                    </button>
+                </div>
                 <div class="error-message" id="confirm-password-error"></div>
             </div>
             
@@ -256,7 +302,23 @@
     </div>
 
     <script>
-        // Check if dark mode was enabled previously
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = passwordInput.parentElement.querySelector('.toggle-icon-img');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.src = '/static/images/eye-off.icon.png';
+                toggleIcon.alt = 'Hide Password';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.src = '/static/images/eye.icon.png';
+                toggleIcon.alt = 'Show Password';
+            }
+        }
+        
+        // Check for dark mode
         if (localStorage.getItem('darkMode') === 'true' || 
             (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && 
              localStorage.getItem('darkMode') !== 'false')) {
@@ -291,7 +353,7 @@
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
             const terms = document.getElementById('terms').checked;
             const signupButton = document.querySelector('.btn-primary');
             const signupError = document.getElementById('signup-error');
@@ -337,7 +399,11 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ 
+                        username, 
+                        password,
+                        confirm_password: confirmPassword
+                    })
                 });
                 
                 // Check if response is JSON

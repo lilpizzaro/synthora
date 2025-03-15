@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, make_response
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, make_response, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -271,54 +271,126 @@ def signup_page():
 @app.route('/auth/signup', methods=['POST'])
 def signup():
     try:
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        
+        # Check if the request has JSON content
+        if request.is_json:
+            data = request.json
+            username = data.get('username')
+            password = data.get('password')
+            confirm_password = data.get('confirm_password')
+        else:
+            # Handle form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+
         # Validate input
         if not username or not password:
-            return jsonify({'error': 'Username and password are required'}), 400
-        
+            if request.is_json:
+                return jsonify({'error': 'Username and password are required'}), 400
+            else:
+                flash('Username and password are required', 'error')
+                return redirect(url_for('signup_page'))
+                
+        # Check if passwords match
+        if password != confirm_password:
+            if request.is_json:
+                return jsonify({'error': 'Passwords do not match'}), 400
+            else:
+                flash('Passwords do not match', 'error')
+                return redirect(url_for('signup_page'))
+
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-            return jsonify({'error': 'Username already exists'}), 400
-        
-        # Hash password and create user
-        password_hash = hash_password(password)
-        
+            if request.is_json:
+                return jsonify({'error': 'Username already exists'}), 400
+            else:
+                flash('Username already exists', 'error')
+                return redirect(url_for('signup_page'))
+    
         # Create new user
+        password_hash = hash_password(password)
         new_user = User(username=username, password_hash=password_hash)
         db.session.add(new_user)
         db.session.commit()
-        
-        # Set session and return
+
+        # Set session
         session['username'] = username
-        return jsonify({
-            'message': 'Signup successful',
-            'username': username
-        })
+
+        if request.is_json:
+            return jsonify({'message': 'Signup successful', 'username': username})
+        else:
+            flash('Signup successful! You are now logged in.', 'success')
+            return redirect(url_for('index'))
+            
     except Exception as e:
         print(f"Signup error: {str(e)}")
-        db.session.rollback()
-        return jsonify({'error': 'An error occurred during signup'}), 500
+        traceback.print_exc()
+        if request.is_json:
+            return jsonify({'error': 'An error occurred during signup'}), 500
+        else:
+            flash('An error occurred during signup', 'error')
+            return redirect(url_for('signup_page'))
 
 @app.route('/auth/login', methods=['POST'])
 def login():
     try:
-        data = request.json
-        username = data.get('username')
-        password = data.get('password')
-        
+        # Check if the request has JSON content
+        if request.is_json:
+            data = request.json
+            username = data.get('username')
+            password = data.get('password')
+        else:
+            # Handle form data
+            username = request.form.get('username')
+            password = request.form.get('password')
+
         print(f"Attempting login for username: {username}")
-        
+
         # Validate credentials
         if not username or not password:
-            return jsonify({'error': 'Username and password are required'}), 400
+            if request.is_json:
+                return jsonify({'error': 'Username and password are required'}), 400
+            else:
+                flash('Username and password are required', 'error')
+                return redirect(url_for('login_page'))
+
+        # Find the user
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            if request.is_json:
+                return jsonify({'error': 'Invalid username or password'}), 401
+            else:
+                flash('Invalid username or password', 'error')
+                return redirect(url_for('login_page'))
+
+        # Verify password
+        if not verify_password(password, user.password_hash):
+            if request.is_json:
+                return jsonify({'error': 'Invalid username or password'}), 401
+            else:
+                flash('Invalid username or password', 'error')
+                return redirect(url_for('login_page'))
+    
+        # Set session and return success
+        session['username'] = username
+        
+        if request.is_json:
+            return jsonify({
+                'message': 'Login successful',
+                'username': username
+            })
+        else:
+            return redirect(url_for('index'))
+            
     except Exception as e:
         print(f"Login error: {str(e)}")
         traceback.print_exc()  # Add detailed stack trace
-        return jsonify({'error': 'An error occurred during login'}), 500
+        if request.is_json:
+            return jsonify({'error': 'An error occurred during login'}), 500
+        else:
+            flash('An error occurred during login', 'error')
+            return redirect(url_for('login_page'))
 
 @app.route('/auth/logout', methods=['POST'])
 def logout():
@@ -586,6 +658,13 @@ def check_password_hashes():
         print(f"Password hash check error: {str(e)}")
         traceback.print_exc()
         return jsonify({'error': 'An error occurred during password hash check'}), 500
+
+# Google login route
+@app.route('/auth/google-login')
+def google_login():
+    # This is a placeholder for Google OAuth implementation
+    # In a real implementation, you would redirect to Google's OAuth endpoint
+    return redirect(url_for('login_page'))
 
 # Ensure app restarts properly
 if __name__ == '__main__':

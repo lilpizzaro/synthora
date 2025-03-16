@@ -919,17 +919,17 @@ def check_admin_account():
         if not admin:
             # Create admin account if it doesn't exist
             admin = User(username='LilPizzaRo')
-            admin.set_password('SynthoraAI@2024')
+            admin.set_password('SynthoraAdmin2024')  # Use consistent password
             db.session.add(admin)
             db.session.commit()
             return jsonify({'message': 'Admin account created successfully'})
         
         # Test if we can verify the password
-        if admin.check_password('SynthoraAI@2024'):
+        if admin.check_password('SynthoraAdmin2024'):  # Use consistent password
             return jsonify({'message': 'Admin account is working correctly'})
         else:
             # Reset admin password
-            admin.set_password('SynthoraAI@2024')
+            admin.set_password('SynthoraAdmin2024')  # Use consistent password
             db.session.commit()
             return jsonify({'message': 'Admin password has been reset'})
             
@@ -942,4 +942,92 @@ def check_admin_account():
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=7)  # Set session to last for 7 days
+
+@app.route('/emergency/debug-admin', methods=['GET'])
+def debug_admin_account():
+    """Emergency endpoint to debug admin account information"""
+    try:
+        # Find admin user
+        admin = User.query.filter_by(username='LilPizzaRo').first()
+        
+        if not admin:
+            return jsonify({
+                'status': 'error',
+                'message': 'Admin account does not exist',
+                'action': 'Please visit /emergency/reset-admin to create an admin account'
+            })
+        
+        # Get hash details
+        hash_info = {
+            'type': str(type(admin.password_hash)),
+            'length': len(admin.password_hash) if admin.password_hash else 0,
+            'starts_with': admin.password_hash[:30] if admin.password_hash else None,
+            'is_string': isinstance(admin.password_hash, str),
+            'is_bytes': isinstance(admin.password_hash, bytes)
+        }
+        
+        # Test admin password
+        test_password = 'SynthoraAdmin2024'
+        password_works = admin.check_password(test_password)
+        
+        # Return debug info
+        return jsonify({
+            'status': 'success',
+            'admin_exists': True,
+            'username': admin.username,
+            'created_at': admin.created_at.isoformat() if admin.created_at else None,
+            'hash_info': hash_info,
+            'test_password': test_password,
+            'password_works': password_works,
+            'action': 'If password_works is False, visit /emergency/reset-admin to reset the admin password'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+@app.route('/emergency/force-reset-admin', methods=['GET'])
+def force_reset_admin_password():
+    """Emergency endpoint to force reset admin password with direct method"""
+    try:
+        # Find or create admin user
+        admin = User.query.filter_by(username='LilPizzaRo').first()
+        
+        if not admin:
+            # Create new admin
+            admin = User(username='LilPizzaRo')
+            db.session.add(admin)
+            print("Created new admin user")
+        
+        # Hard-coded password
+        admin_password = "SynthoraAdmin2024"
+        
+        # Use direct werkzeug method to hash
+        admin.password_hash = generate_password_hash(admin_password)
+        
+        # Commit changes
+        db.session.commit()
+        print(f"Admin password direct reset successful")
+        
+        # Test if it works
+        verification_result = check_password_hash(admin.password_hash, admin_password)
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Admin password has been reset with direct method',
+            'username': 'LilPizzaRo',
+            'password': admin_password,
+            'verification_works': verification_result
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Admin password direct reset error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
 

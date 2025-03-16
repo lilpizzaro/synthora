@@ -17,6 +17,15 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'development-key')
 
+# Session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 # Fix database URL for PostgreSQL on Render
 database_url = os.environ.get('DATABASE_URL')
 is_prod = os.environ.get('RENDER', False)
@@ -221,8 +230,21 @@ async def get_ai_response(message, conversation_history=None, settings=None):
 # Main routes
 @app.route('/')
 def index():
-    # Implementation of index route
-    return render_template('index.html')
+    # Check if user is logged in
+    is_authenticated = 'username' in session
+    username = session.get('username', None)
+    
+    # Print debug information
+    if is_authenticated:
+        print(f"Index page: User is authenticated as {username}")
+        print(f"Session data: {session}")
+    else:
+        print("Index page: No user authenticated")
+    
+    # Return the template with debug info
+    return render_template('index.html', 
+                          is_authenticated=is_authenticated, 
+                          username=username)
 
 # Login page route
 @app.route('/auth/login-page')
@@ -375,15 +397,27 @@ def logout():
 
 @app.route('/auth/status')
 def auth_status():
-    if 'username' in session:
-        user = User.query.filter_by(username=session['username']).first()
-        if user:
-            return jsonify({
-                'authenticated': True,
-                'username': user.username,
-                'avatar_url': url_for('serve_avatar', username=user.username) if user.avatar_data else None
-            })
-    return jsonify({'authenticated': False})
+    try:
+        if 'username' in session:
+            username = session['username']
+            user = User.query.filter_by(username=username).first()
+            if user:
+                print(f"Auth status: User {username} is authenticated")
+                return jsonify({
+                    'authenticated': True,
+                    'username': user.username,
+                    'avatar_url': url_for('serve_avatar', username=user.username) if user.avatar_data else None,
+                    'session_active': True
+                })
+            else:
+                print(f"Auth status: Session has username {username} but user not found in database")
+        else:
+            print("Auth status: No username in session")
+            
+        return jsonify({'authenticated': False, 'session_active': 'username' in session})
+    except Exception as e:
+        print(f"Auth status error: {str(e)}")
+        return jsonify({'authenticated': False, 'error': str(e)})
 
 @app.route('/auth/update', methods=['POST'])
 @login_required
@@ -942,6 +976,13 @@ def check_admin_account():
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=7)  # Set session to last for 7 days
+    
+    # Debug session information on each request
+    if request.endpoint and not request.endpoint.startswith('static'):
+        if 'username' in session:
+            print(f"Request to {request.endpoint}: User {session['username']} is in session")
+        else:
+            print(f"Request to {request.endpoint}: No user in session")
 
 @app.route('/emergency/debug-admin', methods=['GET'])
 def debug_admin_account():

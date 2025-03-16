@@ -67,33 +67,19 @@ def save_avatar(file, username):
     return None
 
 def hash_password(password):
-    """Hash a password using bcrypt."""
-    if isinstance(password, str):
-        password = password.encode('utf-8')
-    return bcrypt.hashpw(password, bcrypt.gensalt())
+    """Simple password hashing using werkzeug"""
+    return generate_password_hash(password)
 
-def verify_password(plain_password, hashed_password):
-    """Verify a password against its hash."""
-    try:
-        # Ensure plain_password is bytes
-        if isinstance(plain_password, str):
-            plain_password = plain_password.encode('utf-8')
-        
-        # Ensure hashed_password is bytes
-        if isinstance(hashed_password, str):
-            hashed_password = hashed_password.encode('utf-8')
-        
-        return bcrypt.checkpw(plain_password, hashed_password)
-    except Exception as e:
-        print(f"Password verification error: {str(e)}")
-        return False
+def verify_password(password, hash):
+    """Simple password verification using werkzeug"""
+    return check_password_hash(hash, password)
 
 # User model
 class User(db.Model):
-    __tablename__ = 'users'  # Explicitly set table name to avoid SQLite/PostgreSQL naming issues
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     avatar_url = db.Column(db.String(200))
     avatar_data = db.Column(db.LargeBinary)
     avatar_content_type = db.Column(db.String(50))
@@ -103,17 +89,13 @@ class User(db.Model):
     reset_token_expiry = db.Column(db.DateTime)
     memories = db.relationship('Memory', backref='user', lazy=True)
     
-    def generate_reset_token(self):
-        # Implementation of generate_reset_token
-        pass
+    def set_password(self, password):
+        """Set the user's password"""
+        self.password_hash = hash_password(password)
         
-    def verify_reset_token(self, token):
-        # Implementation of verify_reset_token
-        pass
-        
-    def clear_reset_token(self):
-        # Implementation of clear_reset_token
-        pass
+    def check_password(self, password):
+        """Check if the password is correct"""
+        return verify_password(password, self.password_hash)
 
 # Memory model
 class Memory(db.Model):
@@ -127,10 +109,7 @@ class Memory(db.Model):
 # Initialize database on startup (ensures tables exist)
 with app.app_context():
     try:
-        # Drop existing tables in development if needed
-        # db.drop_all()  # Uncomment if you need to reset the database structure
-        
-        # Create all tables
+        # Create all tables if they don't exist
         db.create_all()
         print("Database tables created successfully")
         
@@ -138,10 +117,8 @@ with app.app_context():
         if User.query.count() == 0:
             print("No users found, creating default admin user")
             admin_password = "SynthoraAdmin2024"
-            admin_user = User(
-                username="LilPizzaRo",
-                password_hash=hash_password(admin_password)
-            )
+            admin_user = User(username="LilPizzaRo")
+            admin_user.set_password(admin_password)
             db.session.add(admin_user)
             db.session.commit()
             print("Default admin user 'LilPizzaRo' created successfully")
@@ -303,17 +280,23 @@ def signup():
             flash('Username already exists', 'error')
             return redirect(url_for('signup_page'))
 
-        # Create new user
-        password_hash = hash_password(password)
-        new_user = User(username=username, password_hash=password_hash)
+        # Create new user with User model methods
+        new_user = User(username=username)
+        new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
 
         # Log in the new user
         session['username'] = username
+        print(f"User {username} successfully registered and logged in")
 
         if request.is_json:
-            return jsonify({'message': 'Signup successful', 'username': username})
+            return jsonify({
+                'message': 'Signup successful', 
+                'username': username,
+                'authenticated': True
+            })
+        
         flash('Signup successful! You are now logged in.', 'success')
         return redirect(url_for('index'))
 
@@ -338,7 +321,7 @@ def login():
             username = request.form.get('username')
             password = request.form.get('password')
 
-        print(f"Attempting login for username: {username}")
+        print(f"Login attempt for username: {username}")
 
         # Validate input
         if not username or not password:
@@ -355,8 +338,8 @@ def login():
             flash('Invalid username or password', 'error')
             return redirect(url_for('login_page'))
 
-        # Verify password
-        if not verify_password(password, user.password_hash):
+        # Verify password using User model method
+        if not user.check_password(password):
             print(f"Password verification failed for user {username}")
             if request.is_json:
                 return jsonify({'error': 'Invalid username or password'}), 401
@@ -365,10 +348,16 @@ def login():
 
         # Login successful
         session['username'] = username
+        session.permanent = True  # Make the session persistent
         print(f"Login successful for {username}")
 
         if request.is_json:
-            return jsonify({'message': 'Login successful', 'username': username})
+            return jsonify({
+                'message': 'Login successful', 
+                'username': username,
+                'authenticated': True
+            })
+        
         return redirect(url_for('index'))
 
     except Exception as e:
@@ -838,10 +827,8 @@ def emergency_reset_admin():
         
         if not admin_users:
             # Create a new admin user if none exists
-            new_admin = User(
-                username="LilPizzaRo",
-                password_hash=hash_password("SynthoraAdmin2024")
-            )
+            new_admin = User(username="LilPizzaRo")
+            new_admin.set_password("SynthoraAdmin2024")
             db.session.add(new_admin)
             db.session.commit()
             
@@ -855,7 +842,7 @@ def emergency_reset_admin():
         reset_users = []
         for admin_user in admin_users:
             # Force create a new hash instead of using the existing one
-            admin_user.password_hash = hash_password("SynthoraAdmin2024")
+            admin_user.set_password("SynthoraAdmin2024")
             reset_users.append(admin_user.username)
         
         db.session.commit()
@@ -877,10 +864,8 @@ def emergency_create_new_admin():
     try:
         # Create a new admin user with a unique name
         new_admin_username = f"admin_{int(datetime.now().timestamp())}"
-        new_admin = User(
-            username=new_admin_username,
-            password_hash=hash_password("SynthoraAdmin2024")
-        )
+        new_admin = User(username=new_admin_username)
+        new_admin.set_password("SynthoraAdmin2024")
         db.session.add(new_admin)
         db.session.commit()
         
@@ -909,12 +894,9 @@ def emergency_reset_db():
             db.create_all()
             print("Created fresh tables")
             
-            # Create admin user
-            admin_password = "SynthoraAdmin2024"
-            admin_user = User(
-                username="LilPizzaRo",
-                password_hash=hash_password(admin_password)
-            )
+            # Create admin user with User model methods
+            admin_user = User(username="LilPizzaRo")
+            admin_user.set_password("SynthoraAdmin2024")
             db.session.add(admin_user)
             db.session.commit()
             print("Created fresh admin user")
@@ -922,7 +904,7 @@ def emergency_reset_db():
             return jsonify({
                 'message': 'Database reset successful',
                 'admin_username': 'LilPizzaRo',
-                'admin_password': admin_password
+                'admin_password': 'SynthoraAdmin2024'
             })
     except Exception as e:
         print(f"Database reset error: {str(e)}")
@@ -936,21 +918,28 @@ def check_admin_account():
         admin = User.query.filter_by(username='LilPizzaRo').first()
         if not admin:
             # Create admin account if it doesn't exist
-            hashed_password = hash_password('SynthoraAI@2024')
-            admin = User(username='LilPizzaRo', password_hash=hashed_password, is_admin=True)
+            admin = User(username='LilPizzaRo')
+            admin.set_password('SynthoraAI@2024')
             db.session.add(admin)
             db.session.commit()
             return jsonify({'message': 'Admin account created successfully'})
         
         # Test if we can verify the password
-        if verify_password('SynthoraAI@2024', admin.password_hash):
+        if admin.check_password('SynthoraAI@2024'):
             return jsonify({'message': 'Admin account is working correctly'})
         else:
             # Reset admin password
-            admin.password_hash = hash_password('SynthoraAI@2024')
+            admin.set_password('SynthoraAI@2024')
             db.session.commit()
             return jsonify({'message': 'Admin password has been reset'})
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# Add a session timeout setting near the top of the file
+# Add this after the app configuration, before the route definitions
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(days=7)  # Set session to last for 7 days
 
